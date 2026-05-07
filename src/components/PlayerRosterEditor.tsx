@@ -178,7 +178,7 @@ export function FieldEditor({
     return (
       <div className="flex items-center gap-2">
         <Input
-          className={`h-8 font-mono ${changed ? "border-warning" : ""}`}
+          className={`h-9 border-2 text-sm font-mono font-semibold ${changed ? "border-warning" : "border-input"}`}
           value={cur.text ?? ""}
           maxLength={field.length}
           onChange={(e) => onWrite(encodeText(e.target.value, field.length, encoding))}
