@@ -8,6 +8,7 @@ import { RecordMapper } from "@/components/RecordMapper";
 import { EncodingPanel } from "@/components/EncodingPanel";
 import { PlayerRosterEditor } from "@/components/PlayerRosterEditor";
 import { PlayerNameEditor } from "@/components/PlayerNameEditor";
+import { PlayerAbilitiesEditor } from "@/components/PlayerAbilitiesEditor";
 import { TeamEditor } from "@/components/TeamEditor";
 import { ExportPanel } from "@/components/ExportPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,6 +61,7 @@ function Shell() {
             <TabsTrigger value="research">Research</TabsTrigger>
             <TabsTrigger value="mappers">Mappers</TabsTrigger>
             <TabsTrigger value="names" disabled={!rom}>Names</TabsTrigger>
+            <TabsTrigger value="abilities" disabled={!rom}>Abilities</TabsTrigger>
             <TabsTrigger value="players" disabled={!rom}>Players</TabsTrigger>
             <TabsTrigger value="teams" disabled={!rom}>Teams</TabsTrigger>
             <TabsTrigger value="export">Export</TabsTrigger>
@@ -83,6 +85,10 @@ function Shell() {
 
           <TabsContent value="names">
             <PlayerNameEditor />
+          </TabsContent>
+
+          <TabsContent value="abilities">
+            <PlayerAbilitiesEditor />
           </TabsContent>
 
           <TabsContent value="players">
