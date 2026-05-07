@@ -17,7 +17,7 @@ function download(name: string, data: Uint8Array | string, mime = "application/o
 }
 
 export function ExportPanel() {
-  const { rom, originalRom, romName, edits, romMap, setRomMap, clearEdits } = useRom();
+  const { rom, originalRom, romName, edits, romMap, setRomMap, clearEdits, setBytes } = useRom();
   const importRef = useRef<HTMLInputElement>(null);
   const projectRef = useRef<HTMLInputElement>(null);
 
@@ -130,12 +130,7 @@ export function ExportPanel() {
                 edits: { offset: number; value: number }[];
               };
               for (const { offset, value } of data.edits) {
-                useRom; // satisfy lint
-              }
-              // apply via store
-              const { setBytes } = (window as any).__romStoreRef ?? {};
-              for (const { offset, value } of data.edits) {
-                setBytes?.(offset, new Uint8Array([value]));
+                setBytes(offset, new Uint8Array([value]));
               }
             } catch {
               alert("Invalid project JSON");
