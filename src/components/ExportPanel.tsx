@@ -6,7 +6,8 @@ import { Download, Upload, FileJson, RotateCcw, FileCode } from "lucide-react";
 import { DEFAULT_ROM_MAP, type RomMap } from "@/types/RomMap";
 
 function download(name: string, data: Uint8Array | string, mime = "application/octet-stream") {
-  const blob = new Blob([data], { type: mime });
+  const part: BlobPart = typeof data === "string" ? data : new Uint8Array(data).buffer as ArrayBuffer;
+  const blob = new Blob([part], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
