@@ -125,7 +125,43 @@ function downloadBlob(name: string, data: Uint8Array) {
   URL.revokeObjectURL(url);
 }
 
+// Face portrait images from the open-source tsbtools project
+const FACE_IMG_BASE = "https://raw.githubusercontent.com/BAD-AL/tsbtools/HEAD/TSBProjects/Java/TSBToolSupreme_netbeans/src/tsbtool_gui/facepackage/";
+function faceImgUrl(id: number) {
+  return `${FACE_IMG_BASE}${id.toString(16).toUpperCase().padStart(2, "0")}.BMP`;
+}
+function hexId(id: number) { return id.toString(16).toUpperCase().padStart(2, "0"); }
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+function FaceThumb({ id, selected, onClick }: { id: number; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      title={`0x${hexId(id)} (${id})`}
+      onClick={onClick}
+      className={`flex flex-col items-center gap-px rounded border p-0.5 transition hover:scale-105 hover:bg-accent ${
+        selected
+          ? "border-yellow-400 ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-950/50"
+          : "border-transparent hover:border-foreground/20"
+      }`}
+    >
+      <img
+        src={faceImgUrl(id)}
+        alt={hexId(id)}
+        width={32} height={36}
+        className="object-cover"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+          (e.currentTarget.nextSibling as HTMLElement | null)?.classList.remove("hidden");
+        }}
+      />
+      <span className="hidden text-[8px] font-mono text-muted-foreground leading-4 w-8 text-center bg-muted rounded-sm">
+        ?
+      </span>
+      <span className="text-[7px] font-mono text-muted-foreground leading-none">{hexId(id)}</span>
+    </button>
+  );
+}
 
 function FaceCell({ value, changed, onChange }: {
   value: number; changed: boolean; onChange: (v: number) => void;
@@ -135,65 +171,53 @@ function FaceCell({ value, changed, onChange }: {
 
   function pick(id: number) { onChange(id); setOpen(false); }
 
-  const triggerClass = [
-    "flex h-8 w-20 items-center gap-1 rounded border px-1.5 font-mono text-xs transition hover:bg-accent",
-    changed ? "border-yellow-500 bg-yellow-50 text-gray-900 dark:bg-yellow-950/50 dark:text-yellow-100" : "border-input bg-background",
-    !valid ? "border-red-500" : "",
-  ].join(" ");
-
   return (
     <td className="px-1 py-1">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button className={triggerClass}>
-            {!valid && <span className="text-red-500 font-bold">!</span>}
-            <span>0x{value.toString(16).toUpperCase().padStart(2, "0")}</span>
+          <button
+            className={[
+              "flex h-12 w-16 flex-col items-center justify-center gap-0.5 rounded border transition hover:bg-accent",
+              changed ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/50" : "border-input bg-background",
+              !valid ? "border-red-500" : "",
+            ].join(" ")}
+          >
+            {valid ? (
+              <>
+                <img src={faceImgUrl(value)} alt={hexId(value)} width={32} height={36} className="object-cover" />
+                <span className="font-mono text-[8px] text-muted-foreground">{hexId(value)}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-red-500 font-bold text-base leading-none">!</span>
+                <span className="font-mono text-[8px] text-red-400">{hexId(value)}</span>
+              </>
+            )}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-3 space-y-3" align="start">
-          <p className="text-xs font-semibold text-muted-foreground">Face ID picker — click to select</p>
+        <PopoverContent className="w-auto p-3 space-y-3" align="start" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+          <p className="text-xs font-semibold text-muted-foreground">Select face (0x00–0x52 · 0x81–0xD4)</p>
 
-          {/* Range 0x00–0x52 */}
           <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground">0x00–0x52</p>
-            <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(16, 1fr)" }}>
+            <p className="text-[10px] text-muted-foreground font-mono">0x00–0x52</p>
+            <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
               {VALID_FACE_RANGE1.map((id) => (
-                <button
-                  key={id}
-                  title={`0x${id.toString(16).toUpperCase().padStart(2, "0")} (${id})`}
-                  onClick={() => pick(id)}
-                  className={`h-5 w-5 rounded-sm border text-center text-[7px] font-mono leading-5 transition hover:scale-110 ${
-                    id === value ? "border-yellow-400 ring-2 ring-yellow-400" : "border-transparent hover:border-foreground/30"
-                  } bg-muted`}
-                >
-                  {id === value ? "✓" : ""}
-                </button>
+                <FaceThumb key={id} id={id} selected={id === value} onClick={() => pick(id)} />
               ))}
             </div>
           </div>
 
-          {/* Range 0x81–0xD4 */}
           <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground">0x81–0xD4</p>
-            <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(16, 1fr)" }}>
+            <p className="text-[10px] text-muted-foreground font-mono">0x81–0xD4</p>
+            <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
               {VALID_FACE_RANGE2.map((id) => (
-                <button
-                  key={id}
-                  title={`0x${id.toString(16).toUpperCase().padStart(2, "0")} (${id})`}
-                  onClick={() => pick(id)}
-                  className={`h-5 w-5 rounded-sm border text-center text-[7px] font-mono leading-5 transition hover:scale-110 ${
-                    id === value ? "border-yellow-400 ring-2 ring-yellow-400" : "border-transparent hover:border-foreground/30"
-                  } bg-muted`}
-                >
-                  {id === value ? "✓" : ""}
-                </button>
+                <FaceThumb key={id} id={id} selected={id === value} onClick={() => pick(id)} />
               ))}
             </div>
           </div>
 
-          {/* Direct entry */}
           <div className="flex items-center gap-2 border-t pt-2">
-            <span className="text-xs text-muted-foreground">Direct (0–255):</span>
+            <span className="text-xs text-muted-foreground">Direct:</span>
             <Input
               type="number" min={0} max={255}
               value={value}
