@@ -183,7 +183,7 @@ export function PlayerNameEditor() {
     const rawBytes = rom.slice(p.offset + 1, p.offset + 1 + p.nameLength);
     const rawName = String.fromCharCode(...rawBytes);
     const { first, last } = splitName(rawName);
-    return { first, last, jersey: bcdToDec(jerseyBcd) };
+    return { first: first.trimEnd(), last: last.trimEnd(), jersey: bcdToDec(jerseyBcd) };
   }
 
   function writeName(p: Player, newFirst: string, newLast: string) {
@@ -296,9 +296,8 @@ export function PlayerNameEditor() {
                   const fnChanged = cur.first !== p.first;
                   const lnChanged = cur.last !== p.last;
                   const jerseyChanged = cur.jersey !== p.jersey;
-                  // Max combined length = nameLength; split proportionally
-                  const maxFirst = p.first.length;
-                  const maxLast = p.last.length;
+                  const maxFirst = p.nameLength - cur.last.length;
+                  const maxLast = p.nameLength - cur.first.length;
                   return (
                     <tr key={p.slot} className="border-t hover:bg-accent/20">
                       <td className="px-3 py-1">

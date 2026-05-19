@@ -3,7 +3,16 @@ import { useRom } from "@/lib/romStore";
 import { buildIPS } from "@/lib/diff";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download, FileCode, Wand2, Settings } from "lucide-react";
+
+// Face IDs that point to real face scripts in Bank 15.
+// 0x53–0x80 all map to PLAYER_FACE_SCRIPT_BAD_PTR and produce no face.
+const VALID_FACE_RANGE1 = Array.from({ length: 0x53 }, (_, i) => i);           // 0x00–0x52
+const VALID_FACE_RANGE2 = Array.from({ length: 0xD4 - 0x81 + 1 }, (_, i) => i + 0x81); // 0x81–0xD4
+const VALID_FACE_SET = new Set([...VALID_FACE_RANGE1, ...VALID_FACE_RANGE2]);
+
+function isValidFaceId(id: number) { return VALID_FACE_SET.has(id); }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -118,6 +127,87 @@ function downloadBlob(name: string, data: Uint8Array) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+function FaceCell({ value, changed, onChange }: {
+  value: number; changed: boolean; onChange: (v: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const valid = isValidFaceId(value);
+
+  function pick(id: number) { onChange(id); setOpen(false); }
+
+  const triggerClass = [
+    "flex h-8 w-20 items-center gap-1 rounded border px-1.5 font-mono text-xs transition hover:bg-accent",
+    changed ? "border-yellow-500 bg-yellow-50 text-gray-900 dark:bg-yellow-950/50 dark:text-yellow-100" : "border-input bg-background",
+    !valid ? "border-red-500" : "",
+  ].join(" ");
+
+  return (
+    <td className="px-1 py-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button className={triggerClass}>
+            {!valid && <span className="text-red-500 font-bold">!</span>}
+            <span>0x{value.toString(16).toUpperCase().padStart(2, "0")}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-3 space-y-3" align="start">
+          <p className="text-xs font-semibold text-muted-foreground">Face ID picker — click to select</p>
+
+          {/* Range 0x00–0x52 */}
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground">0x00–0x52</p>
+            <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(16, 1fr)" }}>
+              {VALID_FACE_RANGE1.map((id) => (
+                <button
+                  key={id}
+                  title={`0x${id.toString(16).toUpperCase().padStart(2, "0")} (${id})`}
+                  onClick={() => pick(id)}
+                  className={`h-5 w-5 rounded-sm border text-center text-[7px] font-mono leading-5 transition hover:scale-110 ${
+                    id === value ? "border-yellow-400 ring-2 ring-yellow-400" : "border-transparent hover:border-foreground/30"
+                  } bg-muted`}
+                >
+                  {id === value ? "✓" : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Range 0x81–0xD4 */}
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground">0x81–0xD4</p>
+            <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(16, 1fr)" }}>
+              {VALID_FACE_RANGE2.map((id) => (
+                <button
+                  key={id}
+                  title={`0x${id.toString(16).toUpperCase().padStart(2, "0")} (${id})`}
+                  onClick={() => pick(id)}
+                  className={`h-5 w-5 rounded-sm border text-center text-[7px] font-mono leading-5 transition hover:scale-110 ${
+                    id === value ? "border-yellow-400 ring-2 ring-yellow-400" : "border-transparent hover:border-foreground/30"
+                  } bg-muted`}
+                >
+                  {id === value ? "✓" : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Direct entry */}
+          <div className="flex items-center gap-2 border-t pt-2">
+            <span className="text-xs text-muted-foreground">Direct (0–255):</span>
+            <Input
+              type="number" min={0} max={255}
+              value={value}
+              className={`h-7 w-20 font-mono text-xs ${!valid ? "border-red-500" : ""}`}
+              onChange={(e) => onChange(Math.max(0, Math.min(255, parseInt(e.target.value) || 0)))}
+            />
+            {!valid && <span className="text-xs text-red-500">invalid — no face drawn</span>}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </td>
+  );
+}
+
 function NibbleCell({ value, changed, onChange }: {
   value: number; changed: boolean; onChange: (v: number) => void;
 }) {
@@ -162,14 +252,7 @@ function PlayerRow({ pos, cur, orig, onNibble, onFace }: PlayerRowProps) {
       <NibbleCell value={nb(0, false)} changed={nbChanged(0, false)} onChange={(v) => onNibble(0, false, v)} />
       <NibbleCell value={nb(1, true)}  changed={nbChanged(1, true)}  onChange={(v) => onNibble(1, true,  v)} />
       <NibbleCell value={nb(1, false)} changed={nbChanged(1, false)} onChange={(v) => onNibble(1, false, v)} />
-      <td className="px-1 py-1">
-        <Input
-          type="number" min={0} max={255}
-          value={cur[2] ?? 0}
-          className={`h-8 w-16 font-mono text-xs ${faceChanged ? "border-yellow-500" : ""}`}
-          onChange={(e) => onFace(Math.max(0, Math.min(255, parseInt(e.target.value) || 0)))}
-        />
-      </td>
+      <FaceCell value={cur[2] ?? 0} changed={faceChanged} onChange={onFace} />
       {pos.type === "qb" && (
         <>
           <NibbleCell value={nb(3, true)}  changed={nbChanged(3, true)}  onChange={(v) => onNibble(3, true,  v)} />
