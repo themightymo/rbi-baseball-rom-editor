@@ -3,6 +3,7 @@ import { useRom } from "@/lib/romStore";
 import { buildIPS } from "@/lib/diff";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Download, FileCode, Wand2, Settings } from "lucide-react";
 
 // ─── TSB ROM constants ────────────────────────────────────────────────────────
@@ -281,12 +282,25 @@ export function PlayerNameEditor() {
       </div>
 
       {/* Teams */}
-      <div className="space-y-4">
-        {teams?.map((team) => (
-          <div key={team.index} className="overflow-hidden rounded-lg border bg-card">
-            <div className="bg-muted/50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {TEAM_NAMES[team.index] ?? `Team ${team.index + 1}`}
-            </div>
+      <Accordion type="multiple" className="rounded-lg border bg-card overflow-hidden">
+        {teams?.map((team) => {
+          const changedCount = team.players.filter((p) => {
+            const cur = getCurrent(p);
+            return cur.first !== p.first || cur.last !== p.last || cur.jersey !== p.jersey;
+          }).length;
+          return (
+          <AccordionItem key={team.index} value={`team-${team.index}`} className="border-b last:border-b-0">
+            <AccordionTrigger className="px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:no-underline hover:bg-muted/50">
+              <span className="flex items-center gap-2">
+                {TEAM_NAMES[team.index] ?? `Team ${team.index + 1}`}
+                {changedCount > 0 && (
+                  <span className="rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-[10px] font-medium text-yellow-600 dark:text-yellow-400">
+                    {changedCount} edited
+                  </span>
+                )}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20 text-left text-xs text-muted-foreground">
                 <tr>
@@ -340,9 +354,11 @@ export function PlayerNameEditor() {
                 })}
               </tbody>
             </table>
-          </div>
-        ))}
-      </div>
+            </AccordionContent>
+          </AccordionItem>
+          );
+        })}
+      </Accordion>
     </div>
   );
 }
