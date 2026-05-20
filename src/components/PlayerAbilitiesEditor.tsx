@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRom } from "@/lib/romStore";
 import { buildIPS } from "@/lib/diff";
 import { loadPlayerNames, type PlayerName } from "@/lib/nameLoader";
@@ -77,24 +77,24 @@ const POS_OFFSETS: number[] = (() => {
 
 // Buffalo Bills QB1 signature: RP=69, RS=25, MS=13, HP=13, face=0x52, PS=56, PC=81, PA=81, APB=81
 const DETECT_PATTERN = [0xa3, 0x11, 0x52, 0x8c, 0xcc];
-const BUFFALO_INDEX = 2; // Buffalo is team slot 2
+// Buffalo is the first team in the abilities block (index 0).
+// Teams 0-1 showed all 0xFF (=100) with index 2, confirming no valid data exists before Buffalo.
+const BUFFALO_INDEX = 0;
 
+// Abilities block team order matches the name pointer-table order (both start with Buffalo).
 const TEAM_NAMES = [
-  "Chicago", "New York Giants", "Buffalo", "Indianapolis", "Miami",
-  "New England", "New York Jets", "Cleveland", "Houston", "Pittsburgh",
-  "Cincinnati", "Denver", "Kansas City", "LA Raiders", "Seattle",
-  "San Diego", "Minnesota", "Green Bay", "Detroit", "Tampa Bay",
-  "Atlanta", "Dallas", "Phoenix", "Philadelphia", "Chicago Bears",
-  "New York Giants 2", "San Francisco", "LA Rams",
-];
-
-// Maps abilities block team index → name pointer-table team index.
-// abilities[2] = Buffalo = names[0] is the confirmed anchor (detected via DETECT_PATTERN).
-// The rest follows AFC East→Central→West then NFC East→Central→West, alphabetical within divisions.
-const ABILITIES_TO_NAMES_IDX: number[] = [
-  19, 15,  0,  1,  2,  3,  4,  6,  7,  8,
-   5,  9, 10, 11, 13, 12, 22, 21, 20, 23,
-  27, 18, 17, 16, 14, 26, 24, 25,
+  // AFC East (0–4)
+  "Buffalo Bills", "Indianapolis Colts", "Miami Dolphins", "New England Patriots", "New York Jets",
+  // AFC Central (5–8)
+  "Cincinnati Bengals", "Cleveland Browns", "Houston Oilers", "Pittsburgh Steelers",
+  // AFC West (9–13)
+  "Denver Broncos", "Kansas City Chiefs", "Los Angeles Raiders", "San Diego Chargers", "Seattle Seahawks",
+  // NFC East (14–18)
+  "Washington Redskins", "New York Giants", "Philadelphia Eagles", "Phoenix Cardinals", "Dallas Cowboys",
+  // NFC Central (19–23)
+  "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Tampa Bay Buccaneers",
+  // NFC West (24–27)
+  "San Francisco 49ers", "Los Angeles Rams", "New Orleans Saints", "Atlanta Falcons",
 ];
 
 const LS_KEY = "tecmo.abilitiesconfig.v1";
@@ -359,7 +359,7 @@ function GroupTable({ headers, posIndices, teamNames, rom, originalRom, base, te
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerAbilitiesEditor() {
-  const { rom, originalRom, romName, hasINES, setBytes, edits } = useRom();
+  const { rom, originalRom, romName, hasINES, setBytes, clearEdits, edits } = useRom();
 
   const allTeamNames = useMemo(() => {
     if (!originalRom) return null;
@@ -384,6 +384,16 @@ export function PlayerAbilitiesEditor() {
     try { localStorage.setItem(LS_KEY, String(offset)); } catch {}
     setShowSetup(false);
   }
+
+  // Auto-correct a stale stored base (e.g. saved when BUFFALO_INDEX was a different value).
+  // Valid base: DETECT_PATTERN must appear at base + BUFFALO_INDEX * TEAM_BYTES.
+  useEffect(() => {
+    if (!originalRom || base === null || detectedBase === null) return;
+    const chk = base + BUFFALO_INDEX * TEAM_BYTES;
+    const valid = DETECT_PATTERN.every((b, j) => (originalRom[chk + j] ?? -1) === b);
+    if (!valid) activate(detectedBase);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originalRom, detectedBase]);
 
   function handleNibble(posIdx: number, byteIdx: number, hi: boolean, value: number) {
     if (!rom || base === null) return;
@@ -484,8 +494,7 @@ export function PlayerAbilitiesEditor() {
     qb: QB_HEADERS, skill: SKILL_HEADERS, oline: OL_HEADERS, defense: DEF_HEADERS, special: KICK_HEADERS,
   };
 
-  const namesTeamIdx = ABILITIES_TO_NAMES_IDX[teamIdx] ?? teamIdx;
-  const teamNames: PlayerName[] = allTeamNames?.[namesTeamIdx] ?? [];
+  const teamNames: PlayerName[] = allTeamNames?.[teamIdx] ?? [];
 
   const tableProps: Omit<GroupTableProps, "headers" | "posIndices"> = {
     rom, originalRom: originalRom!, base, teamIdx, teamNames,
@@ -533,9 +542,14 @@ export function PlayerAbilitiesEditor() {
             <FileCode className="size-4" /> Export IPS
           </Button>
           {editCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {editCount} byte{editCount === 1 ? "" : "s"} modified
-            </span>
+            <>
+              <span className="text-xs text-muted-foreground">
+                {editCount} byte{editCount === 1 ? "" : "s"} modified
+              </span>
+              <Button variant="outline" size="sm" onClick={clearEdits}>
+                Revert all
+              </Button>
+            </>
           )}
           <Button variant="ghost" size="sm" className="ml-auto gap-1.5" onClick={() => setShowSetup(true)}>
             <Settings className="size-4" /> Settings
