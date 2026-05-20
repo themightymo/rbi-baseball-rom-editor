@@ -146,12 +146,18 @@ function downloadBlob(name: string, data: Uint8Array) {
 // ─── Team name lookup ─────────────────────────────────────────────────────────
 
 const TEAM_NAMES = [
-  "Chicago", "New York Giants", "Buffalo", "Indianapolis", "Miami",
-  "New England", "New York Jets", "Cleveland", "Houston", "Pittsburgh",
-  "Cincinnati", "Denver", "Kansas City", "Los Angeles Raiders", "Seattle",
-  "San Diego", "Minnesota", "Green Bay", "Detroit", "Chicago Bears",
-  "Tampa Bay", "Atlanta", "Dallas", "Phoenix", "Philadelphia",
-  "New York Giants 2", "San Francisco", "Los Angeles Rams",
+  // AFC East (0–4)
+  "Buffalo Bills", "Indianapolis Colts", "Miami Dolphins", "New England Patriots", "New York Jets",
+  // AFC Central (5–8)
+  "Cincinnati Bengals", "Cleveland Browns", "Houston Oilers", "Pittsburgh Steelers",
+  // AFC West (9–13)
+  "Denver Broncos", "Kansas City Chiefs", "Los Angeles Raiders", "San Diego Chargers", "Seattle Seahawks",
+  // NFC East (14–18)
+  "Washington Redskins", "New York Giants", "Philadelphia Eagles", "Phoenix Cardinals", "Dallas Cowboys",
+  // NFC Central (19–23)
+  "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Tampa Bay Buccaneers",
+  // NFC West (24–27)
+  "San Francisco 49ers", "Los Angeles Rams", "New Orleans Saints", "Atlanta Falcons",
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
