@@ -56,7 +56,7 @@ function Shell() {
         <RomUploader />
         <Notice />
 
-        <Tabs defaultValue="research">
+        <Tabs defaultValue="abilities">
           <TabsList className="flex w-full flex-wrap">
             <TabsTrigger value="research">Research</TabsTrigger>
             <TabsTrigger value="mappers">Mappers</TabsTrigger>
