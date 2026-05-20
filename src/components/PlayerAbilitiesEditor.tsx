@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRom } from "@/lib/romStore";
 import { buildIPS } from "@/lib/diff";
-import { loadPlayerNames, type PlayerName } from "@/lib/nameLoader";
+import { loadTeams, splitName, type Player, type TeamData } from "@/lib/nameLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -268,29 +268,46 @@ interface PlayerRowProps {
   pos: PosDef;
   cur: Uint8Array;
   orig: Uint8Array;
-  name?: PlayerName;
+  curFirst?: string;
+  curLast?: string;
+  origFirst?: string;
+  origLast?: string;
+  maxFirst?: number;
+  maxLast?: number;
   onNibble: (byteIdx: number, hi: boolean, value: number) => void;
   onFace: (value: number) => void;
+  onName?: (first: string, last: string) => void;
 }
 
-function formatPlayerName(name: PlayerName): string {
-  const first = name.first.trim();
-  const last  = name.last.trim();
-  const f = first ? first.charAt(0).toUpperCase() + first.slice(1) : "";
-  return [f, last].filter(Boolean).join(" ");
-}
-
-function PlayerRow({ pos, cur, orig, name, onNibble, onFace }: PlayerRowProps) {
+function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, maxFirst, maxLast, onNibble, onFace, onName }: PlayerRowProps) {
   const nb = (bi: number, hi: boolean) => nibble(cur, bi, hi);
   const nbChanged = (bi: number, hi: boolean) => nibble(cur, bi, hi) !== nibble(orig, bi, hi);
   const faceChanged = (cur[2] ?? 0) !== (orig[2] ?? 0);
+  const fnChanged = curFirst !== origFirst;
+  const lnChanged = curLast !== origLast;
 
   return (
     <tr className="border-t hover:bg-accent/20">
-      <td className="min-w-[11rem] px-2 py-1 text-xs font-mono">
-        {name
-          ? <><span className="font-semibold">{formatPlayerName(name)}</span>{" "}<span className="text-muted-foreground">({pos.label})</span></>
-          : <span className="font-bold text-muted-foreground">{pos.label}</span>
+      <td className="min-w-[14rem] px-2 py-1">
+        {onName && curFirst !== undefined && curLast !== undefined
+          ? (
+            <div className="flex items-center gap-1">
+              <Input
+                className={`h-7 w-[5.5rem] border font-mono text-xs ${fnChanged ? "border-yellow-500" : "border-input"}`}
+                value={curFirst}
+                maxLength={maxFirst}
+                onChange={(e) => onName(e.target.value, curLast)}
+              />
+              <Input
+                className={`h-7 w-[6.5rem] border font-mono text-xs font-semibold ${lnChanged ? "border-yellow-500" : "border-input"}`}
+                value={curLast}
+                maxLength={maxLast}
+                onChange={(e) => onName(curFirst, e.target.value)}
+              />
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">({pos.label})</span>
+            </div>
+          )
+          : <span className="font-mono text-xs font-bold text-muted-foreground">{pos.label}</span>
         }
       </td>
       <NibbleCell value={nb(0, true)}  changed={nbChanged(0, true)}  onChange={(v) => onNibble(0, true,  v)} />
@@ -319,37 +336,55 @@ function PlayerRow({ pos, cur, orig, name, onNibble, onFace }: PlayerRowProps) {
 interface GroupTableProps {
   headers: string[];
   posIndices: number[];
-  teamNames: PlayerName[];
-  rom: Uint8Array;
+  teamPlayers: Player[];
+  liveRom: Uint8Array;
   originalRom: Uint8Array;
   base: number;
   teamIdx: number;
   onNibble: (posIdx: number, byteIdx: number, hi: boolean, value: number) => void;
   onFace: (posIdx: number, value: number) => void;
+  onName: (player: Player, first: string, last: string) => void;
 }
 
-function GroupTable({ headers, posIndices, teamNames, rom, originalRom, base, teamIdx, onNibble, onFace }: GroupTableProps) {
+function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, base, teamIdx, onNibble, onFace, onName }: GroupTableProps) {
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
         <thead className="border-b bg-muted/20 text-left text-xs text-muted-foreground">
           <tr>
-            <th className="min-w-[11rem] px-2 py-2">Player</th>
+            <th className="min-w-[14rem] px-2 py-2">Player</th>
             {headers.map((h) => <th key={h} className="px-1 py-2 whitespace-nowrap">{h}</th>)}
           </tr>
         </thead>
         <tbody>
-          {posIndices.map((pi) => (
-            <PlayerRow
-              key={pi}
-              pos={POSITIONS[pi]}
-              cur={getPlayerBytes(rom, base, teamIdx, pi)}
-              orig={getPlayerBytes(originalRom, base, teamIdx, pi)}
-              name={teamNames[pi]}
-              onNibble={(bi, hi, v) => onNibble(pi, bi, hi, v)}
-              onFace={(v) => onFace(pi, v)}
-            />
-          ))}
+          {posIndices.map((pi) => {
+            const player = teamPlayers[pi];
+            let curFirst: string | undefined;
+            let curLast: string | undefined;
+            if (player) {
+              const raw = String.fromCharCode(...liveRom.slice(player.offset + 1, player.offset + 1 + player.nameLength));
+              const n = splitName(raw);
+              curFirst = n.first.trimEnd();
+              curLast  = n.last.trimEnd();
+            }
+            return (
+              <PlayerRow
+                key={pi}
+                pos={POSITIONS[pi]}
+                cur={getPlayerBytes(liveRom, base, teamIdx, pi)}
+                orig={getPlayerBytes(originalRom, base, teamIdx, pi)}
+                curFirst={curFirst}
+                curLast={curLast}
+                origFirst={player?.first}
+                origLast={player?.last}
+                maxFirst={player ? player.nameLength - (curLast?.length ?? 0) : undefined}
+                maxLast={player ? player.nameLength - (curFirst?.length ?? 0) : undefined}
+                onNibble={(bi, hi, v) => onNibble(pi, bi, hi, v)}
+                onFace={(v) => onFace(pi, v)}
+                onName={player ? (f, l) => onName(player, f, l) : undefined}
+              />
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -361,9 +396,10 @@ function GroupTable({ headers, posIndices, teamNames, rom, originalRom, base, te
 export function PlayerAbilitiesEditor() {
   const { rom, originalRom, romName, hasINES, setBytes, clearEdits, edits } = useRom();
 
-  const allTeamNames = useMemo(() => {
+  const allTeams = useMemo((): TeamData[] | null => {
     if (!originalRom) return null;
-    return loadPlayerNames(originalRom, hasINES);
+    const result = loadTeams(originalRom, hasINES);
+    return Array.isArray(result) ? result : null;
   }, [originalRom, hasINES]);
 
   const [base, setBase] = useState<number | null>(() => {
@@ -494,12 +530,22 @@ export function PlayerAbilitiesEditor() {
     qb: QB_HEADERS, skill: SKILL_HEADERS, oline: OL_HEADERS, defense: DEF_HEADERS, special: KICK_HEADERS,
   };
 
-  const teamNames: PlayerName[] = allTeamNames?.[teamIdx] ?? [];
+  const teamPlayers: Player[] = allTeams?.[teamIdx]?.players ?? [];
+
+  function writePlayerName(player: Player, newFirst: string, newLast: string) {
+    const combined = newFirst.toLowerCase() + newLast.toUpperCase();
+    const bytes = new Uint8Array(player.nameLength).fill(0x20);
+    for (let i = 0; i < Math.min(player.nameLength, combined.length); i++) {
+      bytes[i] = combined.charCodeAt(i) & 0xff;
+    }
+    setBytes(player.offset + 1, bytes);
+  }
 
   const tableProps: Omit<GroupTableProps, "headers" | "posIndices"> = {
-    rom, originalRom: originalRom!, base, teamIdx, teamNames,
+    liveRom: rom, originalRom: originalRom!, base, teamIdx, teamPlayers,
     onNibble: handleNibble,
     onFace: handleFace,
+    onName: writePlayerName,
   };
 
   return (
