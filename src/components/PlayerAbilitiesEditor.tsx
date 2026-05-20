@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { buildIPS } from "@/lib/diff";
+import { loadPlayerNames, type PlayerName } from "@/lib/nameLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -85,6 +86,15 @@ const TEAM_NAMES = [
   "San Diego", "Minnesota", "Green Bay", "Detroit", "Tampa Bay",
   "Atlanta", "Dallas", "Phoenix", "Philadelphia", "Chicago Bears",
   "New York Giants 2", "San Francisco", "LA Rams",
+];
+
+// Maps abilities block team index → name pointer-table team index.
+// abilities[2] = Buffalo = names[0] is the confirmed anchor (detected via DETECT_PATTERN).
+// The rest follows AFC East→Central→West then NFC East→Central→West, alphabetical within divisions.
+const ABILITIES_TO_NAMES_IDX: number[] = [
+  19, 15,  0,  1,  2,  3,  4,  6,  7,  8,
+   5,  9, 10, 11, 13, 12, 22, 21, 20, 23,
+  27, 18, 17, 16, 14, 26, 24, 25,
 ];
 
 const LS_KEY = "tecmo.abilitiesconfig.v1";
@@ -258,19 +268,30 @@ interface PlayerRowProps {
   pos: PosDef;
   cur: Uint8Array;
   orig: Uint8Array;
+  name?: PlayerName;
   onNibble: (byteIdx: number, hi: boolean, value: number) => void;
   onFace: (value: number) => void;
 }
 
-function PlayerRow({ pos, cur, orig, onNibble, onFace }: PlayerRowProps) {
+function formatPlayerName(name: PlayerName): string {
+  const first = name.first.trim();
+  const last  = name.last.trim();
+  const f = first ? first.charAt(0).toUpperCase() + first.slice(1) : "";
+  return [f, last].filter(Boolean).join(" ");
+}
+
+function PlayerRow({ pos, cur, orig, name, onNibble, onFace }: PlayerRowProps) {
   const nb = (bi: number, hi: boolean) => nibble(cur, bi, hi);
   const nbChanged = (bi: number, hi: boolean) => nibble(cur, bi, hi) !== nibble(orig, bi, hi);
   const faceChanged = (cur[2] ?? 0) !== (orig[2] ?? 0);
 
   return (
     <tr className="border-t hover:bg-accent/20">
-      <td className="w-12 px-2 py-1 font-mono text-xs font-bold text-muted-foreground">
-        {pos.label}
+      <td className="min-w-[11rem] px-2 py-1 text-xs font-mono">
+        {name
+          ? <><span className="font-semibold">{formatPlayerName(name)}</span>{" "}<span className="text-muted-foreground">({pos.label})</span></>
+          : <span className="font-bold text-muted-foreground">{pos.label}</span>
+        }
       </td>
       <NibbleCell value={nb(0, true)}  changed={nbChanged(0, true)}  onChange={(v) => onNibble(0, true,  v)} />
       <NibbleCell value={nb(0, false)} changed={nbChanged(0, false)} onChange={(v) => onNibble(0, false, v)} />
@@ -298,6 +319,7 @@ function PlayerRow({ pos, cur, orig, onNibble, onFace }: PlayerRowProps) {
 interface GroupTableProps {
   headers: string[];
   posIndices: number[];
+  teamNames: PlayerName[];
   rom: Uint8Array;
   originalRom: Uint8Array;
   base: number;
@@ -306,13 +328,13 @@ interface GroupTableProps {
   onFace: (posIdx: number, value: number) => void;
 }
 
-function GroupTable({ headers, posIndices, rom, originalRom, base, teamIdx, onNibble, onFace }: GroupTableProps) {
+function GroupTable({ headers, posIndices, teamNames, rom, originalRom, base, teamIdx, onNibble, onFace }: GroupTableProps) {
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
         <thead className="border-b bg-muted/20 text-left text-xs text-muted-foreground">
           <tr>
-            <th className="w-12 px-2 py-2">Pos</th>
+            <th className="min-w-[11rem] px-2 py-2">Player</th>
             {headers.map((h) => <th key={h} className="px-1 py-2 whitespace-nowrap">{h}</th>)}
           </tr>
         </thead>
@@ -323,6 +345,7 @@ function GroupTable({ headers, posIndices, rom, originalRom, base, teamIdx, onNi
               pos={POSITIONS[pi]}
               cur={getPlayerBytes(rom, base, teamIdx, pi)}
               orig={getPlayerBytes(originalRom, base, teamIdx, pi)}
+              name={teamNames[pi]}
               onNibble={(bi, hi, v) => onNibble(pi, bi, hi, v)}
               onFace={(v) => onFace(pi, v)}
             />
@@ -336,7 +359,12 @@ function GroupTable({ headers, posIndices, rom, originalRom, base, teamIdx, onNi
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerAbilitiesEditor() {
-  const { rom, originalRom, romName, setBytes, edits } = useRom();
+  const { rom, originalRom, romName, hasINES, setBytes, edits } = useRom();
+
+  const allTeamNames = useMemo(() => {
+    if (!originalRom) return null;
+    return loadPlayerNames(originalRom, hasINES);
+  }, [originalRom, hasINES]);
 
   const [base, setBase] = useState<number | null>(() => {
     try { const s = localStorage.getItem(LS_KEY); return s ? parseInt(s) : null; } catch { return null; }
@@ -456,8 +484,11 @@ export function PlayerAbilitiesEditor() {
     qb: QB_HEADERS, skill: SKILL_HEADERS, oline: OL_HEADERS, defense: DEF_HEADERS, special: KICK_HEADERS,
   };
 
+  const namesTeamIdx = ABILITIES_TO_NAMES_IDX[teamIdx] ?? teamIdx;
+  const teamNames: PlayerName[] = allTeamNames?.[namesTeamIdx] ?? [];
+
   const tableProps: Omit<GroupTableProps, "headers" | "posIndices"> = {
-    rom, originalRom: originalRom!, base, teamIdx,
+    rom, originalRom: originalRom!, base, teamIdx, teamNames,
     onNibble: handleNibble,
     onFace: handleFace,
   };
