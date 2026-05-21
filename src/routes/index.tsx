@@ -16,16 +16,6 @@ import { Gamepad2, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
-  head: () => ({
-    meta: [
-      { title: "Tecmo Roster & Team Editor — local NES ROM research" },
-      {
-        name: "description",
-        content:
-          "Local-only research and editor for player rosters and team data inside a user-supplied Tecmo Super Bowl NES ROM. No ROMs or copyrighted data are distributed.",
-      },
-    ],
-  }),
 });
 
 function Index() {
