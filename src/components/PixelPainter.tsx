@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TRANSPARENT, pixelsToDataUrl, type Pixels } from "@/lib/pixels";
-import { Eraser, FlipHorizontal2, Grid3x3, PaintBucket, Pencil, Pipette, Redo2, Undo2 } from "lucide-react";
+import { Eraser, FlipHorizontal2, Grid3x3, PaintBucket, PaintbrushVertical, Pencil, Pipette, Redo2, Undo2 } from "lucide-react";
 
 // Shared pixel-art editor behind the headshot and helmet painters. Render it inside a
 // DialogContent; it supplies the title, canvas, tools and Save / Revert buttons.
@@ -38,6 +38,11 @@ interface Props {
   defaultColor: string;
   /** Background behind the preview images (shows through transparent pixels). */
   previewBackground?: string;
+  /**
+   * Colour shown behind transparent pixels on the canvas instead of a checkerboard
+   * (display only, never saved). Can be toggled off with a toolbar button.
+   */
+  canvasBackground?: string;
   previewScales?: number[];
   /** Extra "Start from" buttons; call `load` with the pixels to start from. */
   startOptions: (load: (source: Source) => void) => React.ReactNode;
@@ -53,7 +58,7 @@ interface Props {
 
 export function PixelPainter({
   title, description, width, height, eraseColor, initial, blank, palettes, customColor,
-  defaultColor, previewBackground, previewScales = [1, 2], startOptions, loadError,
+  defaultColor, previewBackground, canvasBackground, previewScales = [1, 2], startOptions, loadError,
   saveLabel, downloadName, onRevert, revertTitle, onSave, onClose,
 }: Props) {
   const scale = Math.floor(CANVAS_PX / width);
@@ -65,6 +70,7 @@ export function PixelPainter({
   const [color, setColor] = useState(defaultColor);
   const [mirror, setMirror] = useState(false);
   const [grid, setGrid] = useState(true);
+  const [showBackdrop, setShowBackdrop] = useState(!!canvasBackground);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -116,7 +122,10 @@ export function PixelPainter({
     pixels.forEach((c, i) => {
       const x = (i % width) * scale;
       const y = Math.floor(i / width) * scale;
-      if (c === TRANSPARENT) {
+      if (c === TRANSPARENT && showBackdrop && canvasBackground) {
+        ctx.fillStyle = canvasBackground;
+        ctx.fillRect(x, y, scale, scale);
+      } else if (c === TRANSPARENT) {
         ctx.fillStyle = CHECK_A;
         ctx.fillRect(x, y, scale, scale);
         ctx.fillStyle = CHECK_B;
@@ -148,7 +157,7 @@ export function PixelPainter({
         ctx.stroke();
       }
     }
-  }, [pixels, grid, mirror, width, height, scale]);
+  }, [pixels, grid, mirror, width, height, scale, showBackdrop, canvasBackground]);
 
   const doUndo = () => {
     const prev = undo[undo.length - 1];
@@ -321,6 +330,15 @@ export function PixelPainter({
             <span className="mx-1 w-px bg-border" />
             <ToolBtn label="Mirror left/right" active={mirror} onClick={() => setMirror(!mirror)}><FlipHorizontal2 /></ToolBtn>
             <ToolBtn label="Show grid" active={grid} onClick={() => setGrid(!grid)}><Grid3x3 /></ToolBtn>
+            {canvasBackground && (
+              <ToolBtn
+                label="Show background colour behind see-through pixels (not saved)"
+                active={showBackdrop}
+                onClick={() => setShowBackdrop(!showBackdrop)}
+              >
+                <PaintbrushVertical />
+              </ToolBtn>
+            )}
             <span className="mx-1 w-px bg-border" />
             <ToolBtn label="Undo (Ctrl+Z)" disabled={!undo.length} onClick={doUndo}><Undo2 /></ToolBtn>
             <ToolBtn label="Redo (Ctrl+Shift+Z)" disabled={!redo.length} onClick={doRedo}><Redo2 /></ToolBtn>

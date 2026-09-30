@@ -82,6 +82,7 @@ function PainterBody({ teamIdx, onClose }: { teamIdx: number; onClose: () => voi
       palettes={palettes}
       defaultColor={teamColors[0] ?? NES_RGB[0x30]!}
       previewBackground={SCREEN_BG}
+      canvasBackground={SCREEN_BG}
       previewScales={[1, 2, 4]}
       startOptions={(load) => (
         <>
