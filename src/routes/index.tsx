@@ -66,7 +66,24 @@ function Shell() {
                 <TabsTrigger value="roster" className="gap-1.5">
                   <Users className="size-4" /> Team Roster
                 </TabsTrigger>
-                <TabsTrigger value="advanced" className="ml-auto gap-1.5 text-muted-foreground">
+                <TabsTrigger
+                  value="advanced"
+                  className="ml-auto gap-1.5 text-muted-foreground"
+                  // Clicking Advanced while it's open toggles back to the roster. Radix activates
+                  // tabs on mousedown, so intercept there (preventDefault skips its handler).
+                  onMouseDown={(e) => {
+                    if (tab === "advanced" && e.button === 0 && !e.ctrlKey) {
+                      e.preventDefault();
+                      setTab("roster");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (tab === "advanced" && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      setTab("roster");
+                    }
+                  }}
+                >
                   <Wrench className="size-4" /> Advanced
                 </TabsTrigger>
               </TabsList>
