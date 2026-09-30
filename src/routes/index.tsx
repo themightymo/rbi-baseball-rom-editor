@@ -10,8 +10,9 @@ import { isAllStarTeam } from "@/lib/tsbRoster";
 import { PlayerCard } from "@/components/PlayerCard";
 import { ExportPanel } from "@/components/ExportPanel";
 import { AdvancedTools } from "@/components/AdvancedTools";
+import tsbLogo from "@/assets/tsb-logo.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gamepad2, Users, SlidersHorizontal, Hash, Save, Wrench } from "lucide-react";
+import { Users, SlidersHorizontal, Hash, Save, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -43,9 +44,9 @@ function Shell() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="nes-rule bg-card">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4">
-          <Gamepad2 className="size-6 shrink-0 text-primary" />
-          <h1 className="text-lg leading-snug text-primary [text-shadow:3px_3px_0_#e40058]">
-            Tecmo Super Bowl <span className="text-foreground [text-shadow:none]">Roster Editor</span>
+          <h1 className="flex flex-wrap items-center gap-x-4 gap-y-1 text-lg leading-snug text-foreground">
+            <img src={tsbLogo} alt="Tecmo Super Bowl" className="h-12 w-auto shrink-0 sm:h-14" />
+            Roster Editor
           </h1>
         </div>
       </header>
