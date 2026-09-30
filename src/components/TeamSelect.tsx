@@ -17,7 +17,7 @@ interface Props {
 // NES palette colours from the game's TEAM DATA screen.
 const BG = NES_RGB[0x11];
 const WHITE = "#fcfcfc";
-const YELLOW = "#f8b800";
+const HIGHLIGHT = "#f858a5";
 const RED = "#e40058";
 
 // Same 8×8 tile grid as the player card: 1em = one tile, 32 tiles across.
@@ -83,12 +83,12 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
               {ALL_STAR_TEAMS.map((t, i) => (
                 <div key={t} className="flex items-center gap-[1em]">
                   <AllStarButton team={t} name={teamName(t)} selected={t === teamIdx} onClick={() => choose(t)} />
-                  {i === 0 && <span style={{ color: YELLOW }}>SELECT TEAM</span>}
+                  {i === 0 && <span style={{ color: HIGHLIGHT }}>SELECT TEAM</span>}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="mt-[1.25em] text-center" style={{ color: YELLOW }}>
+            <div className="mt-[1.25em] text-center" style={{ color: HIGHLIGHT }}>
               SELECT TEAM
             </div>
           )}
@@ -147,8 +147,8 @@ function TeamButton({
       <Cursor visible={selected} />
       <Helmet pixels={helmet} />
       <span
-        className="ml-[0.25em] group-hover:text-[#f8b800]"
-        style={selected ? { color: YELLOW } : undefined}
+        className="ml-[0.25em] group-hover:text-[#f858a5]"
+        style={selected ? { color: HIGHLIGHT } : undefined}
       >
         {abbr}
       </span>
@@ -174,7 +174,7 @@ function AllStarButton({
       className="group flex h-[2em] items-center gap-[0.5em] outline-none focus-visible:bg-white/15"
     >
       <Cursor visible={selected} />
-      <span className="group-hover:text-[#f8b800]" style={selected ? { color: YELLOW } : undefined}>
+      <span className="group-hover:text-[#f858a5]" style={selected ? { color: HIGHLIGHT } : undefined}>
         {name.toUpperCase()}
       </span>
     </button>

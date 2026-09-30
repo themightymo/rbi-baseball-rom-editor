@@ -93,7 +93,7 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
         title={`${pl.first} ${pl.last} · #${pl.jersey} · ${POSITION_NAMES[posIdx]} — click to open`}
         className="group flex w-full items-baseline gap-2 rounded px-1 text-left hover:bg-white/10"
       >
-        <span className="font-bold tracking-wider group-hover:text-[#f8b800]">
+        <span className="font-bold tracking-wider group-hover:text-[#f858a5]">
           {pl.last.toUpperCase() || pl.first.toUpperCase()}
         </span>
         <span className="text-[10px] text-white/50">#{pl.jersey}</span>

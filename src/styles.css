@@ -19,6 +19,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-highlight: var(--highlight);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -56,7 +57,8 @@
 
 :root {
   /* Colours taken from the NES palette used by Tecmo Super Bowl's team and
-     roster screens: black background, white text, pink rules, yellow cursor. */
+     roster screens: black background, white text, pink rules. Buttons are blue;
+     active and hovered links are pink. */
   --radius: 0px;
   --nes-black: #000000;
   --nes-white: #fcfcfc;
@@ -64,9 +66,11 @@
   --nes-dark-gray: #747474;
   --nes-panel: #181818;
   --nes-pink: #fc74b4;
-  --nes-yellow: #f8b800;
+  --nes-blue: #0956e7;
+  --nes-blue-dark: #0744b8;
+  --nes-hot-pink: #f858a5;
   --nes-green: #00a800;
-  --nes-red: #e40058;
+  --nes-red: #da0046;
 
   --background: var(--nes-black);
   --foreground: var(--nes-white);
@@ -74,19 +78,21 @@
   --card-foreground: var(--nes-white);
   --popover: var(--nes-black);
   --popover-foreground: var(--nes-white);
-  --primary: var(--nes-yellow);
-  --primary-foreground: var(--nes-black);
+  --primary: var(--nes-blue);
+  --primary-foreground: var(--nes-white);
+  /* Text-on-black accent: blue is too dark to read on black, so use pink. */
+  --highlight: var(--nes-hot-pink);
   --secondary: var(--nes-panel);
   --secondary-foreground: var(--nes-white);
   --muted: var(--nes-panel);
   --muted-foreground: var(--nes-gray);
   --accent: #2c2c2c;
-  --accent-foreground: var(--nes-yellow);
+  --accent-foreground: var(--nes-hot-pink);
   --destructive: var(--nes-red);
   --destructive-foreground: var(--nes-white);
   --border: var(--nes-white);
   --input: var(--nes-gray);
-  --ring: var(--nes-yellow);
+  --ring: var(--nes-hot-pink);
   --success: #80d010;
   --warning: #fcd800;
 }
@@ -105,7 +111,7 @@
     image-rendering: pixelated;
   }
   h1, h2, h3, h4, h5, h6, button, [role="tab"], label, th { text-transform: uppercase; }
-  ::selection { background: var(--nes-yellow); color: var(--nes-black); }
+  ::selection { background: var(--nes-blue); color: var(--nes-white); }
 }
 
 /* A TSB window: black panel with a white frame. */

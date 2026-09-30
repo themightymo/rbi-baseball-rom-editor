@@ -49,10 +49,10 @@ export function RomDropZone() {
       }`}
     >
       <div className="rounded-full bg-primary/10 p-4">
-        <FileUp className="size-10 text-primary" />
+        <FileUp className="size-10 text-highlight" />
       </div>
       <div className="space-y-1">
-        <h2 className="text-xl leading-relaxed text-primary">Open your Tecmo Super Bowl ROM</h2>
+        <h2 className="text-xl leading-relaxed text-highlight">Open your Tecmo Super Bowl ROM</h2>
         <p className="text-sm text-muted-foreground">
           Drag and drop a <span className="font-mono">.nes</span> file here, or choose one from
           your computer.
