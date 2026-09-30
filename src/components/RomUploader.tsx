@@ -73,7 +73,6 @@ export function RomDropZone() {
 /** Top-of-page bar once a ROM is loaded: file info, Save ROM As, and secondary actions. */
 export function RomToolbar() {
   const { rom, romName, romChecksum, hasINES, edits, clearEdits } = useRom();
-  const { input, browse } = useOpenRom();
   if (!rom) return null;
 
   const editCount = edits.size;
@@ -100,9 +99,6 @@ export function RomToolbar() {
               <RotateCcw className="size-4" /> Undo all changes
             </Button>
           )}
-          <Button variant="outline" onClick={() => confirmDiscard() && browse()}>
-            <Upload className="size-4" /> Open another ROM…
-          </Button>
           <Button onClick={() => saveFileAs(romName ?? "modified.nes", rom)}>
             <Save className="size-4" /> Save ROM As…
           </Button>
@@ -115,7 +111,6 @@ export function RomToolbar() {
           results in an emulator.
         </div>
       )}
-      {input}
     </div>
   );
 }
