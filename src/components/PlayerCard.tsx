@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import "@fontsource/press-start-2p/latin-400.css";
 import { useRom } from "@/lib/romStore";
-import { bcdToDec, decToBcd, loadTeams, splitName, type TeamData } from "@/lib/nameLoader";
+import { toInitial, usePlayerNames } from "@/lib/usePlayerNames";
 import {
   POSITIONS,
   TSB_ATTRIBUTE_SCALE,
@@ -105,11 +105,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   const [painterOpen, setPainterOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
 
-  const teams = useMemo((): TeamData[] | null => {
-    if (!originalRom) return null;
-    const r = loadTeams(originalRom, hasINES);
-    return Array.isArray(r) ? r : null;
-  }, [originalRom, hasINES]);
+  const names = usePlayerNames();
 
   const base = useMemo(
     () => (originalRom ? resolveBase(originalRom, readStoredBase(), detectBase(originalRom)) : null),
@@ -123,27 +119,20 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   if (!rom || !originalRom) return null;
 
   const pos = POSITIONS[src.slot]!;
-  const player = teams?.[src.team]?.players.find((p) => p.slot === src.slot);
+  const player = names.player(src.team, src.slot);
+  const orig = names.original(src.team, src.slot);
 
   // Name + jersey (live ROM so edits show immediately)
-  let first = "", last = "", jersey = 0, origFirst = "", origLast = "", origJersey = 0;
-  if (player) {
-    const n = splitName(String.fromCharCode(...rom.slice(player.offset + 1, player.offset + 1 + player.nameLength)));
-    first = n.first.trimEnd();
-    last = n.last.trimEnd();
-    jersey = bcdToDec(rom[player.offset] ?? 0);
-    origFirst = player.first.trimEnd();
-    origLast = player.last.trimEnd();
-    origJersey = player.jersey;
-  }
+  const first = player?.first.trimEnd() ?? "";
+  const last = player?.last.trimEnd() ?? "";
+  const jersey = player?.jersey ?? 0;
+  const origFirst = orig?.first.trimEnd() ?? "";
+  const origLast = orig?.last.trimEnd() ?? "";
+  const origJersey = orig?.jersey ?? 0;
 
-  const writeName = (f: string, l: string) => {
-    if (!player) return;
-    const combined = f.toLowerCase() + l.toUpperCase();
-    const bytes = new Uint8Array(player.nameLength).fill(0x20);
-    for (let i = 0; i < Math.min(player.nameLength, combined.length); i++) bytes[i] = combined.charCodeAt(i) & 0xff;
-    setBytes(player.offset + 1, bytes);
-  };
+  const writeName = (f: string, l: string) => player && names.setName(src.team, src.slot, f, l);
+  const { maxFirst, maxLast } = names.limits(first, last);
+  const canInitial = first.length > 2 || (first.length === 2 && !first.endsWith("."));
 
   // Like the game, shorten a long first name to its initial ("R.CUNNINGHAM").
   const jerseyText = `${jersey}-`;
@@ -272,7 +261,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                   width={Math.max(1, String(jersey).length)}
                   changed={jersey !== origJersey}
                   inputMode="numeric"
-                  onChange={(v) => player && setBytes(player.offset, new Uint8Array([decToBcd(parseInt(v.replace(/\D/g, "").slice(-2) || "0"))]))}
+                  onChange={(v) => names.setJersey(src.team, src.slot, parseInt(v.replace(/\D/g, "").slice(-2) || "0"))}
                 />
                 <span>-</span>
                 {editingName || shortName === fullName ? (
@@ -283,7 +272,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                           label="First name"
                           value={first}
                           width={Math.max(1, first.length)}
-                          maxLength={player ? player.nameLength - last.length : 0}
+                          maxLength={player ? maxFirst : 0}
                           changed={first !== origFirst}
                           data-name-input
                           autoFocus={shortName !== fullName}
@@ -298,7 +287,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                       label="Last name"
                       value={last}
                       width={Math.max(1, last.length)}
-                      maxLength={player ? player.nameLength - first.length : 0}
+                      maxLength={player ? maxLast : 0}
                       changed={last !== origLast}
                       data-name-input
                       onFocus={() => setEditingName(true)}
@@ -359,11 +348,33 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
           <span className="w-12 text-center font-mono">{POSITION_NAMES[posIdx]}</span>
           <CtrlBtn label="Next player" onClick={() => onNavigate(next)}><ChevronRight className="size-4" /></CtrlBtn>
         </div>
+        {editingName ? (
+          <span className="flex items-center gap-2">
+            <span className={names.pool.free <= 0 ? "text-warning" : undefined} title="All player names share one fixed block of ROM space">
+              {names.pool.free} letter{names.pool.free === 1 ? "" : "s"} of name space free
+            </span>
+            {canInitial && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-xs"
+                data-name-input
+                onBlur={endNameEdit}
+                onMouseDown={(e) => e.preventDefault()} // keep focus in the name so editing stays open
+                title={`Shorten the first name to "${toInitial(first)}"`}
+                onClick={() => writeName(toInitial(first), last)}
+              >
+                Use initial
+              </Button>
+            )}
+          </span>
+        ) : (
         <span className="hidden text-muted-foreground sm:inline">
           {isAllStarTeam(teamIdx)
             ? `${teamName(teamIdx)} · edits also apply on the ${teamName(src.team)}`
             : "Click a bar, name, number or face to edit"}
         </span>
+        )}
         <CtrlBtn label="Close" onClick={onClose}><X className="size-4" /></CtrlBtn>
       </div>
     </>

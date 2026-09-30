@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
-import { bcdToDec, loadTeams, splitName, type TeamData } from "@/lib/nameLoader";
+import { usePlayerNames } from "@/lib/usePlayerNames";
 import { POSITIONS } from "@/lib/abilities";
 import {
   FORMATION_LABEL,
@@ -54,11 +53,7 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
   const allStar = isAllStarTeam(teamIdx);
   const { name: teamName, abbr: teamAbbr } = useTeamNames();
 
-  const teams = useMemo((): TeamData[] | null => {
-    if (!originalRom) return null;
-    const r = loadTeams(originalRom, hasINES);
-    return Array.isArray(r) ? r : null;
-  }, [originalRom, hasINES]);
+  const { teams } = usePlayerNames();
 
   if (!rom) return null;
   if (!teams) {
@@ -80,9 +75,7 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
     const src = resolvePlayer(rom, hasINES, teamIdx, posIdx);
     const p = teams[src.team]?.players.find((pl) => pl.slot === src.slot);
     if (!p) return null;
-    const raw = String.fromCharCode(...rom.slice(p.offset + 1, p.offset + 1 + p.nameLength));
-    const { first, last } = splitName(raw);
-    return { first: first.trimEnd(), last: last.trimEnd(), jersey: bcdToDec(rom[p.offset] ?? 0) };
+    return { first: p.first.trimEnd(), last: p.last.trimEnd(), jersey: p.jersey };
   };
 
   const Name = ({ posIdx }: { posIdx: number }) => {
@@ -118,10 +111,7 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
     const nameOf = (team: number, slot: number) => {
       const p = teams[team]?.players.find((pl) => pl.slot === slot);
       if (!p) return "—";
-      const { first, last } = splitName(
-        String.fromCharCode(...rom.slice(p.offset + 1, p.offset + 1 + p.nameLength)),
-      );
-      return `${first.trimEnd()} ${last.trimEnd()}`.trim();
+      return `${p.first.trimEnd()} ${p.last.trimEnd()}`.trim();
     };
     const offset = allStarSlotOffset(hasINES, teamIdx, posIdx);
     const changed = originalRom

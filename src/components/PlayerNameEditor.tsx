@@ -1,47 +1,28 @@
-import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { Input } from "@/components/ui/input";
-import { bcdToDec, decToBcd, loadTeams, splitName, type Player } from "@/lib/nameLoader";
+import { Button } from "@/components/ui/button";
+import { toInitial, usePlayerNames } from "@/lib/usePlayerNames";
 import { useTeamNames } from "@/lib/useTeamNames";
+import { NamePoolMeter } from "@/components/NamePoolMeter";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerNameEditor() {
-  const { rom, originalRom, hasINES, setBytes } = useRom();
+  const { rom } = useRom();
   const { name: teamName } = useTeamNames();
+  const names = usePlayerNames();
+  const teams = names.teams;
+  const loadError = names.error;
 
-  // Load teams from original ROM (stable offsets)
-  const result = useMemo(() => {
-    if (!originalRom) return null;
-    return loadTeams(originalRom, hasINES);
-  }, [originalRom, hasINES]);
-
-  const teams = Array.isArray(result) ? result : null;
-  const loadError = typeof result === "string" ? result : null;
-
-  // For each player, read current name from live ROM at same offsets
-  function getCurrent(p: Player) {
-    if (!rom) return { first: p.first, last: p.last, jersey: p.jersey };
-    const jerseyBcd = rom[p.offset];
-    const rawBytes = rom.slice(p.offset + 1, p.offset + 1 + p.nameLength);
-    const rawName = String.fromCharCode(...rawBytes);
-    const { first, last } = splitName(rawName);
-    return { first: first.trimEnd(), last: last.trimEnd(), jersey: bcdToDec(jerseyBcd) };
-  }
-
-  function writeName(p: Player, newFirst: string, newLast: string) {
-    if (!rom) return;
-    const combined = newFirst.toLowerCase() + newLast.toUpperCase();
-    const bytes = new Uint8Array(p.nameLength).fill(0x20);
-    for (let i = 0; i < Math.min(p.nameLength, combined.length); i++) {
-      bytes[i] = combined.charCodeAt(i) & 0xff;
-    }
-    setBytes(p.offset + 1, bytes);
-  }
-
-  function writeJersey(p: Player, n: number) {
-    setBytes(p.offset, new Uint8Array([decToBcd(n)]));
+  // Current name from the live ROM, alongside the original for change highlighting
+  function getCurrent(team: number, slot: number) {
+    const p = names.player(team, slot);
+    const o = names.original(team, slot);
+    return {
+      first: p?.first.trimEnd() ?? "", last: p?.last.trimEnd() ?? "", jersey: p?.jersey ?? 0,
+      origFirst: o?.first.trimEnd() ?? "", origLast: o?.last.trimEnd() ?? "", origJersey: o?.jersey ?? 0,
+    };
   }
 
   if (!rom) return null;
@@ -62,12 +43,16 @@ export function PlayerNameEditor() {
 
   return (
     <div className="space-y-4">
+      <div className="nes-window p-3">
+        <NamePoolMeter />
+      </div>
+
       {/* Teams */}
       <Accordion type="multiple" className="nes-window overflow-hidden">
         {teams?.map((team) => {
           const changedCount = team.players.filter((p) => {
-            const cur = getCurrent(p);
-            return cur.first !== p.first || cur.last !== p.last || cur.jersey !== p.jersey;
+            const cur = getCurrent(team.index, p.slot);
+            return cur.first !== cur.origFirst || cur.last !== cur.origLast || cur.jersey !== cur.origJersey;
           }).length;
           return (
           <AccordionItem key={team.index} value={`team-${team.index}`} className="border-b last:border-b-0">
@@ -92,12 +77,12 @@ export function PlayerNameEditor() {
               </thead>
               <tbody>
                 {team.players.map((p) => {
-                  const cur = getCurrent(p);
-                  const fnChanged = cur.first !== p.first;
-                  const lnChanged = cur.last !== p.last;
-                  const jerseyChanged = cur.jersey !== p.jersey;
-                  const maxFirst = p.nameLength - cur.last.length;
-                  const maxLast = p.nameLength - cur.first.length;
+                  const cur = getCurrent(team.index, p.slot);
+                  const fnChanged = cur.first !== cur.origFirst;
+                  const lnChanged = cur.last !== cur.origLast;
+                  const jerseyChanged = cur.jersey !== cur.origJersey;
+                  const { maxFirst, maxLast } = names.limits(cur.first, cur.last);
+                  const canInitial = cur.first.length > 2 || (cur.first.length === 2 && !cur.first.endsWith("."));
                   return (
                     <tr key={p.slot} className="border-t hover:bg-accent/20">
                       <td className="px-3 py-1">
@@ -107,23 +92,36 @@ export function PlayerNameEditor() {
                           max={99}
                           className={`h-8 w-12 text-center font-mono text-xs ${jerseyChanged ? "border-warning" : ""}`}
                           value={cur.jersey}
-                          onChange={(e) => writeJersey(p, parseInt(e.target.value) || 0)}
+                          onChange={(e) => names.setJersey(team.index, p.slot, parseInt(e.target.value) || 0)}
                         />
                       </td>
                       <td className="px-2 py-1">
-                        <Input
-                          className={`h-9 border-2 font-mono text-sm font-semibold ${fnChanged ? "border-warning" : "border-input"}`}
-                          value={cur.first}
-                          maxLength={maxFirst}
-                          onChange={(e) => writeName(p, e.target.value, cur.last)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            className={`h-9 border-2 font-mono text-sm font-semibold ${fnChanged ? "border-warning" : "border-input"}`}
+                            value={cur.first}
+                            maxLength={maxFirst}
+                            onChange={(e) => names.setName(team.index, p.slot, e.target.value, cur.last)}
+                          />
+                          {canInitial && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 shrink-0 px-2 font-mono text-xs"
+                              title={`Shorten to "${toInitial(cur.first)}" and free ${cur.first.length - 2} letters`}
+                              onClick={() => names.setName(team.index, p.slot, toInitial(cur.first), cur.last)}
+                            >
+                              {toInitial(cur.first).toUpperCase()}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-2 py-1">
                         <Input
                           className={`h-9 border-2 font-mono text-sm font-semibold ${lnChanged ? "border-warning" : "border-input"}`}
                           value={cur.last}
                           maxLength={maxLast}
-                          onChange={(e) => writeName(p, cur.first, e.target.value)}
+                          onChange={(e) => names.setName(team.index, p.slot, cur.first, e.target.value)}
                         />
                       </td>
                     </tr>

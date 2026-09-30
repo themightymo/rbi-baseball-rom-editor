@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useRom } from "@/lib/romStore";
-import { loadTeams, splitName, type Player, type TeamData } from "@/lib/nameLoader";
+import type { Player } from "@/lib/nameLoader";
+import { usePlayerNames, type NameLimits } from "@/lib/usePlayerNames";
 import { TeamSelect } from "@/components/TeamSelect";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -182,6 +183,8 @@ interface GroupTableProps {
   headers: string[];
   posIndices: number[];
   teamPlayers: Player[];
+  origPlayers: Player[];
+  limits: (first: string, last: string) => NameLimits;
   liveRom: Uint8Array;
   originalRom: Uint8Array;
   base: number;
@@ -192,7 +195,7 @@ interface GroupTableProps {
   onOpen?: (posIdx: number) => void;
 }
 
-function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, base, teamIdx, onNibble, onFace, onName, onOpen }: GroupTableProps) {
+function GroupTable({ headers, posIndices, teamPlayers, origPlayers, limits, liveRom, originalRom, base, teamIdx, onNibble, onFace, onName, onOpen }: GroupTableProps) {
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
@@ -205,14 +208,10 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
         <tbody>
           {posIndices.map((pi) => {
             const player = teamPlayers[pi];
-            let curFirst: string | undefined;
-            let curLast: string | undefined;
-            if (player) {
-              const raw = String.fromCharCode(...liveRom.slice(player.offset + 1, player.offset + 1 + player.nameLength));
-              const n = splitName(raw);
-              curFirst = n.first.trimEnd();
-              curLast  = n.last.trimEnd();
-            }
+            const orig = origPlayers[pi];
+            const curFirst = player?.first.trimEnd();
+            const curLast = player?.last.trimEnd();
+            const lim = player ? limits(curFirst ?? "", curLast ?? "") : undefined;
             return (
               <PlayerRow
                 key={pi}
@@ -223,10 +222,10 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
                 orig={getPlayerBytes(originalRom, base, teamIdx, pi)}
                 curFirst={curFirst}
                 curLast={curLast}
-                origFirst={player?.first}
-                origLast={player?.last}
-                maxFirst={player ? player.nameLength - (curLast?.length ?? 0) : undefined}
-                maxLast={player ? player.nameLength - (curFirst?.length ?? 0) : undefined}
+                origFirst={orig?.first.trimEnd()}
+                origLast={orig?.last.trimEnd()}
+                maxFirst={lim?.maxFirst}
+                maxLast={lim?.maxLast}
                 onNibble={(bi, hi, v) => onNibble(pi, bi, hi, v)}
                 onFace={(v) => onFace(pi, v)}
                 onName={player ? (f, l) => onName(player, f, l) : undefined}
@@ -254,11 +253,7 @@ interface EditorProps {
 export function PlayerAbilitiesEditor(props: EditorProps = {}) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
 
-  const allTeams = useMemo((): TeamData[] | null => {
-    if (!originalRom) return null;
-    const result = loadTeams(originalRom, hasINES);
-    return Array.isArray(result) ? result : null;
-  }, [originalRom, hasINES]);
+  const names = usePlayerNames();
 
   const [storedBase, setStoredBase] = useState<number | null>(readStoredBase);
   const [showSetup, setShowSetup] = useState(false);
@@ -376,19 +371,15 @@ export function PlayerAbilitiesEditor(props: EditorProps = {}) {
     qb: QB_HEADERS, skill: SKILL_HEADERS, oline: OL_HEADERS, defense: DEF_HEADERS, special: KICK_HEADERS,
   };
 
-  const teamPlayers: Player[] = allTeams?.[teamIdx]?.players ?? [];
+  const teamPlayers: Player[] = names.teams?.[teamIdx]?.players ?? [];
+  const origPlayers: Player[] = names.originalTeams?.[teamIdx]?.players ?? [];
 
   function writePlayerName(player: Player, newFirst: string, newLast: string) {
-    const combined = newFirst.toLowerCase() + newLast.toUpperCase();
-    const bytes = new Uint8Array(player.nameLength).fill(0x20);
-    for (let i = 0; i < Math.min(player.nameLength, combined.length); i++) {
-      bytes[i] = combined.charCodeAt(i) & 0xff;
-    }
-    setBytes(player.offset + 1, bytes);
+    names.setName(teamIdx, player.slot, newFirst, newLast);
   }
 
   const tableProps: Omit<GroupTableProps, "headers" | "posIndices"> = {
-    liveRom: rom, originalRom: originalRom!, base, teamIdx, teamPlayers,
+    liveRom: rom, originalRom: originalRom!, base, teamIdx, teamPlayers, origPlayers, limits: names.limits,
     onNibble: handleNibble,
     onFace: handleFace,
     onName: writePlayerName,

@@ -77,7 +77,10 @@ export function RomProvider({ children }: { children: ReactNode }) {
         const next = new Uint8Array(rom);
         for (let i = 0; i < bytes.length; i++) {
           next[offset + i] = bytes[i];
-          editsRef.current.set(offset + i, bytes[i]);
+          // Only count bytes that differ from the original, so rewriting a block
+          // (like the repacked name table) doesn't inflate the change count.
+          if (originalRom && originalRom[offset + i] === bytes[i]) editsRef.current.delete(offset + i);
+          else editsRef.current.set(offset + i, bytes[i]);
         }
         setRomBytes(next);
         force((n) => n + 1);
