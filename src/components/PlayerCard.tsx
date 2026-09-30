@@ -82,7 +82,8 @@ interface Props {
 export function PlayerCard({ teamIdx, posIdx, onClose, onNavigate }: Props) {
   return (
     <Dialog open={posIdx !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[544px] gap-0 overflow-hidden border-0 bg-black p-0 sm:max-w-[544px] [&>button:last-child]:hidden">
+      {/* As wide as fits — up to ~3× NES scale — without the screen overflowing a short window. */}
+      <DialogContent className="w-[min(calc(100vw-2rem),800px,calc((100dvh-7rem)*1.15))] max-w-none gap-0 overflow-hidden border-0 bg-black p-0 sm:max-w-none [&>button:last-child]:hidden">
         {posIdx !== null && (
           <CardBody teamIdx={teamIdx} posIdx={posIdx} onNavigate={onNavigate} onClose={onClose} />
         )}
