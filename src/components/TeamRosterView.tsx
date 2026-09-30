@@ -16,6 +16,7 @@ import {
 } from "@/lib/tsbRoster";
 import { TeamSelect } from "@/components/TeamSelect";
 import { TeamRenameDialog } from "@/components/TeamRenameDialog";
+import { HelmetPainter } from "@/components/HelmetPainter";
 import { useTeamNames } from "@/lib/useTeamNames";
 
 interface Props {
@@ -186,7 +187,12 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} allStars />
-        {!allStar && <TeamRenameDialog teamIdx={teamIdx} />}
+        {!allStar && (
+          <>
+            <TeamRenameDialog teamIdx={teamIdx} />
+            <HelmetPainter teamIdx={teamIdx} />
+          </>
+        )}
       </div>
 
       {/* Game-style screen */}

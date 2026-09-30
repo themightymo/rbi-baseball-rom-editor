@@ -1,10 +1,10 @@
 import "@fontsource/press-start-2p/latin-400.css";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { decodeHelmet, NES_RGB } from "@/lib/helmets";
-import { useRom } from "@/lib/romStore";
-import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam } from "@/lib/tsbRoster";
+import { NES_RGB } from "@/lib/helmets";
+import { useHelmets } from "@/lib/customHelmets";
+import { ALL_STAR_TEAMS, CONFERENCES, isAllStarTeam } from "@/lib/tsbRoster";
 import { useTeamNames } from "@/lib/useTeamNames";
 
 interface Props {
@@ -34,13 +34,10 @@ const SCREEN_STYLE: React.CSSProperties = {
  * TEAM DATA → SELECT TEAM screen (helmets and abbreviations by division).
  */
 export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
-  const { rom, hasINES } = useRom();
   const [open, setOpen] = useState(false);
   const { name: teamName, abbr: teamAbbr } = useTeamNames();
-  const helmets = useMemo(
-    () => (rom ? TEAM_NAMES.map((_, t) => decodeHelmet(rom, hasINES, t)) : []),
-    [rom, hasINES],
-  );
+  // Custom helmets painted in the editor replace the ROM's.
+  const { helmets } = useHelmets();
 
   const choose = (t: number) => {
     onTeamChange(t);
@@ -222,7 +219,7 @@ function AllStarBadge({ team }: { team: number }) {
 }
 
 /** Draws a decoded 16×16 helmet as one SVG path per colour. */
-function Helmet({ pixels }: { pixels: Int8Array | undefined }) {
+export function Helmet({ pixels }: { pixels: Int8Array | undefined }) {
   const paths = new Map<number, string>();
   pixels?.forEach((c, i) => {
     if (c >= 0) paths.set(c, (paths.get(c) ?? "") + `M${i % 16} ${i >> 4}h1v1h-1z`);
