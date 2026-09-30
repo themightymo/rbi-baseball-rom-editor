@@ -40,15 +40,17 @@ function Shell() {
   const [group, setGroup] = useState<GroupId>("qb");
   const [card, setCard] = useState<{ team: number; pos: number } | null>(null);
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/40 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3">
-          <Gamepad2 className="size-5 text-primary" />
-          <h1 className="text-base font-semibold">Tecmo Super Bowl Roster Editor</h1>
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="nes-rule bg-card">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4">
+          <Gamepad2 className="size-6 shrink-0 text-primary" />
+          <h1 className="text-lg leading-snug text-primary [text-shadow:3px_3px_0_#e40058]">
+            Tecmo Super Bowl <span className="text-foreground [text-shadow:none]">Roster Editor</span>
+          </h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-4 px-4 py-6">
         {!rom ? (
           <div className="py-8">
             <RomDropZone />
@@ -126,7 +128,7 @@ function Shell() {
         )}
       </main>
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
+      <footer className="border-t-[3px] border-[#fc74b4] bg-card px-4 py-6 text-center text-xs leading-loose text-muted-foreground">
         This tool ships with no ROM data and no NFL/Tecmo/Nintendo content. You must supply
         your own legally owned ROM. All processing happens in your browser.
       </footer>
@@ -135,5 +137,5 @@ function Shell() {
 }
 
 function Intro({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted-foreground">{children}</p>;
+  return <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>;
 }

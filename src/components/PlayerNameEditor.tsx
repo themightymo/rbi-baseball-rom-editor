@@ -62,7 +62,7 @@ export function PlayerNameEditor() {
   return (
     <div className="space-y-4">
       {/* Teams */}
-      <Accordion type="multiple" className="rounded-lg border bg-card overflow-hidden">
+      <Accordion type="multiple" className="nes-window overflow-hidden">
         {teams?.map((team) => {
           const changedCount = team.players.filter((p) => {
             const cur = getCurrent(p);
@@ -74,7 +74,7 @@ export function PlayerNameEditor() {
               <span className="flex items-center gap-2">
                 {TEAM_NAMES[team.index] ?? `Team ${team.index + 1}`}
                 {changedCount > 0 && (
-                  <span className="rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-[10px] font-medium text-yellow-600 dark:text-yellow-400">
+                  <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning">
                     {changedCount} edited
                   </span>
                 )}
@@ -104,14 +104,14 @@ export function PlayerNameEditor() {
                           type="number"
                           min={0}
                           max={99}
-                          className={`h-8 w-12 text-center font-mono text-xs ${jerseyChanged ? "border-yellow-500" : ""}`}
+                          className={`h-8 w-12 text-center font-mono text-xs ${jerseyChanged ? "border-warning" : ""}`}
                           value={cur.jersey}
                           onChange={(e) => writeJersey(p, parseInt(e.target.value) || 0)}
                         />
                       </td>
                       <td className="px-2 py-1">
                         <Input
-                          className={`h-9 border-2 font-mono text-sm font-semibold ${fnChanged ? "border-yellow-500" : "border-input"}`}
+                          className={`h-9 border-2 font-mono text-sm font-semibold ${fnChanged ? "border-warning" : "border-input"}`}
                           value={cur.first}
                           maxLength={maxFirst}
                           onChange={(e) => writeName(p, e.target.value, cur.last)}
@@ -119,7 +119,7 @@ export function PlayerNameEditor() {
                       </td>
                       <td className="px-2 py-1">
                         <Input
-                          className={`h-9 border-2 font-mono text-sm font-semibold ${lnChanged ? "border-yellow-500" : "border-input"}`}
+                          className={`h-9 border-2 font-mono text-sm font-semibold ${lnChanged ? "border-warning" : "border-input"}`}
                           value={cur.last}
                           maxLength={maxLast}
                           onChange={(e) => writeName(p, cur.first, e.target.value)}

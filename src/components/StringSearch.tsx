@@ -13,13 +13,13 @@ export function StringSearch() {
 
   if (!rom)
     return (
-      <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
+      <div className="nes-window border-dashed p-6 text-sm text-muted-foreground">
         Upload a ROM to search for strings.
       </div>
     );
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className="nes-window p-4 space-y-3">
       <div className="flex gap-2">
         <Input
           placeholder="Search for text (e.g. team name) — type your own"

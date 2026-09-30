@@ -44,15 +44,15 @@ export function RomDropZone() {
         const f = e.dataTransfer.files?.[0];
         if (f) open(f);
       }}
-      className={`mx-auto flex max-w-2xl flex-col items-center gap-4 rounded-xl border-2 border-dashed px-6 py-16 text-center transition ${
-        dragging ? "border-primary bg-primary/10" : "border-primary/40 bg-card"
+      className={`mx-auto flex max-w-2xl flex-col items-center gap-4 nes-window px-6 py-16 text-center transition ${
+        dragging ? "bg-accent" : ""
       }`}
     >
       <div className="rounded-full bg-primary/10 p-4">
         <FileUp className="size-10 text-primary" />
       </div>
       <div className="space-y-1">
-        <h2 className="text-2xl font-semibold">Open your Tecmo Super Bowl ROM</h2>
+        <h2 className="text-xl leading-relaxed text-primary">Open your Tecmo Super Bowl ROM</h2>
         <p className="text-sm text-muted-foreground">
           Drag and drop a <span className="font-mono">.nes</span> file here, or choose one from
           your computer.
@@ -81,7 +81,7 @@ export function RomToolbar() {
     editCount === 0 || confirm("You have unsaved changes. Discard them?");
 
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="nes-window p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate font-medium">{romName}</div>

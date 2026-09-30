@@ -39,7 +39,7 @@ export function PlayerRosterEditor() {
 
   if (!ready) {
     return (
-      <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
+      <div className="nes-window border-dashed p-6 text-sm text-muted-foreground">
         Fill in the starting offset, entry size, player count, and players per team above,
         then add at least one field — an editable table of players will appear here.
       </div>
@@ -68,7 +68,7 @@ export function PlayerRosterEditor() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[200px_1fr]">
-      <aside className="rounded-lg border bg-card p-2">
+      <aside className="nes-window p-2">
         <div className="px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">
           Teams ({teams})
         </div>
@@ -87,7 +87,7 @@ export function PlayerRosterEditor() {
         </div>
       </aside>
 
-      <div className="rounded-lg border bg-card">
+      <div className="nes-window">
         <div className="flex items-center gap-2 border-b p-3">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

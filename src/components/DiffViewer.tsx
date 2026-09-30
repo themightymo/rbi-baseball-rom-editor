@@ -28,7 +28,7 @@ export function DiffViewer() {
   };
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className="nes-window p-4 space-y-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <FileSlot label="Original ROM" inputRef={aRef} loaded={!!a} onPick={(f) => load(f, setA)} />
         <FileSlot label="Modified ROM" inputRef={bRef} loaded={!!b} onPick={(f) => load(f, setB)} />

@@ -8,7 +8,7 @@ export function TeamEditor() {
 
   if (!rom || t.offset === null || !t.recordLength || !t.count) {
     return (
-      <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
+      <div className="nes-window border-dashed p-6 text-sm text-muted-foreground">
         Fill in the starting offset, entry size, and number of teams above, then add at least
         one field — an editable table of teams will appear here.
       </div>
@@ -28,7 +28,7 @@ export function TeamEditor() {
           ? decodeText(rom, base + headerField[1].start, headerField[1].length, romMap.encoding)
           : `Team ${i + 1}`;
         return (
-          <div key={i} className="rounded-lg border bg-card p-3">
+          <div key={i} className="nes-window p-3">
             <div className="mb-2 flex items-baseline justify-between">
               <h3 className="font-semibold">{header.trim() || `Team ${i + 1}`}</h3>
               <span className="font-mono text-[10px] text-muted-foreground">

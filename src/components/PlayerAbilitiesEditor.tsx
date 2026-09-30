@@ -29,8 +29,8 @@ function FaceCell({ value, changed, onChange }: {
           <button
             className={[
               "flex h-12 w-16 flex-col items-center justify-center gap-0.5 rounded border transition hover:bg-accent",
-              changed ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/50" : "border-input bg-background",
-              !valid ? "border-red-500" : "",
+              changed ? "border-warning bg-warning/20" : "border-input bg-background",
+              !valid ? "border-destructive" : "",
             ].join(" ")}
           >
             {valid ? (
@@ -40,8 +40,8 @@ function FaceCell({ value, changed, onChange }: {
               </>
             ) : (
               <>
-                <span className="text-red-500 font-bold text-base leading-none">!</span>
-                <span className="font-mono text-[8px] text-red-400">{hexId(value)}</span>
+                <span className="text-destructive font-bold text-base leading-none">!</span>
+                <span className="font-mono text-[8px] text-destructive">{hexId(value)}</span>
               </>
             )}
           </button>
@@ -64,7 +64,7 @@ function NibbleCell({ value, changed, onChange }: {
         onChange={(e) => onChange(parseInt(e.target.value))}
         className={`h-8 w-14 rounded border px-1 text-xs font-mono ${
           changed
-            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/50"
+            ? "border-warning bg-warning/20"
             : "border-input bg-background"
         }`}
       >
@@ -106,13 +106,13 @@ function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, max
           ? (
             <div className="flex items-center gap-1">
               <Input
-                className={`h-7 w-[5.5rem] border font-mono text-xs ${fnChanged ? "border-yellow-500" : "border-input"}`}
+                className={`h-7 w-[5.5rem] border font-mono text-xs ${fnChanged ? "border-warning" : "border-input"}`}
                 value={curFirst}
                 maxLength={maxFirst}
                 onChange={(e) => onName(e.target.value, curLast)}
               />
               <Input
-                className={`h-7 w-[6.5rem] border font-mono text-xs font-semibold ${lnChanged ? "border-yellow-500" : "border-input"}`}
+                className={`h-7 w-[6.5rem] border font-mono text-xs font-semibold ${lnChanged ? "border-warning" : "border-input"}`}
                 value={curLast}
                 maxLength={maxLast}
                 onChange={(e) => onName(curFirst, e.target.value)}
@@ -400,7 +400,7 @@ export function PlayerAbilitiesEditor(props: EditorProps = {}) {
         </div>
 
         {/* Attribute table */}
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="overflow-hidden nes-window">
           <GroupTable
             {...tableProps}
             headers={headersByGroup[group]}

@@ -1,14 +1,16 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "@fontsource/press-start-2p/latin-400.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Square, pixel-grid corners everywhere. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -31,32 +33,62 @@
   --color-ring-offset-background: var(--background);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-sans: "Press Start 2P", ui-monospace, monospace;
+  --font-mono: "Press Start 2P", ui-monospace, monospace;
+}
+
+/* Press Start 2P is drawn on an 8px grid and runs wide, so the type scale is
+   pulled down to keep layouts the same size as with a normal UI font. */
+@theme {
+  --text-xs: 0.5rem;
+  --text-xs--line-height: 1.6;
+  --text-sm: 0.625rem;
+  --text-sm--line-height: 1.7;
+  --text-base: 0.75rem;
+  --text-base--line-height: 1.7;
+  --text-lg: 0.875rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1rem;
+  --text-xl--line-height: 1.5;
+  --text-2xl: 1.25rem;
+  --text-2xl--line-height: 1.4;
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.16 0.02 260);
-  --foreground: oklch(0.96 0.01 260);
-  --card: oklch(0.20 0.02 260);
-  --card-foreground: oklch(0.96 0.01 260);
-  --popover: oklch(0.20 0.02 260);
-  --popover-foreground: oklch(0.96 0.01 260);
-  --primary: oklch(0.78 0.18 145);
-  --primary-foreground: oklch(0.16 0.02 260);
-  --secondary: oklch(0.26 0.02 260);
-  --secondary-foreground: oklch(0.96 0.01 260);
-  --muted: oklch(0.24 0.02 260);
-  --muted-foreground: oklch(0.68 0.02 260);
-  --accent: oklch(0.30 0.04 260);
-  --accent-foreground: oklch(0.96 0.01 260);
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.28 0.02 260);
-  --input: oklch(0.24 0.02 260);
-  --ring: oklch(0.78 0.18 145);
-  --success: oklch(0.78 0.18 145);
-  --warning: oklch(0.80 0.18 75);
+  /* Colours taken from the NES palette used by Tecmo Super Bowl's team and
+     roster screens: black background, white text, pink rules, yellow cursor. */
+  --radius: 0px;
+  --nes-black: #000000;
+  --nes-white: #fcfcfc;
+  --nes-gray: #bcbcbc;
+  --nes-dark-gray: #747474;
+  --nes-panel: #181818;
+  --nes-pink: #fc74b4;
+  --nes-yellow: #f8b800;
+  --nes-green: #00a800;
+  --nes-red: #e40058;
+
+  --background: var(--nes-black);
+  --foreground: var(--nes-white);
+  --card: var(--nes-black);
+  --card-foreground: var(--nes-white);
+  --popover: var(--nes-black);
+  --popover-foreground: var(--nes-white);
+  --primary: var(--nes-yellow);
+  --primary-foreground: var(--nes-black);
+  --secondary: var(--nes-panel);
+  --secondary-foreground: var(--nes-white);
+  --muted: var(--nes-panel);
+  --muted-foreground: var(--nes-gray);
+  --accent: #2c2c2c;
+  --accent-foreground: var(--nes-yellow);
+  --destructive: var(--nes-red);
+  --destructive-foreground: var(--nes-white);
+  --border: var(--nes-white);
+  --input: var(--nes-gray);
+  --ring: var(--nes-yellow);
+  --success: #80d010;
+  --warning: #fcd800;
 }
 
 .dark { color-scheme: dark; }
@@ -67,6 +99,22 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "ss01", "cv11";
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    image-rendering: pixelated;
   }
+  h1, h2, h3, h4, h5, h6, button, [role="tab"], label, th { text-transform: uppercase; }
+  ::selection { background: var(--nes-yellow); color: var(--nes-black); }
+}
+
+/* A TSB window: black panel with a white frame. */
+@utility nes-window {
+  background-color: var(--nes-black);
+  border: 2px solid var(--nes-white);
+}
+
+/* The pink rule the game draws under section titles like ROSTER and RESULTS. */
+@utility nes-rule {
+  border-bottom: 3px solid var(--nes-pink);
 }

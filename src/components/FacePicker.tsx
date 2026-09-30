@@ -8,7 +8,7 @@ export function FaceThumb({ id, selected, onClick }: { id: number; selected: boo
       onClick={onClick}
       className={`flex flex-col items-center gap-px rounded border p-0.5 transition hover:scale-105 hover:bg-accent ${
         selected
-          ? "border-yellow-400 ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-950/50"
+          ? "border-warning ring-2 ring-warning bg-warning/20"
           : "border-transparent hover:border-foreground/20"
       }`}
     >
@@ -66,10 +66,10 @@ export function FacePickerGrid({ value, onPick, onChange }: {
       <Input
         type="number" min={0} max={255}
         value={value}
-        className={`h-7 w-20 font-mono text-xs ${!valid ? "border-red-500" : ""}`}
+        className={`h-7 w-20 font-mono text-xs ${!valid ? "border-destructive" : ""}`}
         onChange={(e) => onChange(Math.max(0, Math.min(255, parseInt(e.target.value) || 0)))}
       />
-      {!valid && <span className="text-xs text-red-500">invalid — no face drawn</span>}
+      {!valid && <span className="text-xs text-destructive">invalid — no face drawn</span>}
     </div>
     </div>
   );

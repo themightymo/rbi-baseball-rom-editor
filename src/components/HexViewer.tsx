@@ -24,7 +24,7 @@ export function HexViewer() {
   for (let i = 0; i < ROWS_PER_PAGE; i++) rows.push(begin + i * ROW);
 
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="nes-window">
       <div className="flex flex-wrap items-center gap-2 border-b p-3">
         <label className="text-xs uppercase tracking-wide text-muted-foreground">
           Jump to (hex)
@@ -78,7 +78,7 @@ export function HexViewer() {
 
 function Empty() {
   return (
-    <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
+    <div className="nes-window border-dashed p-8 text-center text-sm text-muted-foreground">
       Upload a ROM to view its bytes.
     </div>
   );

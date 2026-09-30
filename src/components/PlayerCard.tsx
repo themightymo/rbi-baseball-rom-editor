@@ -313,13 +313,13 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
       </div>
 
       {/* ── Controls (outside the game screen) ───────────────────────── */}
-      <div className="flex items-center justify-between gap-2 bg-neutral-900 px-3 py-2 text-xs text-neutral-300">
+      <div className="flex items-center justify-between gap-2 bg-card px-3 py-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <CtrlBtn label="Previous player" onClick={() => onNavigate(prev)}><ChevronLeft className="size-4" /></CtrlBtn>
           <span className="w-12 text-center font-mono">{POSITION_NAMES[posIdx]}</span>
           <CtrlBtn label="Next player" onClick={() => onNavigate(next)}><ChevronRight className="size-4" /></CtrlBtn>
         </div>
-        <span className="hidden text-neutral-400 sm:inline">
+        <span className="hidden text-muted-foreground sm:inline">
           {isAllStarTeam(teamIdx)
             ? `${teamName(teamIdx)} · edits also apply on the ${TEAM_NAMES[src.team]}`
             : "Click a bar, name, number or face to edit"}

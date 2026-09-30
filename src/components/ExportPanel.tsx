@@ -41,7 +41,7 @@ export function ExportPanel() {
         </Option>
       </div>
 
-      <details className="rounded-lg border bg-card p-4">
+      <details className="nes-window p-4">
         <summary className="cursor-pointer text-sm font-medium">
           Advanced: work-in-progress &amp; layout files
         </summary>
@@ -169,7 +169,7 @@ export function ExportPanel() {
 
 function Option({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+    <div className="flex flex-col gap-3 nes-window p-4">
       <div>
         <h3 className="font-medium">{title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{body}</p>

@@ -33,7 +33,7 @@ export function EncodingPanel() {
   };
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className="nes-window p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-xs uppercase text-muted-foreground">Encoding</span>
         <Button
