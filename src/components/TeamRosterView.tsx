@@ -1,14 +1,20 @@
 import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { bcdToDec, loadTeams, splitName, type TeamData } from "@/lib/nameLoader";
+import { POSITIONS } from "@/lib/abilities";
 import {
   FORMATION_LABEL,
   POSITION_NAMES,
   TEAM_NAMES,
+  allStarSlotOffset,
+  isAllStarTeam,
   posIndex,
   readFormation,
   readReturners,
+  resolvePlayer,
   splitStarters,
+  teamAbbr,
+  teamName,
   type PositionName,
 } from "@/lib/tsbRoster";
 import { TeamSelect } from "@/components/TeamSelect";
@@ -44,7 +50,8 @@ const DB: PositionName[] = ["RCB", "LCB", "FS", "SS"];
 const KP: PositionName[] = ["K", "P"];
 
 export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
-  const { rom, originalRom, hasINES } = useRom();
+  const { rom, originalRom, hasINES, setBytes } = useRom();
+  const allStar = isAllStarTeam(teamIdx);
 
   const teams = useMemo((): TeamData[] | null => {
     if (!originalRom) return null;
@@ -61,14 +68,16 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
     );
   }
 
-  const players = teams[teamIdx]?.players ?? [];
-  const formation = readFormation(rom, hasINES, teamIdx);
+  // All-Star teams use the default formation; their returners aren't mapped yet.
+  const formation = allStar ? "2RB_2WR_1TE" : readFormation(rom, hasINES, teamIdx);
   const { starters, bench } = splitStarters(formation);
   const { kr, pr } = readReturners(rom, hasINES, teamIdx);
 
   // Names and numbers come from the live ROM so edits made elsewhere show up here.
+  // For an All-Star slot, that's the regular-team player it points to.
   const playerAt = (posIdx: number) => {
-    const p = players.find((pl) => pl.slot === posIdx);
+    const src = resolvePlayer(rom, hasINES, teamIdx, posIdx);
+    const p = teams[src.team]?.players.find((pl) => pl.slot === src.slot);
     if (!p) return null;
     const raw = String.fromCharCode(...rom.slice(p.offset + 1, p.offset + 1 + p.nameLength));
     const { first, last } = splitName(raw);
@@ -78,7 +87,7 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
   const Name = ({ posIdx }: { posIdx: number }) => {
     const pl = playerAt(posIdx);
     if (!pl) return <span className="text-white/40">—</span>;
-    return (
+    const button = (
       <button
         onClick={() => onEditPlayer(posIdx)}
         title={`${pl.first} ${pl.last} · #${pl.jersey} · ${POSITION_NAMES[posIdx]} — click to open`}
@@ -89,6 +98,64 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
         </span>
         <span className="text-[10px] text-white/50">#{pl.jersey}</span>
       </button>
+    );
+    if (!allStar) return button;
+    return (
+      <div className="flex items-baseline gap-1">
+        {button}
+        <AllStarPicker posIdx={posIdx} />
+      </div>
+    );
+  };
+
+  // Lets the user choose which player fills an All-Star slot. Only players whose ROM
+  // record has the same shape (QB, skill, lineman, defender, kicker) are offered, since
+  // the game reads the slot's ratings in that layout.
+  const AllStarPicker = ({ posIdx }: { posIdx: number }) => {
+    const src = resolvePlayer(rom, hasINES, teamIdx, posIdx);
+    const type = POSITIONS[posIdx]!.type;
+    const nameOf = (team: number, slot: number) => {
+      const p = teams[team]?.players.find((pl) => pl.slot === slot);
+      if (!p) return "—";
+      const { first, last } = splitName(
+        String.fromCharCode(...rom.slice(p.offset + 1, p.offset + 1 + p.nameLength)),
+      );
+      return `${first.trimEnd()} ${last.trimEnd()}`.trim();
+    };
+    const offset = allStarSlotOffset(hasINES, teamIdx, posIdx);
+    const changed = originalRom
+      ? originalRom[offset] !== rom[offset] || originalRom[offset + 1] !== rom[offset + 1]
+      : false;
+    return (
+      <label
+        title={`Change who plays ${POSITION_NAMES[posIdx]} for the ${teamName(teamIdx)}`}
+        className={`relative shrink-0 cursor-pointer rounded border px-1 text-[10px] hover:bg-white/10 ${
+          changed ? "border-[#fcd800] text-[#fcd800]" : "border-white/30 text-white/60"
+        }`}
+      >
+        {teamAbbr(src.team)} ▾
+        <select
+          aria-label={`Player at ${POSITION_NAMES[posIdx]}`}
+          value={`${src.team}:${src.slot}`}
+          onChange={(e) => {
+            const [t, sl] = e.target.value.split(":").map(Number);
+            setBytes(offset, new Uint8Array([t!, sl!]));
+          }}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        >
+          {TEAM_NAMES.map((tn, t) => (
+            <optgroup key={t} label={tn}>
+              {POSITIONS.map((pd, sl) =>
+                pd.type === type ? (
+                  <option key={sl} value={`${t}:${sl}`}>
+                    {pd.label} {nameOf(t, sl)}
+                  </option>
+                ) : null,
+              )}
+            </optgroup>
+          ))}
+        </select>
+      </label>
     );
   };
 
@@ -117,12 +184,12 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
 
   return (
     <div className="space-y-3">
-      <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} />
+      <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} allStars />
 
       {/* Game-style screen */}
       <div className="overflow-hidden rounded-lg border-4 border-black bg-black font-mono text-sm text-white shadow-lg">
         <div className="flex flex-wrap items-baseline justify-between gap-2 bg-[#3c9c3c] px-4 py-2">
-          <h2 className="text-lg font-bold uppercase tracking-widest">{TEAM_NAMES[teamIdx]}</h2>
+          <h2 className="text-lg font-bold uppercase tracking-widest">{teamName(teamIdx)}</h2>
           <span className="text-xs font-bold uppercase tracking-wider text-white/90">
             {FORMATION_LABEL[formation]}
           </span>
@@ -135,21 +202,23 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
               <Panel title="Starters">
                 <Rows slots={slotsFor(starters)} />
               </Panel>
-              <Panel title="Returners">
-                <div className="space-y-0.5">
-                  {returnerSlots.map((r) => (
-                    <div key={r.label} className="grid grid-cols-[3.25rem_1fr] items-baseline">
-                      <span className="font-bold tracking-wider text-white/80">{r.label}</span>
-                      <div className="flex items-baseline gap-2">
-                        <Name posIdx={r.idx} />
-                        <span className="shrink-0 text-[10px] text-white/40">
-                          {POSITION_NAMES[r.idx]}
-                        </span>
+              {!allStar && (
+                <Panel title="Returners">
+                  <div className="space-y-0.5">
+                    {returnerSlots.map((r) => (
+                      <div key={r.label} className="grid grid-cols-[3.25rem_1fr] items-baseline">
+                        <span className="font-bold tracking-wider text-white/80">{r.label}</span>
+                        <div className="flex items-baseline gap-2">
+                          <Name posIdx={r.idx} />
+                          <span className="shrink-0 text-[10px] text-white/40">
+                            {POSITION_NAMES[r.idx]}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Panel>
+                    ))}
+                  </div>
+                </Panel>
+              )}
             </div>
             <div className="space-y-3">
               <Panel title="Team Area">
@@ -183,6 +252,13 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
         </div>
       </div>
 
+      {allStar && (
+        <p className="text-xs text-muted-foreground">
+          All-Star teams borrow players from the regular teams. Use the team tag next to a name to
+          choose a different player for that spot. Editing an All-Star's name or ratings also
+          changes them on their own team.
+        </p>
+      )}
       <p className="text-xs text-muted-foreground">
         This is the default lineup stored in the ROM. Lineup changes you make inside the game are
         kept in the game's save file, not the ROM. Click any player to open their player card.

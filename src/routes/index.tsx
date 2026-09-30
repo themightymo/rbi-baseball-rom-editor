@@ -6,6 +6,7 @@ import { PlayerNameEditor } from "@/components/PlayerNameEditor";
 import { PlayerAbilitiesEditor } from "@/components/PlayerAbilitiesEditor";
 import type { GroupId } from "@/lib/abilities";
 import { TeamRosterView } from "@/components/TeamRosterView";
+import { isAllStarTeam } from "@/lib/tsbRoster";
 import { PlayerCard } from "@/components/PlayerCard";
 import { ExportPanel } from "@/components/ExportPanel";
 import { AdvancedTools } from "@/components/AdvancedTools";
@@ -28,9 +29,16 @@ function Shell() {
   const { rom } = useRom();
   const [tab, setTab] = useState("roster");
   // Shared between the roster view and the player editor so clicking a player jumps to them.
-  const [teamIdx, setTeamIdx] = useState(0);
+  const [teamIdx, setTeamIdxState] = useState(0);
+  // The Edit Players table only works on regular teams, so it keeps the last one picked
+  // while the roster view shows an All-Star team.
+  const [editTeam, setEditTeam] = useState(0);
+  const setTeamIdx = (t: number) => {
+    setTeamIdxState(t);
+    if (!isAllStarTeam(t)) setEditTeam(t);
+  };
   const [group, setGroup] = useState<GroupId>("qb");
-  const [cardPos, setCardPos] = useState<number | null>(null);
+  const [card, setCard] = useState<{ team: number; pos: number } | null>(null);
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/40 backdrop-blur">
@@ -74,7 +82,7 @@ function Shell() {
                 <TeamRosterView
                   teamIdx={teamIdx}
                   onTeamChange={setTeamIdx}
-                  onEditPlayer={setCardPos}
+                  onEditPlayer={(pos) => setCard({ team: teamIdx, pos })}
                 />
               </TabsContent>
 
@@ -84,11 +92,11 @@ function Shell() {
                   are highlighted in yellow.
                 </Intro>
                 <PlayerAbilitiesEditor
-                  teamIdx={teamIdx}
+                  teamIdx={editTeam}
                   onTeamChange={setTeamIdx}
                   group={group}
                   onGroupChange={setGroup}
-                  onOpenPlayer={setCardPos}
+                  onOpenPlayer={(pos) => setCard({ team: editTeam, pos })}
                 />
               </TabsContent>
 
@@ -109,10 +117,10 @@ function Shell() {
               </TabsContent>
             </Tabs>
             <PlayerCard
-              teamIdx={teamIdx}
-              posIdx={cardPos}
-              onClose={() => setCardPos(null)}
-              onNavigate={setCardPos}
+              teamIdx={card?.team ?? 0}
+              posIdx={card?.pos ?? null}
+              onClose={() => setCard(null)}
+              onNavigate={(pos) => setCard((c) => c && { ...c, pos })}
             />
           </>
         )}

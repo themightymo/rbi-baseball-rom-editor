@@ -4,11 +4,13 @@ import { ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { decodeHelmet, NES_RGB } from "@/lib/helmets";
 import { useRom } from "@/lib/romStore";
-import { CONFERENCES, TEAM_ABBR, TEAM_NAMES } from "@/lib/tsbRoster";
+import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam, teamAbbr, teamName } from "@/lib/tsbRoster";
 
 interface Props {
   teamIdx: number;
   onTeamChange: (i: number) => void;
+  /** Also offer the AFC / NFC All-Star teams. */
+  allStars?: boolean;
 }
 
 // NES palette colours from the game's TEAM DATA screen.
@@ -30,7 +32,7 @@ const SCREEN_STYLE: React.CSSProperties = {
  * Button showing the current team; opens a popup that mirrors the game's
  * TEAM DATA → SELECT TEAM screen (helmets and abbreviations by division).
  */
-export function TeamSelect({ teamIdx, onTeamChange }: Props) {
+export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
   const { rom, hasINES } = useRom();
   const [open, setOpen] = useState(false);
   const helmets = useMemo(
@@ -47,9 +49,9 @@ export function TeamSelect({ teamIdx, onTeamChange }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className="inline-flex items-center gap-2 rounded-md border bg-card py-1.5 pl-2 pr-3 text-sm font-medium shadow-sm transition hover:bg-accent">
         <span className="rounded p-0.5 text-[16px]" style={{ background: BG }}>
-          <Helmet pixels={helmets[teamIdx]} />
+          {isAllStarTeam(teamIdx) ? <AllStarBadge team={teamIdx} /> : <Helmet pixels={helmets[teamIdx]} />}
         </span>
-        {TEAM_NAMES[teamIdx]}
+        {teamName(teamIdx)}
         <ChevronDown className="size-4 text-muted-foreground" />
       </DialogTrigger>
 
@@ -72,9 +74,22 @@ export function TeamSelect({ teamIdx, onTeamChange }: Props) {
             </DialogTitle>
             <Stars />
           </div>
-          <div className="mt-[1.25em] text-center" style={{ color: YELLOW }}>
-            SELECT TEAM
-          </div>
+          {allStars ? (
+            // Like the game: the All-Star teams are listed as text above the helmets,
+            // with SELECT TEAM beside the first one.
+            <div role="group" aria-label="All Stars" className="mt-[1.25em] pl-[3em]">
+              {ALL_STAR_TEAMS.map((t, i) => (
+                <div key={t} className="flex items-center gap-[1em]">
+                  <AllStarButton team={t} selected={t === teamIdx} onClick={() => choose(t)} />
+                  {i === 0 && <span style={{ color: YELLOW }}>SELECT TEAM</span>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-[1.25em] text-center" style={{ color: YELLOW }}>
+              SELECT TEAM
+            </div>
+          )}
 
           {CONFERENCES.map((conf) => (
             <div
@@ -99,7 +114,7 @@ export function TeamSelect({ teamIdx, onTeamChange }: Props) {
             </div>
           ))}
 
-          <div className="mt-[1.5em] text-center">{TEAM_NAMES[teamIdx]?.toUpperCase()}</div>
+          <div className="mt-[1.5em] text-center">{teamName(teamIdx).toUpperCase()}</div>
         </div>
       </DialogContent>
     </Dialog>
@@ -121,7 +136,7 @@ function TeamButton({
     <button
       onClick={onClick}
       aria-pressed={selected}
-      title={TEAM_NAMES[team]}
+      title={teamName(team)}
       className="group flex h-[2.5em] w-full items-center gap-[0.5em] text-left outline-none focus-visible:bg-white/15"
     >
       <Cursor visible={selected} />
@@ -130,7 +145,30 @@ function TeamButton({
         className="ml-[0.25em] group-hover:text-[#f8b800]"
         style={selected ? { color: YELLOW } : undefined}
       >
-        {TEAM_ABBR[team]}
+        {teamAbbr(team)}
+      </span>
+    </button>
+  );
+}
+
+function AllStarButton({
+  team,
+  selected,
+  onClick,
+}: {
+  team: number;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      className="group flex h-[2em] items-center gap-[0.5em] outline-none focus-visible:bg-white/15"
+    >
+      <Cursor visible={selected} />
+      <span className="group-hover:text-[#f8b800]" style={selected ? { color: YELLOW } : undefined}>
+        {teamName(team).toUpperCase()}
       </span>
     </button>
   );
@@ -158,6 +196,20 @@ function Stars() {
       {star(RED, 0)}
       {star(WHITE, 8)}
       {star(RED, 16)}
+    </svg>
+  );
+}
+
+/** The ROM has no All-Star helmets, so these get a star in the conference's colour. */
+function AllStarBadge({ team }: { team: number }) {
+  return (
+    <svg viewBox="0 0 16 16" className="size-[2em] shrink-0" aria-hidden>
+      <path
+        d="M8 1 9.8 6H15l-4.2 3.2L12.4 15 8 11.6 3.6 15l1.6-5.8L1 6h5.2Z"
+        fill={team === ALL_STAR_TEAMS[0] ? RED : NES_RGB[0x21]}
+        stroke={WHITE}
+        strokeWidth="0.75"
+      />
     </svg>
   );
 }

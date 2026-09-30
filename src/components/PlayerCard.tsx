@@ -15,7 +15,7 @@ import {
   withNibble,
   type PosType,
 } from "@/lib/abilities";
-import { POSITION_NAMES, TEAM_NAMES, teamScreenColor } from "@/lib/tsbRoster";
+import { POSITION_NAMES, TEAM_NAMES, isAllStarTeam, resolvePlayer, teamName, teamScreenColor } from "@/lib/tsbRoster";
 import { FacePickerGrid } from "@/components/FacePicker";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -71,6 +71,7 @@ const SCREEN_STYLE: React.CSSProperties = {
 const NAME_WIDTH = 20; // tiles available for "NN-FIRST LAST" before the game abbreviates
 
 interface Props {
+  /** A regular team, or an All-Star team (the card then shows the player that slot points to). */
   teamIdx: number;
   /** Roster slot 0–29, or null when closed. */
   posIdx: number | null;
@@ -110,8 +111,10 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
 
   if (!rom || !originalRom) return null;
 
-  const pos = POSITIONS[posIdx]!;
-  const player = teams?.[teamIdx]?.players.find((p) => p.slot === posIdx);
+  // Everything below reads the real player; for an All-Star slot that's on another team.
+  const src = resolvePlayer(rom, hasINES, teamIdx, posIdx);
+  const pos = POSITIONS[src.slot]!;
+  const player = teams?.[src.team]?.players.find((p) => p.slot === src.slot);
 
   // Name + jersey (live ROM so edits show immediately)
   let first = "", last = "", jersey = 0, origFirst = "", origLast = "", origJersey = 0;
@@ -147,7 +150,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   };
 
   // Abilities
-  const recOff = base !== null ? playerAbilityOffset(base, teamIdx, posIdx) : null;
+  const recOff = base !== null ? playerAbilityOffset(base, src.team, src.slot) : null;
   const level = (r: Uint8Array, a: Ability) => {
     if (recOff === null) return 0;
     const b = r[recOff + a.byte] ?? 0;
@@ -167,12 +170,12 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   const skills = SKILLS[pos.type];
   const prev = (posIdx + POSITIONS.length - 1) % POSITIONS.length;
   const next = (posIdx + 1) % POSITIONS.length;
-  const bg = teamScreenColor(teamIdx);
+  const bg = teamScreenColor(src.team);
 
   return (
     <>
       <DialogTitle className="sr-only">
-        {first} {last}, {TEAM_NAMES[teamIdx]} {pos.label}
+        {first} {last}, {teamName(teamIdx)} {POSITION_NAMES[posIdx]}
       </DialogTitle>
 
       {/* ── The game screen ───────────────────────────────────────────── */}
@@ -183,7 +186,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
         >
           {/* Team name + position */}
           <div className="flex justify-between" style={{ paddingLeft: "3em", paddingRight: "2em" }}>
-            <span>{TEAM_NAMES[teamIdx]}</span>
+            <span>{TEAM_NAMES[src.team]}</span>
             <span>{POSITION_NAMES[posIdx]!.replace(/\d$/, "")}</span>
           </div>
 
@@ -317,7 +320,9 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
           <CtrlBtn label="Next player" onClick={() => onNavigate(next)}><ChevronRight className="size-4" /></CtrlBtn>
         </div>
         <span className="hidden text-neutral-400 sm:inline">
-          Click a bar, name, number or face to edit
+          {isAllStarTeam(teamIdx)
+            ? `${teamName(teamIdx)} · edits also apply on the ${TEAM_NAMES[src.team]}`
+            : "Click a bar, name, number or face to edit"}
         </span>
         <CtrlBtn label="Close" onClick={onClose}><X className="size-4" /></CtrlBtn>
       </div>

@@ -114,3 +114,41 @@ export const CONFERENCES = [
   { name: "NFC", divisions: [[14, 15, 16, 17, 18], [19, 20, 21, 22, 23], [24, 25, 26, 27]] },
 ];
 
+
+// ─── All-Star (Pro Bowl) teams ────────────────────────────────────────────────
+// The two All-Star teams have no players of their own: each of their 30 roster slots
+// is a 2-byte reference (team index, roster slot) to a player on a regular team, so
+// the All-Stars always share that player's name, number and ratings. AFC comes first,
+// then NFC. (Per tsbtools; see tecmobowl.org "editing pro bowl rosters".)
+const ALL_STARS = 0x32853;
+
+export const AFC_ALL_STARS = 28;
+export const NFC_ALL_STARS = 29;
+export const ALL_STAR_TEAMS = [AFC_ALL_STARS, NFC_ALL_STARS];
+export const isAllStarTeam = (team: number) => team >= AFC_ALL_STARS;
+
+const ALL_STAR_NAMES = ["AFC All Stars", "NFC All Stars"];
+const ALL_STAR_ABBR = ["AFC.", "NFC."];
+
+/** Display name for any team index, including the All-Star teams. */
+export const teamName = (team: number) =>
+  TEAM_NAMES[team] ?? ALL_STAR_NAMES[team - AFC_ALL_STARS] ?? `Team ${team + 1}`;
+export const teamAbbr = (team: number) =>
+  TEAM_ABBR[team] ?? ALL_STAR_ABBR[team - AFC_ALL_STARS] ?? "";
+
+export const allStarSlotOffset = (hasINES: boolean, allStarTeam: number, slot: number) =>
+  fileOffset(ALL_STARS + (allStarTeam - AFC_ALL_STARS) * 60 + slot * 2, hasINES);
+
+export interface PlayerRef { team: number; slot: number }
+
+/**
+ * The regular-team player who actually fills (team, slot). For a regular team that's
+ * the player themself; for an All-Star team it follows the ROM's reference.
+ */
+export function resolvePlayer(rom: Uint8Array, hasINES: boolean, team: number, slot: number): PlayerRef {
+  if (!isAllStarTeam(team)) return { team, slot };
+  const o = allStarSlotOffset(hasINES, team, slot);
+  const src = { team: rom[o] ?? 0, slot: rom[o + 1] ?? 0 };
+  // Guard against junk in hacked ROMs so callers can always index a real team.
+  return src.team < TEAM_NAMES.length && src.slot < POSITION_NAMES.length ? src : { team: 0, slot };
+}
