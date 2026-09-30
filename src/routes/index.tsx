@@ -12,6 +12,7 @@ import { ExportPanel } from "@/components/ExportPanel";
 import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import tsbLogo from "@/assets/tsb-logo.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, SlidersHorizontal, Hash, Save, Wrench, Search, Table } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -144,9 +145,16 @@ function Shell() {
         )}
       </main>
 
-      <footer className="border-t-[3px] border-[#fc74b4] bg-card px-4 py-6 text-center text-xs leading-loose text-muted-foreground">
-        This tool ships with no ROM data and no NFL/Tecmo/Nintendo content. You must supply your own
-        legally owned ROM. All processing happens in your browser.
+      <footer className="border-t-[3px] border-[#fc74b4] bg-card px-4 py-3 text-center text-xs text-muted-foreground">
+        <Popover>
+          <PopoverTrigger className="underline-offset-4 hover:text-foreground hover:underline">
+            About
+          </PopoverTrigger>
+          <PopoverContent side="top" className="text-xs leading-relaxed text-muted-foreground">
+            This tool ships with no ROM data and no NFL/Tecmo/Nintendo content. You must supply your
+            own legally owned ROM. All processing happens in your browser.
+          </PopoverContent>
+        </Popover>
       </footer>
     </div>
   );
