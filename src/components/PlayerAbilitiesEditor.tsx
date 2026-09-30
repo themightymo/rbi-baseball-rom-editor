@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { loadTeams, splitName, type Player, type TeamData } from "@/lib/nameLoader";
-import { TEAM_NAMES } from "@/lib/tsbRoster";
+import { TeamSelect } from "@/components/TeamSelect";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FacePickerGrid } from "@/components/FacePicker";
 import {
-  BYTES, POSITIONS, POS_OFFSETS, TEAM_BYTES, TEAM_COUNT, TSB_ATTRIBUTE_SCALE,
+  BYTES, POSITIONS, POS_OFFSETS, TEAM_BYTES, TSB_ATTRIBUTE_SCALE,
   detectBase, faceImgUrl, getPlayerBytes, hexId, isValidFaceId, nibble,
   readStoredBase, resolveBase, withNibble, writeStoredBase,
   type GroupId, type PosDef,
@@ -372,35 +372,8 @@ export function PlayerAbilitiesEditor(props: EditorProps = {}) {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[200px_1fr]">
-      {/* Team sidebar */}
-      {/* Compact team picker on small screens */}
-      <select
-        value={teamIdx}
-        onChange={(e) => setTeamIdx(parseInt(e.target.value))}
-        className="h-10 rounded-md border border-input bg-card px-3 text-sm font-medium lg:hidden"
-      >
-        {TEAM_NAMES.map((name, i) => <option key={i} value={i}>{name}</option>)}
-      </select>
-
-      <aside className="hidden rounded-lg border bg-card p-2 lg:block">
-        <div className="px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">
-          Teams ({TEAM_COUNT})
-        </div>
-        <div className="max-h-[70vh] space-y-0.5 overflow-auto">
-          {TEAM_NAMES.map((name, i) => (
-            <button
-              key={i}
-              onClick={() => setTeamIdx(i)}
-              className={`w-full rounded px-2 py-1.5 text-left text-sm transition ${
-                i === teamIdx ? "bg-primary text-primary-foreground" : "hover:bg-accent"
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      </aside>
+    <div className="space-y-4">
+      <TeamSelect teamIdx={teamIdx} onTeamChange={setTeamIdx} />
 
       {/* Main panel */}
       <div className="space-y-3">

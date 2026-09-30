@@ -29,7 +29,7 @@ export const TEAM_NAMES = [
   "San Francisco 49ers", "Los Angeles Rams", "New Orleans Saints", "Atlanta Falcons",
 ];
 
-const fileOffset = (headeredOffset: number, hasINES: boolean) =>
+export const fileOffset = (headeredOffset: number, hasINES: boolean) =>
   hasINES ? headeredOffset : headeredOffset - 0x10;
 
 // One byte per team: high nibble = kick returner, low nibble = punt returner,
@@ -97,3 +97,20 @@ const TEAM_SCREEN_COLOR = [
   0x06, 0x02, 0x08, 0x05,       // NFC West: 49ers, Rams, Saints, Falcons
 ];
 export const teamScreenColor = (team: number) => NES[TEAM_SCREEN_COLOR[team] ?? 0x01]!;
+
+// Abbreviations as the game's TEAM DATA screen prints them (always 4 tiles wide).
+export const TEAM_ABBR = [
+  "BUF.", "IND.", "MIA.", "N.E.", "NYJ.",
+  "CIN.", "CLE.", "HOU.", "PIT.",
+  "DEN.", "K.C.", "L.A.", "S.D.", "SEA.",
+  "WAS.", "NYG.", "PHI.", "PHX.", "DAL.",
+  "CHI.", "DET.", "G.B.", "MIN.", "T.B.",
+  "S.F.", "RAM.", "N.O.", "ATL.",
+];
+
+/** Team indices grouped the way the TEAM DATA screen lays them out: conference → division column. */
+export const CONFERENCES = [
+  { name: "AFC", divisions: [[0, 1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12, 13]] },
+  { name: "NFC", divisions: [[14, 15, 16, 17, 18], [19, 20, 21, 22, 23], [24, 25, 26, 27]] },
+];
+

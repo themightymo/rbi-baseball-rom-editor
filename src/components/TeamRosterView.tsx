@@ -11,7 +11,7 @@ import {
   splitStarters,
   type PositionName,
 } from "@/lib/tsbRoster";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TeamSelect } from "@/components/TeamSelect";
 
 interface Props {
   teamIdx: number;
@@ -115,29 +115,9 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
     { label: "PR", idx: pr },
   ];
 
-  const prev = () => onTeamChange((teamIdx + TEAM_NAMES.length - 1) % TEAM_NAMES.length);
-  const next = () => onTeamChange((teamIdx + 1) % TEAM_NAMES.length);
-
   return (
     <div className="space-y-3">
-      {/* Team picker */}
-      <div className="flex items-center gap-2">
-        <button onClick={prev} className="rounded-md border p-2 hover:bg-accent" aria-label="Previous team">
-          <ChevronLeft className="size-4" />
-        </button>
-        <select
-          value={teamIdx}
-          onChange={(e) => onTeamChange(parseInt(e.target.value))}
-          className="h-9 min-w-0 flex-1 rounded-md border border-input bg-card px-3 text-sm font-medium sm:max-w-xs"
-        >
-          {TEAM_NAMES.map((n, i) => (
-            <option key={i} value={i}>{n}</option>
-          ))}
-        </select>
-        <button onClick={next} className="rounded-md border p-2 hover:bg-accent" aria-label="Next team">
-          <ChevronRight className="size-4" />
-        </button>
-      </div>
+      <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} />
 
       {/* Game-style screen */}
       <div className="overflow-hidden rounded-lg border-4 border-black bg-black font-mono text-sm text-white shadow-lg">
