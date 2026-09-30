@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { RomProvider, useRom } from "@/lib/romStore";
 import { RomDropZone, RomToolbar } from "@/components/RomUploader";
 import { PlayerNameEditor } from "@/components/PlayerNameEditor";
 import { PlayerAbilitiesEditor } from "@/components/PlayerAbilitiesEditor";
+import type { GroupId } from "@/lib/abilities";
+import { TeamRosterView } from "@/components/TeamRosterView";
+import { PlayerCard } from "@/components/PlayerCard";
 import { ExportPanel } from "@/components/ExportPanel";
 import { AdvancedTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gamepad2, Users, Hash, Save, Wrench } from "lucide-react";
+import { Gamepad2, Users, SlidersHorizontal, Hash, Save, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -22,6 +26,11 @@ function Index() {
 
 function Shell() {
   const { rom } = useRom();
+  const [tab, setTab] = useState("roster");
+  // Shared between the roster view and the player editor so clicking a player jumps to them.
+  const [teamIdx, setTeamIdx] = useState(0);
+  const [group, setGroup] = useState<GroupId>("qb");
+  const [cardPos, setCardPos] = useState<number | null>(null);
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/40 backdrop-blur">
@@ -39,10 +48,13 @@ function Shell() {
         ) : (
           <>
             <RomToolbar />
-            <Tabs defaultValue="rosters">
+            <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="flex h-auto w-full flex-wrap justify-start">
-                <TabsTrigger value="rosters" className="gap-1.5">
-                  <Users className="size-4" /> Team Rosters
+                <TabsTrigger value="roster" className="gap-1.5">
+                  <Users className="size-4" /> Team Roster
+                </TabsTrigger>
+                <TabsTrigger value="edit" className="gap-1.5">
+                  <SlidersHorizontal className="size-4" /> Edit Players
                 </TabsTrigger>
                 <TabsTrigger value="names" className="gap-1.5">
                   <Hash className="size-4" /> Names &amp; Jersey Numbers
@@ -55,12 +67,29 @@ function Shell() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="rosters" className="space-y-3">
+              <TabsContent value="roster" className="space-y-3">
+                <Intro>
+                  Each team's full roster, laid out like the in-game team screen.
+                </Intro>
+                <TeamRosterView
+                  teamIdx={teamIdx}
+                  onTeamChange={setTeamIdx}
+                  onEditPlayer={setCardPos}
+                />
+              </TabsContent>
+
+              <TabsContent value="edit" className="space-y-3">
                 <Intro>
                   Pick a team, then edit each player's name, face, and ratings. Changed values
                   are highlighted in yellow.
                 </Intro>
-                <PlayerAbilitiesEditor />
+                <PlayerAbilitiesEditor
+                  teamIdx={teamIdx}
+                  onTeamChange={setTeamIdx}
+                  group={group}
+                  onGroupChange={setGroup}
+                  onOpenPlayer={setCardPos}
+                />
               </TabsContent>
 
               <TabsContent value="names" className="space-y-3">
@@ -79,6 +108,12 @@ function Shell() {
                 <AdvancedTools />
               </TabsContent>
             </Tabs>
+            <PlayerCard
+              teamIdx={teamIdx}
+              posIdx={cardPos}
+              onClose={() => setCardPos(null)}
+              onNavigate={setCardPos}
+            />
           </>
         )}
       </main>

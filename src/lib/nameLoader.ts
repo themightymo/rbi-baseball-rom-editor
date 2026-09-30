@@ -1,4 +1,5 @@
 const TEAM_COUNT = 28;
+const SLOTS_PER_TEAM = 30;
 const CPU_TO_FILE_INES = 0x7ff0;
 const CPU_TO_FILE_RAW = 0x8000;
 
@@ -59,26 +60,21 @@ export function loadTeams(rom: Uint8Array, hasINES: boolean): TeamData[] | strin
     teamOffsets.push(file);
   }
 
+  // Player pointer tables are contiguous (28 × 30 pointers, then one end sentinel), so a
+  // player's record always ends where the next pointer in the list begins — including the
+  // last player of each team, whose "next" is the following team's first player.
   const teams: TeamData[] = [];
   for (let t = 0; t < TEAM_COUNT; t++) {
     const tableOffset     = teamOffsets[t]!;
-    const nextTableOffset = t < TEAM_COUNT - 1 ? teamOffsets[t + 1]! : tableOffset + 30;
+    const nextTableOffset = t < TEAM_COUNT - 1 ? teamOffsets[t + 1]! : tableOffset + SLOTS_PER_TEAM * 2;
     const slotCount       = Math.max(0, Math.floor((nextTableOffset - tableOffset) / 2));
 
-    const playerOffsets: number[] = [];
-    for (let s = 0; s < slotCount; s++) {
-      const cpu  = readU16LE(rom, tableOffset + s * 2);
-      const file = cpu - cpuToFile;
-      if (file >= 0 && file < rom.length) playerOffsets.push(file);
-    }
-
     const players: Player[] = [];
-    for (let s = 0; s < playerOffsets.length; s++) {
-      const offset      = playerOffsets[s]!;
-      const nextOffset  = s < playerOffsets.length - 1 ? playerOffsets[s + 1]! : offset + 15;
-      const recordLength = Math.max(1, nextOffset - offset);
-      const nameLength   = recordLength - 1;
-      if (offset + recordLength > rom.length) continue;
+    for (let s = 0; s < slotCount; s++) {
+      const offset     = readU16LE(rom, tableOffset + s * 2) - cpuToFile;
+      const nextOffset = readU16LE(rom, tableOffset + (s + 1) * 2) - cpuToFile;
+      if (offset < 0 || nextOffset <= offset || nextOffset > rom.length) continue;
+      const nameLength = nextOffset - offset - 1;
 
       const jerseyBcd = rom[offset]!;
       const rawName   = String.fromCharCode(...rom.slice(offset + 1, offset + 1 + nameLength));

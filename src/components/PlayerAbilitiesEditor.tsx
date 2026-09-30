@@ -1,168 +1,18 @@
 import { useState, useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { loadTeams, splitName, type Player, type TeamData } from "@/lib/nameLoader";
+import { TEAM_NAMES } from "@/lib/tsbRoster";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FacePickerGrid } from "@/components/FacePicker";
+import {
+  BYTES, POSITIONS, POS_OFFSETS, TEAM_BYTES, TEAM_COUNT, TSB_ATTRIBUTE_SCALE,
+  detectBase, faceImgUrl, getPlayerBytes, hexId, isValidFaceId, nibble,
+  readStoredBase, resolveBase, withNibble, writeStoredBase,
+  type GroupId, type PosDef,
+} from "@/lib/abilities";
 import { Wand2, Settings } from "lucide-react";
-
-// Face IDs that point to real face scripts in Bank 15.
-// 0x53–0x80 all map to PLAYER_FACE_SCRIPT_BAD_PTR and produce no face.
-const VALID_FACE_RANGE1 = Array.from({ length: 0x53 }, (_, i) => i);           // 0x00–0x52
-const VALID_FACE_RANGE2 = Array.from({ length: 0xD4 - 0x81 + 1 }, (_, i) => i + 0x81); // 0x81–0xD4
-const VALID_FACE_SET = new Set([...VALID_FACE_RANGE1, ...VALID_FACE_RANGE2]);
-
-function isValidFaceId(id: number) { return VALID_FACE_SET.has(id); }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const TSB_ATTRIBUTE_SCALE = [6, 13, 19, 25, 31, 38, 44, 50, 56, 63, 69, 75, 81, 88, 94, 100];
-
-type PosType = "qb" | "skill" | "ol" | "def" | "kick";
-type GroupId = "qb" | "skill" | "oline" | "defense" | "special";
-
-interface PosDef { id: string; label: string; type: PosType }
-
-const POSITIONS: PosDef[] = [
-  { id: "qb1",  label: "QB1",  type: "qb" },
-  { id: "qb2",  label: "QB2",  type: "qb" },
-  { id: "rb1",  label: "RB1",  type: "skill" },
-  { id: "rb2",  label: "RB2",  type: "skill" },
-  { id: "rb3",  label: "RB3",  type: "skill" },
-  { id: "rb4",  label: "RB4",  type: "skill" },
-  { id: "wr1",  label: "WR1",  type: "skill" },
-  { id: "wr2",  label: "WR2",  type: "skill" },
-  { id: "wr3",  label: "WR3",  type: "skill" },
-  { id: "wr4",  label: "WR4",  type: "skill" },
-  { id: "te1",  label: "TE1",  type: "skill" },
-  { id: "te2",  label: "TE2",  type: "skill" },
-  { id: "c",    label: "C",    type: "ol" },
-  { id: "lg",   label: "LG",   type: "ol" },
-  { id: "rg",   label: "RG",   type: "ol" },
-  { id: "lt",   label: "LT",   type: "ol" },
-  { id: "rt",   label: "RT",   type: "ol" },
-  { id: "re",   label: "RE",   type: "def" },
-  { id: "nt",   label: "NT",   type: "def" },
-  { id: "le",   label: "LE",   type: "def" },
-  { id: "rolb", label: "ROLB", type: "def" },
-  { id: "rilb", label: "RILB", type: "def" },
-  { id: "lilb", label: "LILB", type: "def" },
-  { id: "lolb", label: "LOLB", type: "def" },
-  { id: "rcb",  label: "RCB",  type: "def" },
-  { id: "lcb",  label: "LCB",  type: "def" },
-  { id: "fs",   label: "FS",   type: "def" },
-  { id: "ss",   label: "SS",   type: "def" },
-  { id: "k",    label: "K",    type: "kick" },
-  { id: "p",    label: "P",    type: "kick" },
-];
-
-// Byte counts per position type
-const BYTES: Record<PosType, number> = { qb: 5, skill: 4, ol: 3, def: 4, kick: 4 };
-
-// Total: 2×5 + 10×4 + 5×3 + 11×4 + 2×4 = 117
-const TEAM_BYTES = 117;
-const TEAM_COUNT = 28;
-
-// Byte offset of each position within a team's abilities block
-const POS_OFFSETS: number[] = (() => {
-  const offsets: number[] = [];
-  let off = 0;
-  for (const p of POSITIONS) {
-    offsets.push(off);
-    off += BYTES[p.type];
-  }
-  return offsets;
-})();
-
-// Buffalo Bills QB1 signature: RP=69, RS=25, MS=13, HP=13, face=0x52, PS=56, PC=81, PA=81, APB=81
-const DETECT_PATTERN = [0xa3, 0x11, 0x52, 0x8c, 0xcc];
-// Buffalo is the first team in the abilities block (index 0).
-// Teams 0-1 showed all 0xFF (=100) with index 2, confirming no valid data exists before Buffalo.
-const BUFFALO_INDEX = 0;
-
-// Abilities block team order matches the name pointer-table order (both start with Buffalo).
-const TEAM_NAMES = [
-  // AFC East (0–4)
-  "Buffalo Bills", "Indianapolis Colts", "Miami Dolphins", "New England Patriots", "New York Jets",
-  // AFC Central (5–8)
-  "Cincinnati Bengals", "Cleveland Browns", "Houston Oilers", "Pittsburgh Steelers",
-  // AFC West (9–13)
-  "Denver Broncos", "Kansas City Chiefs", "Los Angeles Raiders", "San Diego Chargers", "Seattle Seahawks",
-  // NFC East (14–18)
-  "Washington Redskins", "New York Giants", "Philadelphia Eagles", "Phoenix Cardinals", "Dallas Cowboys",
-  // NFC Central (19–23)
-  "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Tampa Bay Buccaneers",
-  // NFC West (24–27)
-  "San Francisco 49ers", "Los Angeles Rams", "New Orleans Saints", "Atlanta Falcons",
-];
-
-const LS_KEY = "tecmo.abilitiesconfig.v1";
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function detectBase(rom: Uint8Array): number | null {
-  for (let i = 0; i <= rom.length - DETECT_PATTERN.length; i++) {
-    if (DETECT_PATTERN.every((b, j) => rom[i + j] === b)) {
-      const base = i - BUFFALO_INDEX * TEAM_BYTES;
-      if (base >= 0 && base + TEAM_COUNT * TEAM_BYTES <= rom.length) return base;
-    }
-  }
-  return null;
-}
-
-function getPlayerBytes(rom: Uint8Array, base: number, teamIdx: number, posIdx: number): Uint8Array {
-  const start = base + teamIdx * TEAM_BYTES + POS_OFFSETS[posIdx];
-  return rom.slice(start, start + BYTES[POSITIONS[posIdx].type]);
-}
-
-function nibble(bytes: Uint8Array, byteIdx: number, hi: boolean): number {
-  const b = bytes[byteIdx] ?? 0;
-  return hi ? (b >> 4) & 0xf : b & 0xf;
-}
-
-function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-
-// Face portrait images from the open-source tsbtools project
-const FACE_IMG_BASE = "https://raw.githubusercontent.com/BAD-AL/tsbtools/HEAD/TSBProjects/Java/TSBToolSupreme_netbeans/src/tsbtool_gui/facepackage/";
-function faceImgUrl(id: number) {
-  return `${FACE_IMG_BASE}${id.toString(16).toUpperCase().padStart(2, "0")}.BMP`;
-}
-function hexId(id: number) { return id.toString(16).toUpperCase().padStart(2, "0"); }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function FaceThumb({ id, selected, onClick }: { id: number; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      title={`0x${hexId(id)} (${id})`}
-      onClick={onClick}
-      className={`flex flex-col items-center gap-px rounded border p-0.5 transition hover:scale-105 hover:bg-accent ${
-        selected
-          ? "border-yellow-400 ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-950/50"
-          : "border-transparent hover:border-foreground/20"
-      }`}
-    >
-      <img
-        src={faceImgUrl(id)}
-        alt={hexId(id)}
-        width={32} height={36}
-        className="object-cover"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-          (e.currentTarget.nextSibling as HTMLElement | null)?.classList.remove("hidden");
-        }}
-      />
-      <span className="hidden text-[8px] font-mono text-muted-foreground leading-4 w-8 text-center bg-muted rounded-sm">
-        ?
-      </span>
-      <span className="text-[7px] font-mono text-muted-foreground leading-none">{hexId(id)}</span>
-    </button>
-  );
-}
 
 function FaceCell({ value, changed, onChange }: {
   value: number; changed: boolean; onChange: (v: number) => void;
@@ -197,36 +47,7 @@ function FaceCell({ value, changed, onChange }: {
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-3 space-y-3" align="start" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-          <p className="text-xs font-semibold text-muted-foreground">Select face (0x00–0x52 · 0x81–0xD4)</p>
-
-          <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground font-mono">0x00–0x52</p>
-            <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
-              {VALID_FACE_RANGE1.map((id) => (
-                <FaceThumb key={id} id={id} selected={id === value} onClick={() => pick(id)} />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground font-mono">0x81–0xD4</p>
-            <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(14, minmax(0, 1fr))" }}>
-              {VALID_FACE_RANGE2.map((id) => (
-                <FaceThumb key={id} id={id} selected={id === value} onClick={() => pick(id)} />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 border-t pt-2">
-            <span className="text-xs text-muted-foreground">Direct:</span>
-            <Input
-              type="number" min={0} max={255}
-              value={value}
-              className={`h-7 w-20 font-mono text-xs ${!valid ? "border-red-500" : ""}`}
-              onChange={(e) => onChange(Math.max(0, Math.min(255, parseInt(e.target.value) || 0)))}
-            />
-            {!valid && <span className="text-xs text-red-500">invalid — no face drawn</span>}
-          </div>
+          <FacePickerGrid value={value} onPick={pick} onChange={onChange} />
         </PopoverContent>
       </Popover>
     </td>
@@ -268,9 +89,10 @@ interface PlayerRowProps {
   onNibble: (byteIdx: number, hi: boolean, value: number) => void;
   onFace: (value: number) => void;
   onName?: (first: string, last: string) => void;
+  onOpen?: () => void;
 }
 
-function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, maxFirst, maxLast, onNibble, onFace, onName }: PlayerRowProps) {
+function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, maxFirst, maxLast, onNibble, onFace, onName, onOpen }: PlayerRowProps) {
   const nb = (bi: number, hi: boolean) => nibble(cur, bi, hi);
   const nbChanged = (bi: number, hi: boolean) => nibble(cur, bi, hi) !== nibble(orig, bi, hi);
   const faceChanged = (cur[2] ?? 0) !== (orig[2] ?? 0);
@@ -295,7 +117,17 @@ function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, max
                 maxLength={maxLast}
                 onChange={(e) => onName(curFirst, e.target.value)}
               />
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">({pos.label})</span>
+              {onOpen ? (
+                <button
+                  onClick={onOpen}
+                  title="Open player card"
+                  className="whitespace-nowrap rounded px-1 text-[10px] text-muted-foreground underline-offset-2 hover:bg-accent hover:text-foreground hover:underline"
+                >
+                  {pos.label}
+                </button>
+              ) : (
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">({pos.label})</span>
+              )}
             </div>
           )
           : <span className="font-mono text-xs font-bold text-muted-foreground">{pos.label}</span>
@@ -335,9 +167,10 @@ interface GroupTableProps {
   onNibble: (posIdx: number, byteIdx: number, hi: boolean, value: number) => void;
   onFace: (posIdx: number, value: number) => void;
   onName: (player: Player, first: string, last: string) => void;
+  onOpen?: (posIdx: number) => void;
 }
 
-function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, base, teamIdx, onNibble, onFace, onName }: GroupTableProps) {
+function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, base, teamIdx, onNibble, onFace, onName, onOpen }: GroupTableProps) {
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
@@ -373,6 +206,7 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
                 onNibble={(bi, hi, v) => onNibble(pi, bi, hi, v)}
                 onFace={(v) => onFace(pi, v)}
                 onName={player ? (f, l) => onName(player, f, l) : undefined}
+                onOpen={onOpen ? () => onOpen(pi) : undefined}
               />
             );
           })}
@@ -384,7 +218,16 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function PlayerAbilitiesEditor() {
+interface EditorProps {
+  teamIdx?: number;
+  onTeamChange?: (i: number) => void;
+  group?: GroupId;
+  onGroupChange?: (g: GroupId) => void;
+  /** Opens the single-player card for a roster slot. */
+  onOpenPlayer?: (posIdx: number) => void;
+}
+
+export function PlayerAbilitiesEditor(props: EditorProps = {}) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
 
   const allTeams = useMemo((): TeamData[] | null => {
@@ -393,32 +236,27 @@ export function PlayerAbilitiesEditor() {
     return Array.isArray(result) ? result : null;
   }, [originalRom, hasINES]);
 
-  const [storedBase, setStoredBase] = useState<number | null>(() => {
-    try { const s = localStorage.getItem(LS_KEY); return s ? parseInt(s) : null; } catch { return null; }
-  });
+  const [storedBase, setStoredBase] = useState<number | null>(readStoredBase);
   const [showSetup, setShowSetup] = useState(false);
   const [manualOffset, setManualOffset] = useState("");
-  const [teamIdx, setTeamIdx] = useState(0);
-  const [group, setGroup] = useState<GroupId>("qb");
+  // Team and group can be controlled by the parent (so other views can jump here).
+  const [localTeam, setLocalTeam] = useState(0);
+  const [localGroup, setLocalGroup] = useState<GroupId>("qb");
+  const teamIdx = props.teamIdx ?? localTeam;
+  const setTeamIdx = props.onTeamChange ?? setLocalTeam;
+  const group = props.group ?? localGroup;
+  const setGroup = props.onGroupChange ?? setLocalGroup;
 
   const detectedBase = useMemo(() => {
     if (!originalRom) return null;
     return detectBase(originalRom);
   }, [originalRom]);
 
-  // Prefer a manually stored offset, unless it's stale (the signature isn't where it should be)
-  // and we can auto-detect the real one. Otherwise just use auto-detection — no setup click.
-  const storedValid =
-    storedBase !== null && !!originalRom &&
-    DETECT_PATTERN.every((b, j) => (originalRom[storedBase + BUFFALO_INDEX * TEAM_BYTES + j] ?? -1) === b);
-  const base = storedBase !== null && (storedValid || detectedBase === null) ? storedBase : detectedBase;
+  const base = originalRom ? resolveBase(originalRom, storedBase, detectedBase) : null;
 
   function activate(offset: number | null) {
     setStoredBase(offset);
-    try {
-      if (offset === null) localStorage.removeItem(LS_KEY);
-      else localStorage.setItem(LS_KEY, String(offset));
-    } catch { /* storage unavailable */ }
+    writeStoredBase(offset);
     setShowSetup(false);
   }
 
@@ -426,8 +264,7 @@ export function PlayerAbilitiesEditor() {
     if (!rom || base === null) return;
     const offset = base + teamIdx * TEAM_BYTES + POS_OFFSETS[posIdx] + byteIdx;
     const b = rom[offset] ?? 0;
-    const newByte = hi ? ((value & 0xf) << 4) | (b & 0x0f) : (b & 0xf0) | (value & 0xf);
-    setBytes(offset, new Uint8Array([newByte]));
+    setBytes(offset, new Uint8Array([withNibble(b, hi, value)]));
   }
 
   function handleFace(posIdx: number, value: number) {
@@ -531,6 +368,7 @@ export function PlayerAbilitiesEditor() {
     onNibble: handleNibble,
     onFace: handleFace,
     onName: writePlayerName,
+    onOpen: props.onOpenPlayer,
   };
 
   return (
