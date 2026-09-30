@@ -9,10 +9,10 @@ import { TeamRosterView } from "@/components/TeamRosterView";
 import { isAllStarTeam } from "@/lib/tsbRoster";
 import { PlayerCard } from "@/components/PlayerCard";
 import { ExportPanel } from "@/components/ExportPanel";
-import { AdvancedTools } from "@/components/AdvancedTools";
+import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import tsbLogo from "@/assets/tsb-logo.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, SlidersHorizontal, Hash, Save, Wrench } from "lucide-react";
+import { Users, SlidersHorizontal, Hash, Save, Wrench, Search, Table } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -29,6 +29,7 @@ function Index() {
 function Shell() {
   const { rom } = useRom();
   const [tab, setTab] = useState("roster");
+  const [advancedTab, setAdvancedTab] = useState("edit");
   // Shared between the roster view and the player editor so clicking a player jumps to them.
   const [teamIdx, setTeamIdxState] = useState(0);
   // The Edit Players table only works on regular teams, so it keeps the last one picked
@@ -64,24 +65,13 @@ function Shell() {
                 <TabsTrigger value="roster" className="gap-1.5">
                   <Users className="size-4" /> Team Roster
                 </TabsTrigger>
-                <TabsTrigger value="edit" className="gap-1.5">
-                  <SlidersHorizontal className="size-4" /> Edit Players
-                </TabsTrigger>
-                <TabsTrigger value="names" className="gap-1.5">
-                  <Hash className="size-4" /> Names &amp; Jersey Numbers
-                </TabsTrigger>
-                <TabsTrigger value="save" className="gap-1.5">
-                  <Save className="size-4" /> Save &amp; Share
-                </TabsTrigger>
                 <TabsTrigger value="advanced" className="ml-auto gap-1.5 text-muted-foreground">
                   <Wrench className="size-4" /> Advanced
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="roster" className="space-y-3">
-                <Intro>
-                  Each team's full roster, laid out like the in-game team screen.
-                </Intro>
+                <Intro>Each team's full roster, laid out like the in-game team screen.</Intro>
                 <TeamRosterView
                   teamIdx={teamIdx}
                   onTeamChange={setTeamIdx}
@@ -89,34 +79,60 @@ function Shell() {
                 />
               </TabsContent>
 
-              <TabsContent value="edit" className="space-y-3">
-                <Intro>
-                  Pick a team, then edit each player's name, face, and ratings. Changed values
-                  are highlighted in yellow.
-                </Intro>
-                <PlayerAbilitiesEditor
-                  teamIdx={editTeam}
-                  onTeamChange={setTeamIdx}
-                  group={group}
-                  onGroupChange={setGroup}
-                  onOpenPlayer={(pos) => setCard({ team: editTeam, pos })}
-                />
-              </TabsContent>
-
-              <TabsContent value="names" className="space-y-3">
-                <Intro>
-                  Every team's full roster on one page — quick for renaming players or changing
-                  jersey numbers across the league.
-                </Intro>
-                <PlayerNameEditor />
-              </TabsContent>
-
-              <TabsContent value="save" className="space-y-3">
-                <ExportPanel />
-              </TabsContent>
-
               <TabsContent value="advanced" className="space-y-3">
-                <AdvancedTools />
+                <Tabs value={advancedTab} onValueChange={setAdvancedTab}>
+                  <TabsList className="flex h-auto w-full flex-wrap justify-start">
+                    <TabsTrigger value="edit" className="gap-1.5">
+                      <SlidersHorizontal className="size-4" /> Edit Players
+                    </TabsTrigger>
+                    <TabsTrigger value="names" className="gap-1.5">
+                      <Hash className="size-4" /> Names &amp; Jersey Numbers
+                    </TabsTrigger>
+                    <TabsTrigger value="save" className="gap-1.5">
+                      <Save className="size-4" /> Save &amp; Share
+                    </TabsTrigger>
+                    <TabsTrigger value="inspect" className="gap-1.5 text-muted-foreground">
+                      <Search className="size-4" /> Inspect ROM Data
+                    </TabsTrigger>
+                    <TabsTrigger value="layouts" className="gap-1.5 text-muted-foreground">
+                      <Table className="size-4" /> Custom Data Layouts
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="edit" className="space-y-3">
+                    <Intro>
+                      Pick a team, then edit each player's name, face, and ratings. Changed values
+                      are highlighted in yellow.
+                    </Intro>
+                    <PlayerAbilitiesEditor
+                      teamIdx={editTeam}
+                      onTeamChange={setTeamIdx}
+                      group={group}
+                      onGroupChange={setGroup}
+                      onOpenPlayer={(pos) => setCard({ team: editTeam, pos })}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="names" className="space-y-3">
+                    <Intro>
+                      Every team's full roster on one page — quick for renaming players or changing
+                      jersey numbers across the league.
+                    </Intro>
+                    <PlayerNameEditor />
+                  </TabsContent>
+
+                  <TabsContent value="save" className="space-y-3">
+                    <ExportPanel />
+                  </TabsContent>
+
+                  <TabsContent value="inspect" className="space-y-3">
+                    <InspectRomTools />
+                  </TabsContent>
+
+                  <TabsContent value="layouts" className="space-y-3">
+                    <CustomLayoutTools />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
             <PlayerCard
@@ -130,8 +146,8 @@ function Shell() {
       </main>
 
       <footer className="border-t-[3px] border-[#fc74b4] bg-card px-4 py-6 text-center text-xs leading-loose text-muted-foreground">
-        This tool ships with no ROM data and no NFL/Tecmo/Nintendo content. You must supply
-        your own legally owned ROM. All processing happens in your browser.
+        This tool ships with no ROM data and no NFL/Tecmo/Nintendo content. You must supply your own
+        legally owned ROM. All processing happens in your browser.
       </footer>
     </div>
   );

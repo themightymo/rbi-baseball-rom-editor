@@ -296,7 +296,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
 
           {recOff === null ? (
             <p className="normal-case" style={{ marginTop: "2em", fontSize: "0.75em", lineHeight: 1.5 }}>
-              Ratings couldn't be located in this ROM. Set their location from the Edit Players tab.
+              Ratings couldn't be located in this ROM. Set their location from Advanced › Edit Players.
             </p>
           ) : (
             <div style={{ marginTop: "1.25em" }}>

@@ -48,7 +48,7 @@ export function ExportPanel() {
         <p className="mt-2 text-xs text-muted-foreground">
           A <em>project file</em> saves your list of changes so you can re-apply them to a fresh
           ROM later. A <em>layout file</em> holds any custom data layouts you described in the
-          Advanced tab.
+          Custom Data Layouts tab.
         </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Button
