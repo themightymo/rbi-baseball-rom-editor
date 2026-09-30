@@ -2,22 +2,12 @@ import { useRef } from "react";
 import { useRom } from "@/lib/romStore";
 import { Button } from "@/components/ui/button";
 import { buildIPS } from "@/lib/diff";
-import { Download, Upload, FileJson, RotateCcw, FileCode } from "lucide-react";
+import { download, saveFileAs } from "@/lib/download";
+import { Save, Upload, FileJson, FileCode } from "lucide-react";
 import { DEFAULT_ROM_MAP, type RomMap } from "@/types/RomMap";
 
-function download(name: string, data: Uint8Array | string, mime = "application/octet-stream") {
-  const part: BlobPart = typeof data === "string" ? data : new Uint8Array(data).buffer as ArrayBuffer;
-  const blob = new Blob([part], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export function ExportPanel() {
-  const { rom, originalRom, romName, edits, romMap, setRomMap, clearEdits, setBytes } = useRom();
+  const { rom, originalRom, romName, edits, romMap, setRomMap, setBytes } = useRom();
   const importRef = useRef<HTMLInputElement>(null);
   const projectRef = useRef<HTMLInputElement>(null);
 
@@ -25,39 +15,42 @@ export function ExportPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Change summary
-        </h3>
-        <p className="mt-1 text-sm">
-          {editCount === 0
-            ? "No edited bytes."
-            : `${editCount} byte${editCount === 1 ? "" : "s"} modified across the ROM.`}
-        </p>
-        {editCount > 0 && (
-          <Button variant="outline" size="sm" className="mt-2" onClick={clearEdits}>
-            <RotateCcw className="size-4" /> Revert all edits
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Option
+          title="Save the edited ROM"
+          body="Writes a complete .nes file with your changes. Load it in any emulator to play."
+        >
+          <Button disabled={!rom} onClick={() => rom && saveFileAs(romName ?? "modified.nes", rom)}>
+            <Save className="size-4" /> Save ROM As…
           </Button>
-        )}
+        </Option>
+        <Option
+          title="Share as a patch"
+          body="A small .ips file containing only your changes. Others apply it to their own copy of the ROM — the safe, legal way to share a mod."
+        >
+          <Button
+            variant="outline"
+            disabled={!rom || !originalRom || editCount === 0}
+            onClick={() => {
+              if (!rom || !originalRom) return;
+              download((romName ?? "rom").replace(/\.nes$/i, "") + ".ips", buildIPS(originalRom, rom));
+            }}
+          >
+            <FileCode className="size-4" /> Download IPS patch
+          </Button>
+        </Option>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Button
-          disabled={!rom}
-          onClick={() => rom && download(romName ?? "modified.nes", rom)}
-        >
-          <Download className="size-4" /> Export modified ROM
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!rom || !originalRom}
-          onClick={() => {
-            if (!rom || !originalRom) return;
-            download((romName ?? "rom") + ".ips", buildIPS(originalRom, rom));
-          }}
-        >
-          <FileCode className="size-4" /> Export IPS patch
-        </Button>
+      <details className="rounded-lg border bg-card p-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          Advanced: work-in-progress &amp; layout files
+        </summary>
+        <p className="mt-2 text-xs text-muted-foreground">
+          A <em>project file</em> saves your list of changes so you can re-apply them to a fresh
+          ROM later. A <em>layout file</em> holds any custom data layouts you described in the
+          Advanced tab.
+        </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Button
           variant="outline"
           onClick={() =>
@@ -68,10 +61,10 @@ export function ExportPanel() {
             )
           }
         >
-          <FileJson className="size-4" /> Export ROM map JSON
+          <FileJson className="size-4" /> Export layout file
         </Button>
         <Button variant="outline" onClick={() => importRef.current?.click()}>
-          <Upload className="size-4" /> Import ROM map JSON
+          <Upload className="size-4" /> Import layout file
         </Button>
         <input
           ref={importRef}
@@ -86,7 +79,7 @@ export function ExportPanel() {
               const parsed = JSON.parse(text) as RomMap;
               setRomMap({ ...DEFAULT_ROM_MAP, ...parsed });
             } catch {
-              alert("Invalid ROM map JSON");
+              alert("That doesn't look like a valid layout file.");
             }
             e.target.value = "";
           }}
@@ -112,10 +105,10 @@ export function ExportPanel() {
             );
           }}
         >
-          <FileJson className="size-4" /> Export project JSON
+          <FileJson className="size-4" /> Save project file
         </Button>
         <Button variant="outline" onClick={() => projectRef.current?.click()} disabled={!rom}>
-          <Upload className="size-4" /> Import project JSON
+          <Upload className="size-4" /> Open project file
         </Button>
         <input
           ref={projectRef}
@@ -133,13 +126,17 @@ export function ExportPanel() {
                 setBytes(offset, new Uint8Array([value]));
               }
             } catch {
-              alert("Invalid project JSON");
+              alert("That doesn't look like a valid project file.");
             }
             e.target.value = "";
           }}
         />
       </div>
+      </details>
 
+      {editCount > 0 && originalRom && rom && (
+        <h3 className="text-sm font-medium">Changed bytes ({editCount})</h3>
+      )}
       {editCount > 0 && originalRom && rom && (
         <div className="max-h-72 overflow-auto rounded-lg border font-mono text-xs">
           <table className="w-full">
@@ -166,6 +163,18 @@ export function ExportPanel() {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function Option({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+      <div>
+        <h3 className="font-medium">{title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+      </div>
+      <div className="mt-auto">{children}</div>
     </div>
   );
 }

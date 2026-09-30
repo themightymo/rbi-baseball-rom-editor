@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRom } from "@/lib/romStore";
-import { buildIPS } from "@/lib/diff";
 import { loadTeams, splitName, type Player, type TeamData } from "@/lib/nameLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Download, FileCode, Wand2, Settings } from "lucide-react";
+import { Wand2, Settings } from "lucide-react";
 
 // Face IDs that point to real face scripts in Bank 15.
 // 0x53–0x80 all map to PLAYER_FACE_SCRIPT_BAD_PTR and produce no face.
@@ -125,14 +124,6 @@ function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
-}
-
-function downloadBlob(name: string, data: Uint8Array) {
-  const blob = new Blob([data.buffer as ArrayBuffer]);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  URL.revokeObjectURL(url);
 }
 
 // Face portrait images from the open-source tsbtools project
@@ -394,7 +385,7 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerAbilitiesEditor() {
-  const { rom, originalRom, romName, hasINES, setBytes, clearEdits, edits } = useRom();
+  const { rom, originalRom, hasINES, setBytes } = useRom();
 
   const allTeams = useMemo((): TeamData[] | null => {
     if (!originalRom) return null;
@@ -402,7 +393,7 @@ export function PlayerAbilitiesEditor() {
     return Array.isArray(result) ? result : null;
   }, [originalRom, hasINES]);
 
-  const [base, setBase] = useState<number | null>(() => {
+  const [storedBase, setStoredBase] = useState<number | null>(() => {
     try { const s = localStorage.getItem(LS_KEY); return s ? parseInt(s) : null; } catch { return null; }
   });
   const [showSetup, setShowSetup] = useState(false);
@@ -415,21 +406,21 @@ export function PlayerAbilitiesEditor() {
     return detectBase(originalRom);
   }, [originalRom]);
 
-  function activate(offset: number) {
-    setBase(offset);
-    try { localStorage.setItem(LS_KEY, String(offset)); } catch {}
+  // Prefer a manually stored offset, unless it's stale (the signature isn't where it should be)
+  // and we can auto-detect the real one. Otherwise just use auto-detection — no setup click.
+  const storedValid =
+    storedBase !== null && !!originalRom &&
+    DETECT_PATTERN.every((b, j) => (originalRom[storedBase + BUFFALO_INDEX * TEAM_BYTES + j] ?? -1) === b);
+  const base = storedBase !== null && (storedValid || detectedBase === null) ? storedBase : detectedBase;
+
+  function activate(offset: number | null) {
+    setStoredBase(offset);
+    try {
+      if (offset === null) localStorage.removeItem(LS_KEY);
+      else localStorage.setItem(LS_KEY, String(offset));
+    } catch { /* storage unavailable */ }
     setShowSetup(false);
   }
-
-  // Auto-correct a stale stored base (e.g. saved when BUFFALO_INDEX was a different value).
-  // Valid base: DETECT_PATTERN must appear at base + BUFFALO_INDEX * TEAM_BYTES.
-  useEffect(() => {
-    if (!originalRom || base === null || detectedBase === null) return;
-    const chk = base + BUFFALO_INDEX * TEAM_BYTES;
-    const valid = DETECT_PATTERN.every((b, j) => (originalRom[chk + j] ?? -1) === b);
-    if (!valid) activate(detectedBase);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originalRom, detectedBase]);
 
   function handleNibble(posIdx: number, byteIdx: number, hi: boolean, value: number) {
     if (!rom || base === null) return;
@@ -445,41 +436,37 @@ export function PlayerAbilitiesEditor() {
     setBytes(offset, new Uint8Array([value & 0xff]));
   }
 
-  if (!rom) {
-    return (
-      <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
-        Upload a ROM to use the abilities editor.
-      </div>
-    );
-  }
+  if (!rom) return null;
 
-  if (!base || showSetup) {
+  if (base === null || showSetup) {
     return (
       <div className="mx-auto max-w-lg py-4 space-y-4">
         {showSetup && (
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Settings</span>
+            <span className="text-sm font-semibold">Ratings data location</span>
             <Button variant="ghost" size="sm" onClick={() => setShowSetup(false)}>Cancel</Button>
           </div>
         )}
         <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-6 space-y-3 text-center">
-          <p className="text-sm font-semibold">Player Abilities Editor</p>
+          <p className="text-sm font-semibold">Where are the player ratings?</p>
           {detectedBase !== null ? (
             <>
               <p className="text-xs text-muted-foreground">
-                Abilities block found at file offset{" "}
-                <span className="font-mono">0x{detectedBase.toString(16).toUpperCase()}</span>{" "}
-                (auto-detected via Buffalo Bills QB1 signature).
+                Found automatically at file offset{" "}
+                <span className="font-mono">0x{detectedBase.toString(16).toUpperCase()}</span>.
+                You only need to change this for a heavily modified ROM.
               </p>
-              <Button size="lg" className="gap-2" onClick={() => activate(detectedBase)}>
-                <Wand2 className="size-5" /> Load abilities
+              <Button size="lg" className="gap-2" onClick={() => activate(null)}>
+                <Wand2 className="size-5" /> Use detected location
               </Button>
             </>
           ) : (
             <>
               <p className="text-xs text-muted-foreground">
-                Could not auto-detect the abilities block. Enter the file offset of the first
-                team's abilities data (hex).
+                We couldn't find the player ratings in this ROM automatically. It may be
+                modified or a different version. If you know where the ratings table starts,
+                enter its file offset in hex. Names &amp; jersey numbers can still be edited on
+                the next tab.
               </p>
               <div className="flex items-center justify-center gap-2">
                 <Input
@@ -501,8 +488,6 @@ export function PlayerAbilitiesEditor() {
       </div>
     );
   }
-
-  const editCount = edits.size;
 
   const GROUPS: { id: GroupId; label: string }[] = [
     { id: "qb",      label: "Quarterbacks" },
@@ -551,7 +536,16 @@ export function PlayerAbilitiesEditor() {
   return (
     <div className="grid gap-4 lg:grid-cols-[200px_1fr]">
       {/* Team sidebar */}
-      <aside className="rounded-lg border bg-card p-2">
+      {/* Compact team picker on small screens */}
+      <select
+        value={teamIdx}
+        onChange={(e) => setTeamIdx(parseInt(e.target.value))}
+        className="h-10 rounded-md border border-input bg-card px-3 text-sm font-medium lg:hidden"
+      >
+        {TEAM_NAMES.map((name, i) => <option key={i} value={i}>{name}</option>)}
+      </select>
+
+      <aside className="hidden rounded-lg border bg-card p-2 lg:block">
         <div className="px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">
           Teams ({TEAM_COUNT})
         </div>
@@ -572,38 +566,8 @@ export function PlayerAbilitiesEditor() {
 
       {/* Main panel */}
       <div className="space-y-3">
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" disabled={editCount === 0} onClick={() => downloadBlob(romName ?? "modified.nes", rom)}>
-            <Download className="size-4" /> Export ROM
-            {editCount > 0 && (
-              <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-xs">{editCount}</span>
-            )}
-          </Button>
-          <Button
-            variant="outline" size="sm"
-            disabled={editCount === 0 || !originalRom}
-            onClick={() => originalRom && downloadBlob((romName ?? "rom") + ".ips", buildIPS(originalRom, rom))}
-          >
-            <FileCode className="size-4" /> Export IPS
-          </Button>
-          {editCount > 0 && (
-            <>
-              <span className="text-xs text-muted-foreground">
-                {editCount} byte{editCount === 1 ? "" : "s"} modified
-              </span>
-              <Button variant="outline" size="sm" onClick={clearEdits}>
-                Revert all
-              </Button>
-            </>
-          )}
-          <Button variant="ghost" size="sm" className="ml-auto gap-1.5" onClick={() => setShowSetup(true)}>
-            <Settings className="size-4" /> Settings
-          </Button>
-        </div>
-
         {/* Group tabs */}
-        <div className="flex flex-wrap gap-1 border-b pb-2">
+        <div className="flex flex-wrap items-center gap-1 border-b pb-2">
           {GROUPS.map((g) => (
             <button
               key={g.id}
@@ -615,6 +579,13 @@ export function PlayerAbilitiesEditor() {
               {g.label}
             </button>
           ))}
+          <Button
+            variant="ghost" size="sm" className="ml-auto gap-1.5 text-muted-foreground"
+            title="Change where the ratings are read from (advanced)"
+            onClick={() => setShowSetup(true)}
+          >
+            <Settings className="size-4" />
+          </Button>
         </div>
 
         {/* Attribute table */}
@@ -627,7 +598,7 @@ export function PlayerAbilitiesEditor() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Abilities base: 0x{base.toString(16).toUpperCase()} · {TEAM_BYTES} bytes/team · {TEAM_COUNT} teams
+          Ratings use the game's 6–100 scale. Click a face to pick a different portrait.
         </p>
       </div>
     </div>

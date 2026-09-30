@@ -40,8 +40,8 @@ export function PlayerRosterEditor() {
   if (!ready) {
     return (
       <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
-        Define the player record (offset, length, count, players-per-team, and at least
-        one field) in the <strong>Mappers → Players</strong> tab to enable this editor.
+        Fill in the starting offset, entry size, player count, and players per team above,
+        then add at least one field — an editable table of players will appear here.
       </div>
     );
   }

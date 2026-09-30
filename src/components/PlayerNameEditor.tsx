@@ -1,10 +1,7 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
-import { buildIPS } from "@/lib/diff";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { Download, FileCode, Wand2, Settings } from "lucide-react";
 
 // ─── TSB ROM constants ────────────────────────────────────────────────────────
 
@@ -126,24 +123,6 @@ function loadTeams(rom: Uint8Array, hasINES: boolean): TeamData[] | string {
   return teams;
 }
 
-// ─── Persistence ─────────────────────────────────────────────────────────────
-
-const LS_KEY = "tecmo.nameconfig.v4";
-
-interface Config { ready: boolean }
-
-function loadConfig(): Config | null {
-  try { return localStorage.getItem(LS_KEY) ? { ready: true } : null; } catch { return null; }
-}
-
-function downloadBlob(name: string, data: Uint8Array) {
-  const blob = new Blob([data.buffer as ArrayBuffer]);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  URL.revokeObjectURL(url);
-}
-
 // ─── Team name lookup ─────────────────────────────────────────────────────────
 
 const TEAM_NAMES = [
@@ -164,21 +143,13 @@ const TEAM_NAMES = [
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerNameEditor() {
-  const { rom, originalRom, romName, hasINES, setBytes, edits } = useRom();
-  const [config, setConfig] = useState<Config | null>(loadConfig);
-  const [showSetup, setShowSetup] = useState(false);
-
-  function activate() {
-    setConfig({ ready: true });
-    try { localStorage.setItem(LS_KEY, "1"); } catch {}
-    setShowSetup(false);
-  }
+  const { rom, originalRom, hasINES, setBytes } = useRom();
 
   // Load teams from original ROM (stable offsets)
   const result = useMemo(() => {
-    if (!originalRom || !config) return null;
+    if (!originalRom) return null;
     return loadTeams(originalRom, hasINES);
-  }, [originalRom, hasINES, config]);
+  }, [originalRom, hasINES]);
 
   const teams = Array.isArray(result) ? result : null;
   const loadError = typeof result === "string" ? result : null;
@@ -207,80 +178,24 @@ export function PlayerNameEditor() {
     setBytes(p.offset, new Uint8Array([decToBcd(n)]));
   }
 
-  if (!rom) {
-    return (
-      <div className="rounded-lg border border-dashed bg-card p-6 text-sm text-muted-foreground">
-        Upload a ROM to use the name editor.
-      </div>
-    );
-  }
-
-  if (!config || showSetup) {
-    return (
-      <div className="mx-auto max-w-lg py-4 space-y-4">
-        {showSetup && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Settings</span>
-            <Button variant="ghost" size="sm" onClick={() => setShowSetup(false)}>Cancel</Button>
-          </div>
-        )}
-        <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-6 text-center space-y-3">
-          <p className="text-sm font-semibold">Tecmo Super Bowl (NES) Name Editor</p>
-          <p className="text-xs text-muted-foreground">
-            Reads all 28 team rosters from the pointer table at ROM offset 0x0010.
-            Works with standard NTSC ROMs (with or without iNES header).
-          </p>
-          <Button size="lg" className="gap-2" onClick={activate}>
-            <Wand2 className="size-5" /> Load rosters
-          </Button>
-        </div>
-        {loadError && (
-          <p className="rounded bg-destructive/10 px-3 py-2 text-xs text-destructive">{loadError}</p>
-        )}
-      </div>
-    );
-  }
+  if (!rom) return null;
 
   if (loadError) {
     return (
-      <div className="space-y-3">
-        <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          {loadError}
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
+        <p className="font-medium text-destructive">
+          Couldn't find the player rosters in this ROM.
         </p>
-        <Button variant="outline" size="sm" onClick={() => setShowSetup(true)}>
-          <Settings className="size-4" /> Settings
-        </Button>
+        <p className="mt-1 text-muted-foreground">
+          This editor expects an unmodified-layout NTSC Tecmo Super Bowl ROM. Heavily hacked
+          ROMs may need the Advanced tools. <span className="font-mono text-xs">({loadError})</span>
+        </p>
       </div>
     );
   }
 
-  const editCount = edits.size;
-
   return (
     <div className="space-y-4">
-      {/* Top bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={editCount === 0} onClick={() => downloadBlob(romName ?? "modified.nes", rom)}>
-          <Download className="size-4" /> Export ROM
-          {editCount > 0 && (
-            <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-xs">{editCount}</span>
-          )}
-        </Button>
-        <Button
-          variant="outline" size="sm"
-          disabled={editCount === 0 || !originalRom}
-          onClick={() => originalRom && downloadBlob((romName ?? "rom") + ".ips", buildIPS(originalRom, rom))}
-        >
-          <FileCode className="size-4" /> Export IPS
-        </Button>
-        {editCount > 0 && (
-          <span className="text-xs text-muted-foreground">{editCount} byte{editCount === 1 ? "" : "s"} modified</span>
-        )}
-        <Button variant="ghost" size="sm" className="ml-auto gap-1.5" onClick={() => setShowSetup(true)}>
-          <Settings className="size-4" /> Settings
-        </Button>
-      </div>
-
       {/* Teams */}
       <Accordion type="multiple" className="rounded-lg border bg-card overflow-hidden">
         {teams?.map((team) => {
@@ -304,10 +219,9 @@ export function PlayerNameEditor() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20 text-left text-xs text-muted-foreground">
                 <tr>
-                  <th className="w-14 px-3 py-2">#</th>
+                  <th className="w-14 px-3 py-2">Jersey</th>
                   <th className="px-2 py-2">First Name</th>
                   <th className="px-2 py-2">Last Name</th>
-                  <th className="w-28 px-2 py-2 text-right">Offset</th>
                 </tr>
               </thead>
               <tbody>
@@ -345,9 +259,6 @@ export function PlayerNameEditor() {
                           maxLength={maxLast}
                           onChange={(e) => writeName(p, cur.first, e.target.value)}
                         />
-                      </td>
-                      <td className="px-2 py-1.5 text-right font-mono text-[10px] text-muted-foreground">
-                        0x{p.offset.toString(16).toUpperCase()}
                       </td>
                     </tr>
                   );
