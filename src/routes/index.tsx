@@ -71,7 +71,6 @@ function Shell() {
               </TabsList>
 
               <TabsContent value="roster" className="space-y-3">
-                <Intro>Each team's full roster, laid out like the in-game team screen.</Intro>
                 <TeamRosterView
                   teamIdx={teamIdx}
                   onTeamChange={setTeamIdx}
