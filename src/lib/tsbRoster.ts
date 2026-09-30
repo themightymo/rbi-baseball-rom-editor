@@ -98,7 +98,9 @@ const TEAM_SCREEN_COLOR = [
 ];
 export const teamScreenColor = (team: number) => NES[TEAM_SCREEN_COLOR[team] ?? 0x01]!;
 
-// Abbreviations as the game's TEAM DATA screen prints them (always 4 tiles wide).
+// Abbreviations as the game's TEAM DATA screen prints them (always 4 tiles wide). That
+// screen draws them as graphics; the editable text versions live in the team string table
+// (see readTeamText) and differ for a few teams (JETS, GIA., RAI., RAMS).
 export const TEAM_ABBR = [
   "BUF.", "IND.", "MIA.", "N.E.", "NYJ.",
   "CIN.", "CLE.", "HOU.", "PIT.",
@@ -165,13 +167,23 @@ const TEAM_TEXT_POINTERS = 0x1fc10;
 const TEAM_TEXT_COUNT = 120;
 const TEAM_TEXT_CPU_TO_FILE = 0x14010; // $8000 → 0x1C010 (headered)
 const TEAM_TEXT_BANK_END = 0x20010; // $C000
+const ABBR_BASE = 0;
 const CITY_BASE = 32;
 const NICKNAME_BASE = 64;
 
-export type TeamTextField = "city" | "nickname";
+export type TeamTextField = "city" | "nickname" | "abbr";
 
-/** Longest stock values (SAN FRANCISCO, BUCCANEERS); longer ones can spill off game screens. */
-export const TEAM_TEXT_MAX: Record<TeamTextField, number> = { city: 13, nickname: 10 };
+const FIELD_BASE: Record<TeamTextField, number> = {
+  abbr: ABBR_BASE,
+  city: CITY_BASE,
+  nickname: NICKNAME_BASE,
+};
+
+/**
+ * Longest stock values (SAN FRANCISCO, BUCCANEERS); longer ones can spill off game screens.
+ * Abbreviations are always stored 4 wide ("AFC " is space-padded), so shorter ones get padded.
+ */
+export const TEAM_TEXT_MAX: Record<TeamTextField, number> = { city: 13, nickname: 10, abbr: 4 };
 
 /** Characters the game's font has tiles for. */
 export const TEAM_TEXT_ALLOWED = /^[A-Z0-9 .]*$/;
@@ -214,15 +226,16 @@ const ascii = (b: Uint8Array) => String.fromCharCode(...b);
 export interface TeamText {
   city: string[];
   nickname: string[];
+  abbr: string[];
 }
 
-/** City and nickname for each of the 28 regular teams, or null if the table isn't found. */
+/** City, nickname and abbreviation for each of the 28 regular teams, or null if the table isn't found. */
 export function readTeamText(rom: Uint8Array, hasINES: boolean): TeamText | null {
   const t = readTeamTextTable(rom, hasINES);
   if (!t) return null;
   const pick = (base: number) =>
     TEAM_NAMES.map((_, i) => ascii(t.strings[base + i]!).trim());
-  return { city: pick(CITY_BASE), nickname: pick(NICKNAME_BASE) };
+  return { city: pick(CITY_BASE), nickname: pick(NICKNAME_BASE), abbr: pick(ABBR_BASE) };
 }
 
 /** Bytes still free in the string block for renames. */
@@ -234,7 +247,7 @@ export function teamTextFreeBytes(rom: Uint8Array, original: Uint8Array, hasINES
 }
 
 /**
- * Builds the patch that renames one team's city and nickname: a contiguous run of bytes
+ * Builds the patch that renames one team's city, nickname and/or abbreviation: a contiguous run of bytes
  * starting at `offset` covering the pointers and the repacked strings. Returns an error
  * message instead if the new text doesn't fit.
  */
@@ -243,14 +256,15 @@ export function writeTeamText(
   original: Uint8Array,
   hasINES: boolean,
   team: number,
-  city: string,
-  nickname: string,
+  values: Partial<Record<TeamTextField, string>>,
 ): { offset: number; bytes: Uint8Array } | string {
   const t = readTeamTextTable(rom, hasINES);
   if (!t) return "Couldn't find the team name table in this ROM.";
   const strings = [...t.strings];
-  strings[CITY_BASE + team] = Uint8Array.from(city, (c) => c.charCodeAt(0));
-  strings[NICKNAME_BASE + team] = Uint8Array.from(nickname, (c) => c.charCodeAt(0));
+  for (const [field, value] of Object.entries(values) as [TeamTextField, string][]) {
+    const v = field === "abbr" ? value.padEnd(TEAM_TEXT_MAX.abbr) : value;
+    strings[FIELD_BASE[field] + team] = Uint8Array.from(v, (c) => c.charCodeAt(0));
+  }
 
   const limit = teamTextLimit(original, hasINES);
   const used = strings.reduce((n, s) => n + s.length, 0);
@@ -291,4 +305,10 @@ const titleCase = (s: string) =>
 export function teamNameFrom(text: TeamText | null, team: number) {
   if (!text || isAllStarTeam(team) || !text.city[team]) return teamName(team);
   return titleCase(`${text.city[team]} ${text.nickname[team]}`);
+}
+
+/** The ROM's abbreviation (BUF., JETS…), falling back to the stock one. */
+export function teamAbbrFrom(text: TeamText | null, team: number) {
+  if (!text || isAllStarTeam(team) || !text.abbr[team]) return teamAbbr(team);
+  return text.abbr[team]!;
 }

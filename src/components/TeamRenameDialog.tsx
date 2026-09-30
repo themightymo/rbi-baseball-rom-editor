@@ -7,6 +7,7 @@ import {
   readTeamText,
   teamTextFreeBytes,
   writeTeamText,
+  type TeamText,
   type TeamTextField,
 } from "@/lib/tsbRoster";
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-/** Button + popup for changing a regular team's city and nickname in the ROM. */
+/** Button + popup for changing a regular team's city, nickname and abbreviation in the ROM. */
 export function TeamRenameDialog({ teamIdx }: { teamIdx: number }) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ city: "", nickname: "" });
+  const [draft, setDraft] = useState({ city: "", nickname: "", abbr: "" });
   const [error, setError] = useState<string | null>(null);
 
   const text = rom ? readTeamText(rom, hasINES) : null;
+  const pick = (t: TeamText) => ({
+    city: t.city[teamIdx]!,
+    nickname: t.nickname[teamIdx]!,
+    abbr: t.abbr[teamIdx]!,
+  });
   const orig = originalRom ? readTeamText(originalRom, hasINES) : null;
   if (!rom || !originalRom || !text) return null;
 
   const onOpenChange = (o: boolean) => {
-    if (o) setDraft({ city: text.city[teamIdx]!, nickname: text.nickname[teamIdx]! });
+    if (o) setDraft(pick(text));
     setError(null);
     setOpen(o);
   };
@@ -49,15 +55,16 @@ export function TeamRenameDialog({ teamIdx }: { teamIdx: number }) {
   const save = () => {
     const city = draft.city.trim();
     const nickname = draft.nickname.trim();
-    if (!city || !nickname) return setError("City and team name can't be empty.");
-    const patch = writeTeamText(rom, originalRom, hasINES, teamIdx, city, nickname);
+    const abbr = draft.abbr.trim();
+    if (!city || !nickname || !abbr)
+      return setError("City, team name and abbreviation can't be empty.");
+    const patch = writeTeamText(rom, originalRom, hasINES, teamIdx, { city, nickname, abbr });
     if (typeof patch === "string") return setError(patch);
     if (patch.bytes.length) setBytes(patch.offset, patch.bytes);
     setOpen(false);
   };
 
-  const restore = () =>
-    orig && setDraft({ city: orig.city[teamIdx]!, nickname: orig.nickname[teamIdx]! });
+  const restore = () => orig && setDraft(pick(orig));
 
   const free = teamTextFreeBytes(rom, originalRom, hasINES);
   const field = (key: TeamTextField, label: string) => {
@@ -87,20 +94,21 @@ export function TeamRenameDialog({ teamIdx }: { teamIdx: number }) {
           <Pencil /> Rename team
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Rename team</DialogTitle>
           <DialogDescription>
             Letters, numbers, spaces and periods only — the game shows team names in capitals.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-[1fr_1fr_5rem]">
           {field("city", "City")}
           {field("nickname", "Team name")}
+          {field("abbr", "Short")}
         </div>
         <p className="text-xs text-muted-foreground">
           All team names share one block of ROM space ({free} letters free right now). The short
-          abbreviation (e.g. BUF.) isn't changed.
+          name (BUF., JETS…) is always 4 characters; shorter ones are padded with spaces.
         </p>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="gap-2">

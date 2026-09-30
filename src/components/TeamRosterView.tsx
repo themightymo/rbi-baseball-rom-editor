@@ -12,7 +12,6 @@ import {
   readReturners,
   resolvePlayer,
   splitStarters,
-  teamAbbr,
   type PositionName,
 } from "@/lib/tsbRoster";
 import { TeamSelect } from "@/components/TeamSelect";
@@ -52,7 +51,7 @@ const KP: PositionName[] = ["K", "P"];
 export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
   const allStar = isAllStarTeam(teamIdx);
-  const teamName = useTeamNames();
+  const { name: teamName, abbr: teamAbbr } = useTeamNames();
 
   const teams = useMemo((): TeamData[] | null => {
     if (!originalRom) return null;

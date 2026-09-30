@@ -9,7 +9,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 
 export function PlayerNameEditor() {
   const { rom, originalRom, hasINES, setBytes } = useRom();
-  const teamName = useTeamNames();
+  const { name: teamName } = useTeamNames();
 
   // Load teams from original ROM (stable offsets)
   const result = useMemo(() => {

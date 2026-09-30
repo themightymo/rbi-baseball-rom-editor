@@ -97,7 +97,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   teamIdx: number; posIdx: number; onNavigate: (p: number) => void; onClose: () => void;
 }) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
-  const teamName = useTeamNames();
+  const { name: teamName } = useTeamNames();
   const [faceOpen, setFaceOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
 

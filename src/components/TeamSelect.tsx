@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { decodeHelmet, NES_RGB } from "@/lib/helmets";
 import { useRom } from "@/lib/romStore";
-import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam, teamAbbr } from "@/lib/tsbRoster";
+import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam } from "@/lib/tsbRoster";
 import { useTeamNames } from "@/lib/useTeamNames";
 
 interface Props {
@@ -36,7 +36,7 @@ const SCREEN_STYLE: React.CSSProperties = {
 export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
   const { rom, hasINES } = useRom();
   const [open, setOpen] = useState(false);
-  const teamName = useTeamNames();
+  const { name: teamName, abbr: teamAbbr } = useTeamNames();
   const helmets = useMemo(
     () => (rom ? TEAM_NAMES.map((_, t) => decodeHelmet(rom, hasINES, t)) : []),
     [rom, hasINES],
@@ -105,9 +105,9 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
                   {div.map((t) => (
                     <TeamButton
                       key={t}
-                      team={t}
                       helmet={helmets[t]}
                       name={teamName(t)}
+                      abbr={teamAbbr(t)}
                       selected={t === teamIdx}
                       onClick={() => choose(t)}
                     />
@@ -125,15 +125,15 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
 }
 
 function TeamButton({
-  team,
   helmet,
   name,
+  abbr,
   selected,
   onClick,
 }: {
-  team: number;
   helmet: Int8Array | undefined;
   name: string;
+  abbr: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -150,7 +150,7 @@ function TeamButton({
         className="ml-[0.25em] group-hover:text-[#f8b800]"
         style={selected ? { color: YELLOW } : undefined}
       >
-        {teamAbbr(team)}
+        {abbr}
       </span>
     </button>
   );
