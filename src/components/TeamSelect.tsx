@@ -1,5 +1,7 @@
 import "@fontsource/press-start-2p/latin-400.css";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { decodeHelmet, NES_RGB } from "@/lib/helmets";
 import { useRom } from "@/lib/romStore";
 import { CONFERENCES, TEAM_ABBR, TEAM_NAMES } from "@/lib/tsbRoster";
@@ -24,52 +26,83 @@ const SCREEN_STYLE: React.CSSProperties = {
   color: WHITE,
 };
 
-/** Mirrors the game's TEAM DATA → SELECT TEAM screen: helmets and abbreviations by division. */
+/**
+ * Button showing the current team; opens a popup that mirrors the game's
+ * TEAM DATA → SELECT TEAM screen (helmets and abbreviations by division).
+ */
 export function TeamSelect({ teamIdx, onTeamChange }: Props) {
   const { rom, hasINES } = useRom();
+  const [open, setOpen] = useState(false);
   const helmets = useMemo(
     () => (rom ? TEAM_NAMES.map((_, t) => decodeHelmet(rom, hasINES, t)) : []),
     [rom, hasINES],
   );
 
+  const choose = (t: number) => {
+    onTeamChange(t);
+    setOpen(false);
+  };
+
   return (
-    <div className="w-full max-w-2xl overflow-hidden rounded-lg border-4 border-black shadow-lg [container-type:inline-size]">
-      <div style={SCREEN_STYLE} className="px-[1em] py-[1.5em]">
-        <div className="flex items-center justify-center gap-[1em]">
-          <Stars />
-          <span>TEAM DATA</span>
-          <Stars />
-        </div>
-        <div className="mt-[1.25em] text-center" style={{ color: YELLOW }}>
-          SELECT TEAM
-        </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="inline-flex items-center gap-2 rounded-md border bg-card py-1.5 pl-2 pr-3 text-sm font-medium shadow-sm transition hover:bg-accent">
+        <span className="rounded p-0.5 text-[16px]" style={{ background: BG }}>
+          <Helmet pixels={helmets[teamIdx]} />
+        </span>
+        {TEAM_NAMES[teamIdx]}
+        <ChevronDown className="size-4 text-muted-foreground" />
+      </DialogTrigger>
 
-        {CONFERENCES.map((conf) => (
-          <div
-            key={conf.name}
-            role="group"
-            aria-label={conf.name}
-            className="mt-[1.5em] grid grid-cols-3"
-          >
-            {conf.divisions.map((div, d) => (
-              <div key={d}>
-                {div.map((t) => (
-                  <TeamButton
-                    key={t}
-                    team={t}
-                    helmet={helmets[t]}
-                    selected={t === teamIdx}
-                    onClick={() => onTeamChange(t)}
-                  />
-                ))}
-              </div>
-            ))}
+      <DialogContent
+        aria-describedby={undefined}
+        onOpenAutoFocus={(e) => {
+          // Start keyboard focus on the current team rather than the first one.
+          e.preventDefault();
+          (e.currentTarget as HTMLElement)
+            .querySelector<HTMLElement>("[aria-pressed=true]")
+            ?.focus();
+        }}
+        className="w-[calc(100%-2rem)] max-w-2xl gap-0 overflow-hidden rounded-lg border-4 border-black p-0 text-white [container-type:inline-size]"
+      >
+        <div style={SCREEN_STYLE} className="px-[1em] py-[1.5em]">
+          <div className="flex items-center justify-center gap-[1em]">
+            <Stars />
+            <DialogTitle className="text-[1em] font-normal leading-none tracking-normal">
+              TEAM DATA
+            </DialogTitle>
+            <Stars />
           </div>
-        ))}
+          <div className="mt-[1.25em] text-center" style={{ color: YELLOW }}>
+            SELECT TEAM
+          </div>
 
-        <div className="mt-[1.5em] text-center">{TEAM_NAMES[teamIdx]?.toUpperCase()}</div>
-      </div>
-    </div>
+          {CONFERENCES.map((conf) => (
+            <div
+              key={conf.name}
+              role="group"
+              aria-label={conf.name}
+              className="mt-[1.5em] grid grid-cols-3"
+            >
+              {conf.divisions.map((div, d) => (
+                <div key={d}>
+                  {div.map((t) => (
+                    <TeamButton
+                      key={t}
+                      team={t}
+                      helmet={helmets[t]}
+                      selected={t === teamIdx}
+                      onClick={() => choose(t)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          <div className="mt-[1.5em] text-center">{TEAM_NAMES[teamIdx]?.toUpperCase()}</div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
