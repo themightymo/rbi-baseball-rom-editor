@@ -5,7 +5,6 @@ import { POSITIONS } from "@/lib/abilities";
 import {
   FORMATION_LABEL,
   POSITION_NAMES,
-  TEAM_NAMES,
   allStarSlotOffset,
   isAllStarTeam,
   posIndex,
@@ -14,10 +13,11 @@ import {
   resolvePlayer,
   splitStarters,
   teamAbbr,
-  teamName,
   type PositionName,
 } from "@/lib/tsbRoster";
 import { TeamSelect } from "@/components/TeamSelect";
+import { TeamRenameDialog } from "@/components/TeamRenameDialog";
+import { useTeamNames } from "@/lib/useTeamNames";
 
 interface Props {
   teamIdx: number;
@@ -52,6 +52,7 @@ const KP: PositionName[] = ["K", "P"];
 export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
   const allStar = isAllStarTeam(teamIdx);
+  const teamName = useTeamNames();
 
   const teams = useMemo((): TeamData[] | null => {
     if (!originalRom) return null;
@@ -143,8 +144,8 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
           }}
           className="absolute inset-0 cursor-pointer opacity-0"
         >
-          {TEAM_NAMES.map((tn, t) => (
-            <optgroup key={t} label={tn}>
+          {teams.map((_, t) => (
+            <optgroup key={t} label={teamName(t)}>
               {POSITIONS.map((pd, sl) =>
                 pd.type === type ? (
                   <option key={sl} value={`${t}:${sl}`}>
@@ -184,7 +185,10 @@ export function TeamRosterView({ teamIdx, onTeamChange, onEditPlayer }: Props) {
 
   return (
     <div className="space-y-3">
-      <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} allStars />
+      <div className="flex flex-wrap items-center gap-2">
+        <TeamSelect teamIdx={teamIdx} onTeamChange={onTeamChange} allStars />
+        {!allStar && <TeamRenameDialog teamIdx={teamIdx} />}
+      </div>
 
       {/* Game-style screen */}
       <div className="overflow-hidden nes-window font-mono text-sm text-white">

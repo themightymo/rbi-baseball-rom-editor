@@ -2,13 +2,14 @@ import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { Input } from "@/components/ui/input";
 import { bcdToDec, decToBcd, loadTeams, splitName, type Player } from "@/lib/nameLoader";
-import { TEAM_NAMES } from "@/lib/tsbRoster";
+import { useTeamNames } from "@/lib/useTeamNames";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function PlayerNameEditor() {
   const { rom, originalRom, hasINES, setBytes } = useRom();
+  const teamName = useTeamNames();
 
   // Load teams from original ROM (stable offsets)
   const result = useMemo(() => {
@@ -72,7 +73,7 @@ export function PlayerNameEditor() {
           <AccordionItem key={team.index} value={`team-${team.index}`} className="border-b last:border-b-0">
             <AccordionTrigger className="px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:no-underline hover:bg-muted/50">
               <span className="flex items-center gap-2">
-                {TEAM_NAMES[team.index] ?? `Team ${team.index + 1}`}
+                {teamName(team.index)}
                 {changedCount > 0 && (
                   <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning">
                     {changedCount} edited

@@ -152,3 +152,143 @@ export function resolvePlayer(rom: Uint8Array, hasINES: boolean, team: number, s
   // Guard against junk in hacked ROMs so callers can always index a real team.
   return src.team < TEAM_NAMES.length && src.slot < POSITION_NAMES.length ? src : { team: 0, slot };
 }
+
+
+// ─── Team city / nickname strings ─────────────────────────────────────────────
+// A table of 120 little-endian CPU pointers into a block of packed, unterminated
+// strings: each string ends where the next pointer begins, and the last pointer is an
+// end sentinel. Entries 0–27 are abbreviations, 32–59 cities and 64–91 nicknames (then
+// AFC/NFC, quarter labels, menu words…). The strings sit in the bank mapped at
+// $8000–$BFFF, followed by unused $FF padding up to the end of the bank, so renaming a
+// team repacks every string and rewrites the pointers.
+const TEAM_TEXT_POINTERS = 0x1fc10;
+const TEAM_TEXT_COUNT = 120;
+const TEAM_TEXT_CPU_TO_FILE = 0x14010; // $8000 → 0x1C010 (headered)
+const TEAM_TEXT_BANK_END = 0x20010; // $C000
+const CITY_BASE = 32;
+const NICKNAME_BASE = 64;
+
+export type TeamTextField = "city" | "nickname";
+
+/** Longest stock values (SAN FRANCISCO, BUCCANEERS); longer ones can spill off game screens. */
+export const TEAM_TEXT_MAX: Record<TeamTextField, number> = { city: 13, nickname: 10 };
+
+/** Characters the game's font has tiles for. */
+export const TEAM_TEXT_ALLOWED = /^[A-Z0-9 .]*$/;
+
+interface TeamTextTable {
+  strings: Uint8Array[];
+  /** Headered file offset of the first string. */
+  start: number;
+}
+
+function readTeamTextTable(rom: Uint8Array, hasINES: boolean): TeamTextTable | null {
+  const table = fileOffset(TEAM_TEXT_POINTERS, hasINES);
+  if (table + TEAM_TEXT_COUNT * 2 > rom.length) return null;
+  const ptrs: number[] = [];
+  for (let i = 0; i < TEAM_TEXT_COUNT; i++) {
+    const cpu = rom[table + i * 2]! | (rom[table + i * 2 + 1]! << 8);
+    const file = cpu + TEAM_TEXT_CPU_TO_FILE;
+    // Pointers must stay in the bank and never go backwards; otherwise this isn't the table.
+    if (cpu < 0x8000 || file > TEAM_TEXT_BANK_END || (i > 0 && file < ptrs[i - 1]!)) return null;
+    ptrs.push(file);
+  }
+  const strings: Uint8Array[] = [];
+  for (let i = 0; i < TEAM_TEXT_COUNT - 1; i++) {
+    strings.push(rom.slice(fileOffset(ptrs[i]!, hasINES), fileOffset(ptrs[i + 1]!, hasINES)));
+  }
+  return { strings, start: ptrs[0]! };
+}
+
+/** End of usable space: the original end sentinel plus any unused $FF bytes after it. */
+function teamTextLimit(original: Uint8Array, hasINES: boolean): number {
+  const table = fileOffset(TEAM_TEXT_POINTERS, hasINES) + (TEAM_TEXT_COUNT - 1) * 2;
+  let end = original[table]! | (original[table + 1]! << 8);
+  end += TEAM_TEXT_CPU_TO_FILE;
+  while (end < TEAM_TEXT_BANK_END && original[fileOffset(end, hasINES)] === 0xff) end++;
+  return end;
+}
+
+const ascii = (b: Uint8Array) => String.fromCharCode(...b);
+
+export interface TeamText {
+  city: string[];
+  nickname: string[];
+}
+
+/** City and nickname for each of the 28 regular teams, or null if the table isn't found. */
+export function readTeamText(rom: Uint8Array, hasINES: boolean): TeamText | null {
+  const t = readTeamTextTable(rom, hasINES);
+  if (!t) return null;
+  const pick = (base: number) =>
+    TEAM_NAMES.map((_, i) => ascii(t.strings[base + i]!).trim());
+  return { city: pick(CITY_BASE), nickname: pick(NICKNAME_BASE) };
+}
+
+/** Bytes still free in the string block for renames. */
+export function teamTextFreeBytes(rom: Uint8Array, original: Uint8Array, hasINES: boolean) {
+  const t = readTeamTextTable(rom, hasINES);
+  if (!t) return 0;
+  const used = t.strings.reduce((n, s) => n + s.length, 0);
+  return teamTextLimit(original, hasINES) - t.start - used;
+}
+
+/**
+ * Builds the patch that renames one team's city and nickname: a contiguous run of bytes
+ * starting at `offset` covering the pointers and the repacked strings. Returns an error
+ * message instead if the new text doesn't fit.
+ */
+export function writeTeamText(
+  rom: Uint8Array,
+  original: Uint8Array,
+  hasINES: boolean,
+  team: number,
+  city: string,
+  nickname: string,
+): { offset: number; bytes: Uint8Array } | string {
+  const t = readTeamTextTable(rom, hasINES);
+  if (!t) return "Couldn't find the team name table in this ROM.";
+  const strings = [...t.strings];
+  strings[CITY_BASE + team] = Uint8Array.from(city, (c) => c.charCodeAt(0));
+  strings[NICKNAME_BASE + team] = Uint8Array.from(nickname, (c) => c.charCodeAt(0));
+
+  const limit = teamTextLimit(original, hasINES);
+  const used = strings.reduce((n, s) => n + s.length, 0);
+  if (t.start + used > limit) {
+    return `Not enough room in the ROM: shorten by ${t.start + used - limit} letter(s) (here or on another team).`;
+  }
+
+  // Lay out pointers + strings, padding freed space with $FF, then keep only the span
+  // that actually changed so the edit list stays tidy.
+  const from = fileOffset(TEAM_TEXT_POINTERS, hasINES);
+  const to = fileOffset(limit, hasINES);
+  const next = rom.slice(from, to);
+  const strBase = fileOffset(t.start, hasINES) - from;
+  next.fill(0xff, strBase);
+  let pos = t.start;
+  strings.forEach((s, i) => {
+    const cpu = pos - TEAM_TEXT_CPU_TO_FILE;
+    next[i * 2] = cpu & 0xff;
+    next[i * 2 + 1] = cpu >> 8;
+    next.set(s, fileOffset(pos, hasINES) - from);
+    pos += s.length;
+  });
+  const endCpu = pos - TEAM_TEXT_CPU_TO_FILE;
+  next[(TEAM_TEXT_COUNT - 1) * 2] = endCpu & 0xff;
+  next[(TEAM_TEXT_COUNT - 1) * 2 + 1] = endCpu >> 8;
+
+  let lo = 0;
+  let hi = next.length;
+  while (lo < hi && next[lo] === rom[from + lo]) lo++;
+  while (hi > lo && next[hi - 1] === rom[from + hi - 1]) hi--;
+  return { offset: from + lo, bytes: next.slice(lo, hi) };
+}
+
+const titleCase = (s: string) =>
+  s.toLowerCase().replace(/(^|[\s.])([a-z])/g, (_, p: string, c: string) => p + c.toUpperCase());
+
+/** "Buffalo Bills" from the ROM's text, falling back to the stock name. */
+export function teamNameFrom(text: TeamText | null, team: number) {
+  if (!text || isAllStarTeam(team) || !text.city[team]) return teamName(team);
+  return titleCase(`${text.city[team]} ${text.nickname[team]}`);
+}

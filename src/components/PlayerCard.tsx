@@ -15,7 +15,8 @@ import {
   withNibble,
   type PosType,
 } from "@/lib/abilities";
-import { POSITION_NAMES, TEAM_NAMES, isAllStarTeam, resolvePlayer, teamName, teamScreenColor } from "@/lib/tsbRoster";
+import { POSITION_NAMES, isAllStarTeam, resolvePlayer, teamScreenColor } from "@/lib/tsbRoster";
+import { useTeamNames } from "@/lib/useTeamNames";
 import { FacePickerGrid } from "@/components/FacePicker";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -96,6 +97,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   teamIdx: number; posIdx: number; onNavigate: (p: number) => void; onClose: () => void;
 }) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
+  const teamName = useTeamNames();
   const [faceOpen, setFaceOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
 
@@ -187,7 +189,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
         >
           {/* Team name + position */}
           <div className="flex justify-between" style={{ paddingLeft: "3em", paddingRight: "2em" }}>
-            <span>{TEAM_NAMES[src.team]}</span>
+            <span>{teamName(src.team)}</span>
             <span>{POSITION_NAMES[posIdx]!.replace(/\d$/, "")}</span>
           </div>
 
@@ -322,7 +324,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
         </div>
         <span className="hidden text-muted-foreground sm:inline">
           {isAllStarTeam(teamIdx)
-            ? `${teamName(teamIdx)} · edits also apply on the ${TEAM_NAMES[src.team]}`
+            ? `${teamName(teamIdx)} · edits also apply on the ${teamName(src.team)}`
             : "Click a bar, name, number or face to edit"}
         </span>
         <CtrlBtn label="Close" onClick={onClose}><X className="size-4" /></CtrlBtn>

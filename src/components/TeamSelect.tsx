@@ -4,7 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { decodeHelmet, NES_RGB } from "@/lib/helmets";
 import { useRom } from "@/lib/romStore";
-import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam, teamAbbr, teamName } from "@/lib/tsbRoster";
+import { ALL_STAR_TEAMS, CONFERENCES, TEAM_NAMES, isAllStarTeam, teamAbbr } from "@/lib/tsbRoster";
+import { useTeamNames } from "@/lib/useTeamNames";
 
 interface Props {
   teamIdx: number;
@@ -35,6 +36,7 @@ const SCREEN_STYLE: React.CSSProperties = {
 export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
   const { rom, hasINES } = useRom();
   const [open, setOpen] = useState(false);
+  const teamName = useTeamNames();
   const helmets = useMemo(
     () => (rom ? TEAM_NAMES.map((_, t) => decodeHelmet(rom, hasINES, t)) : []),
     [rom, hasINES],
@@ -80,7 +82,7 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
             <div role="group" aria-label="All Stars" className="mt-[1.25em] pl-[3em]">
               {ALL_STAR_TEAMS.map((t, i) => (
                 <div key={t} className="flex items-center gap-[1em]">
-                  <AllStarButton team={t} selected={t === teamIdx} onClick={() => choose(t)} />
+                  <AllStarButton team={t} name={teamName(t)} selected={t === teamIdx} onClick={() => choose(t)} />
                   {i === 0 && <span style={{ color: YELLOW }}>SELECT TEAM</span>}
                 </div>
               ))}
@@ -105,6 +107,7 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
                       key={t}
                       team={t}
                       helmet={helmets[t]}
+                      name={teamName(t)}
                       selected={t === teamIdx}
                       onClick={() => choose(t)}
                     />
@@ -124,11 +127,13 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
 function TeamButton({
   team,
   helmet,
+  name,
   selected,
   onClick,
 }: {
   team: number;
   helmet: Int8Array | undefined;
+  name: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -136,7 +141,7 @@ function TeamButton({
     <button
       onClick={onClick}
       aria-pressed={selected}
-      title={teamName(team)}
+      title={name}
       className="group flex h-[2.5em] w-full items-center gap-[0.5em] text-left outline-none focus-visible:bg-white/15"
     >
       <Cursor visible={selected} />
@@ -153,10 +158,12 @@ function TeamButton({
 
 function AllStarButton({
   team,
+  name,
   selected,
   onClick,
 }: {
   team: number;
+  name: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -168,7 +175,7 @@ function AllStarButton({
     >
       <Cursor visible={selected} />
       <span className="group-hover:text-[#f8b800]" style={selected ? { color: YELLOW } : undefined}>
-        {teamName(team).toUpperCase()}
+        {name.toUpperCase()}
       </span>
     </button>
   );
