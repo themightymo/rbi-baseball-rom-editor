@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FacePickerGrid } from "@/components/FacePicker";
+import { FacePainter } from "@/components/FacePainter";
+import { clearCustomFace, useCustomFace } from "@/lib/customFaces";
 import {
   BYTES, POSITIONS, POS_OFFSETS, TEAM_BYTES, TSB_ATTRIBUTE_SCALE,
   detectBase, faceImgUrl, getPlayerBytes, hexId, isValidFaceId, nibble,
@@ -14,10 +16,12 @@ import {
 } from "@/lib/abilities";
 import { Wand2, Settings } from "lucide-react";
 
-function FaceCell({ value, changed, onChange }: {
-  value: number; changed: boolean; onChange: (v: number) => void;
+function FaceCell({ value, changed, onChange, teamIdx, posIdx, label }: {
+  value: number; changed: boolean; onChange: (v: number) => void; teamIdx: number; posIdx: number; label: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [painterOpen, setPainterOpen] = useState(false);
+  const custom = useCustomFace(teamIdx, posIdx);
   const valid = isValidFaceId(value);
 
   function pick(id: number) { onChange(id); setOpen(false); }
@@ -29,11 +33,16 @@ function FaceCell({ value, changed, onChange }: {
           <button
             className={[
               "flex h-12 w-16 flex-col items-center justify-center gap-0.5 rounded border transition hover:bg-accent",
-              changed ? "border-warning bg-warning/20" : "border-input bg-background",
+              changed || custom ? "border-warning bg-warning/20" : "border-input bg-background",
               !valid ? "border-destructive" : "",
             ].join(" ")}
           >
-            {valid ? (
+            {custom ? (
+              <>
+                <img src={custom} alt="Custom headshot" width={32} height={32} style={{ imageRendering: "pixelated" }} />
+                <span className="font-mono text-[8px] text-muted-foreground">custom</span>
+              </>
+            ) : valid ? (
               <>
                 <img src={faceImgUrl(value)} alt={hexId(value)} width={32} height={36} className="object-cover" />
                 <span className="font-mono text-[8px] text-muted-foreground">{hexId(value)}</span>
@@ -47,9 +56,17 @@ function FaceCell({ value, changed, onChange }: {
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-3 space-y-3" align="start" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-          <FacePickerGrid value={value} onPick={pick} onChange={onChange} />
+          {custom && (
+            <div className="flex items-center gap-2 rounded border border-highlight bg-highlight/10 p-2 text-xs">
+              <img src={custom} alt="" width={32} height={32} style={{ imageRendering: "pixelated" }} />
+              <span className="flex-1">Showing a custom headshot. The original face is kept.</span>
+              <Button size="sm" variant="outline" onClick={() => clearCustomFace(teamIdx, posIdx)}>Revert to original</Button>
+            </div>
+          )}
+          <FacePickerGrid value={value} onPick={pick} onChange={onChange} onPaint={() => { setOpen(false); setPainterOpen(true); }} />
         </PopoverContent>
       </Popover>
+      <FacePainter open={painterOpen} onOpenChange={setPainterOpen} team={teamIdx} slot={posIdx} faceId={value} playerLabel={label} />
     </td>
   );
 }
@@ -90,9 +107,11 @@ interface PlayerRowProps {
   onFace: (value: number) => void;
   onName?: (first: string, last: string) => void;
   onOpen?: () => void;
+  teamIdx: number;
+  posIdx: number;
 }
 
-function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, maxFirst, maxLast, onNibble, onFace, onName, onOpen }: PlayerRowProps) {
+function PlayerRow({ teamIdx, posIdx, pos, cur, orig, curFirst, curLast, origFirst, origLast, maxFirst, maxLast, onNibble, onFace, onName, onOpen }: PlayerRowProps) {
   const nb = (bi: number, hi: boolean) => nibble(cur, bi, hi);
   const nbChanged = (bi: number, hi: boolean) => nibble(cur, bi, hi) !== nibble(orig, bi, hi);
   const faceChanged = (cur[2] ?? 0) !== (orig[2] ?? 0);
@@ -137,7 +156,10 @@ function PlayerRow({ pos, cur, orig, curFirst, curLast, origFirst, origLast, max
       <NibbleCell value={nb(0, false)} changed={nbChanged(0, false)} onChange={(v) => onNibble(0, false, v)} />
       <NibbleCell value={nb(1, true)}  changed={nbChanged(1, true)}  onChange={(v) => onNibble(1, true,  v)} />
       <NibbleCell value={nb(1, false)} changed={nbChanged(1, false)} onChange={(v) => onNibble(1, false, v)} />
-      <FaceCell value={cur[2] ?? 0} changed={faceChanged} onChange={onFace} />
+      <FaceCell
+        value={cur[2] ?? 0} changed={faceChanged} onChange={onFace}
+        teamIdx={teamIdx} posIdx={posIdx} label={`${pos.label} ${curFirst ?? ""} ${curLast ?? ""}`.trim()}
+      />
       {pos.type === "qb" && (
         <>
           <NibbleCell value={nb(3, true)}  changed={nbChanged(3, true)}  onChange={(v) => onNibble(3, true,  v)} />
@@ -194,6 +216,8 @@ function GroupTable({ headers, posIndices, teamPlayers, liveRom, originalRom, ba
             return (
               <PlayerRow
                 key={pi}
+                teamIdx={teamIdx}
+                posIdx={pi}
                 pos={POSITIONS[pi]}
                 cur={getPlayerBytes(liveRom, base, teamIdx, pi)}
                 orig={getPlayerBytes(originalRom, base, teamIdx, pi)}

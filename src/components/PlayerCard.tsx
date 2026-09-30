@@ -18,8 +18,11 @@ import {
 import { POSITION_NAMES, isAllStarTeam, resolvePlayer, teamScreenColor } from "@/lib/tsbRoster";
 import { useTeamNames } from "@/lib/useTeamNames";
 import { FacePickerGrid } from "@/components/FacePicker";
+import { FacePainter } from "@/components/FacePainter";
+import { clearCustomFace, useCustomFace } from "@/lib/customFaces";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 // Where each rating lives: byte index within the player's record, and which nibble.
@@ -99,6 +102,7 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   const { rom, originalRom, hasINES, setBytes } = useRom();
   const { name: teamName } = useTeamNames();
   const [faceOpen, setFaceOpen] = useState(false);
+  const [painterOpen, setPainterOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
 
   const teams = useMemo((): TeamData[] | null => {
@@ -112,10 +116,12 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
     [originalRom],
   );
 
+  // Everything below reads the real player; for an All-Star slot that's on another team.
+  const src = rom ? resolvePlayer(rom, hasINES, teamIdx, posIdx) : { team: teamIdx, slot: posIdx };
+  const customFace = useCustomFace(src.team, src.slot);
+
   if (!rom || !originalRom) return null;
 
-  // Everything below reads the real player; for an All-Star slot that's on another team.
-  const src = resolvePlayer(rom, hasINES, teamIdx, posIdx);
   const pos = POSITIONS[src.slot]!;
   const player = teams?.[src.team]?.players.find((p) => p.slot === src.slot);
 
@@ -206,10 +212,17 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                     marginLeft: "2em",
                     background: SKY,
                     boxShadow: "0.75em 0.75em 0 #000",
-                    outline: face !== origFace ? `0.125em solid ${CHANGED}` : undefined,
+                    outline: face !== origFace || customFace ? `0.125em solid ${CHANGED}` : undefined,
                   }}
                 >
-                  {isValidFaceId(face) ? (
+                  {customFace ? (
+                    <img
+                      src={customFace}
+                      alt="Custom headshot"
+                      className="h-full w-full"
+                      style={{ imageRendering: "pixelated", objectFit: "cover" }}
+                    />
+                  ) : isValidFaceId(face) ? (
                     <img
                       src={faceImgUrl(face)}
                       alt={`Face ${hexId(face)}`}
@@ -222,9 +235,33 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-3 normal-case" align="start" style={{ maxHeight: "70vh", overflowY: "auto" }}>
-                <FacePickerGrid value={face} onPick={(id) => { setFace(id); setFaceOpen(false); }} onChange={setFace} />
+                {customFace && (
+                  <div className="mb-3 flex items-center gap-2 rounded border border-highlight bg-highlight/10 p-2 text-xs">
+                    <img src={customFace} alt="" width={32} height={32} style={{ imageRendering: "pixelated" }} />
+                    <span className="flex-1">
+                      Showing a custom headshot. The original face below is kept and the game still uses it.
+                    </span>
+                    <Button size="sm" variant="outline" onClick={() => clearCustomFace(src.team, src.slot)}>
+                      Revert to original
+                    </Button>
+                  </div>
+                )}
+                <FacePickerGrid
+                  value={face}
+                  onPick={(id) => { setFace(id); setFaceOpen(false); }}
+                  onChange={setFace}
+                  onPaint={() => { setFaceOpen(false); setPainterOpen(true); }}
+                />
               </PopoverContent>
             </Popover>
+            <FacePainter
+              open={painterOpen}
+              onOpenChange={setPainterOpen}
+              team={src.team}
+              slot={src.slot}
+              faceId={face}
+              playerLabel={`${teamName(src.team)} ${POSITION_NAMES[src.slot]} ${first} ${last}`.trim()}
+            />
 
             <div style={{ marginLeft: "3em", marginTop: "0.5em" }}>
               {/* NN-FIRST LAST */}

@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Paintbrush } from "lucide-react";
 import { VALID_FACE_RANGE1, VALID_FACE_RANGE2, faceImgUrl, hexId, isValidFaceId } from "@/lib/abilities";
 
 export function FaceThumb({ id, selected, onClick }: { id: number; selected: boolean; onClick: () => void }) {
@@ -32,16 +34,27 @@ export function FaceThumb({ id, selected, onClick }: { id: number; selected: boo
 
 
 /** Grid of every valid face portrait, plus a direct-entry box. */
-export function FacePickerGrid({ value, onPick, onChange }: {
+export function FacePickerGrid({ value, onPick, onChange, hideDirect, onPaint }: {
   value: number;
   onPick: (id: number) => void;
   onChange: (id: number) => void;
+  /** Hide the direct face-ID entry box. */
+  hideDirect?: boolean;
+  /** When set, shows a button to paint a custom headshot. */
+  onPaint?: () => void;
 }) {
   const valid = isValidFaceId(value);
   const pick = onPick;
   return (
     <div className="space-y-3">
-    <p className="text-xs font-semibold text-muted-foreground">Select face (0x00–0x52 · 0x81–0xD4)</p>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs font-semibold text-muted-foreground">Select face (0x00–0x52 · 0x81–0xD4)</p>
+      {onPaint && (
+        <Button size="sm" variant="outline" className="gap-1.5" onClick={onPaint}>
+          <Paintbrush /> Paint custom headshot
+        </Button>
+      )}
+    </div>
 
     <div className="space-y-1">
       <p className="text-[10px] text-muted-foreground font-mono">0x00–0x52</p>
@@ -61,6 +74,7 @@ export function FacePickerGrid({ value, onPick, onChange }: {
       </div>
     </div>
 
+    {!hideDirect && (
     <div className="flex items-center gap-2 border-t pt-2">
       <span className="text-xs text-muted-foreground">Direct:</span>
       <Input
@@ -71,6 +85,7 @@ export function FacePickerGrid({ value, onPick, onChange }: {
       />
       {!valid && <span className="text-xs text-destructive">invalid — no face drawn</span>}
     </div>
+    )}
     </div>
   );
 }
