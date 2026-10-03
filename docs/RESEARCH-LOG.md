@@ -1,5 +1,12 @@
 # Research Log
 
+## 2026-10-03 — Dedicated play screen
+
+- “Save and Play Game” now leaves the editor workspace and opens a dedicated play screen, matching
+  the Tecmo editor's navigation model instead of embedding the emulator in an editor tab.
+- “Back to editor” destroys the emulator and restores the unchanged editor tab and in-memory ROM.
+  The play snapshot remains an isolated copy of the ROM at the moment the button was pressed.
+
 ## 2026-10-03 — Safe batter gameplay limits
 
 - Replaced storage-width maxima in normal editors and CSV import with authentic gameplay limits:

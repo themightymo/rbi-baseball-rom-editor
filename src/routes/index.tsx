@@ -9,7 +9,7 @@ import { RbiAdvancedRosterEditor } from "@/components/RbiAdvancedRosterEditor";
 import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FileSearch, Gamepad2, Gauge, List, Save, Table, Users } from "lucide-react";
+import { FileSearch, Gauge, List, Save, Table, Users } from "lucide-react";
 import { RbiRatingsGenerator } from "@/components/RbiRatingsGenerator";
 import { NesPlayer } from "@/components/NesPlayer";
 import { createNesPlaySnapshot, type NesPlaySnapshot } from "@/core/nes/play";
@@ -32,7 +32,6 @@ function Shell() {
   const saveAndPlay = () => {
     if (!rom) return;
     setPlaySnapshot(createNesPlaySnapshot(rom, romName));
-    setTab("play");
   };
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -56,6 +55,8 @@ function Shell() {
           <div className="py-8">
             <RomDropZone />
           </div>
+        ) : playSnapshot ? (
+          <NesPlayer snapshot={playSnapshot} onClose={() => setPlaySnapshot(null)} />
         ) : (
           <>
             <RomToolbar onPlay={saveAndPlay} />
@@ -77,11 +78,6 @@ function Shell() {
                 <TabsTrigger value="ratings" className="gap-1.5">
                   <Gauge className="size-4" /> Ratings Lab
                 </TabsTrigger>
-                {playSnapshot && (
-                  <TabsTrigger value="play" className="gap-1.5">
-                    <Gamepad2 className="size-4" /> Play Game
-                  </TabsTrigger>
-                )}
                 <TabsTrigger value="save" className="ml-auto gap-1.5">
                   <Save className="size-4" /> Save &amp; Export
                 </TabsTrigger>
@@ -97,11 +93,6 @@ function Shell() {
               </TabsContent>
               <TabsContent value="ratings">
                 <RbiRatingsGenerator />
-              </TabsContent>
-              <TabsContent value="play">
-                {playSnapshot && (
-                  <NesPlayer snapshot={playSnapshot} onClose={() => setTab("rosters")} />
-                )}
               </TabsContent>
               <TabsContent value="rosters">
                 <RbiRosterPanel />

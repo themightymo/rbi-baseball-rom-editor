@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, NES, type ButtonKey } from "jsnes";
 import { Button } from "@/components/ui/button";
 import type { NesPlaySnapshot } from "@/core/nes/play";
-import { Maximize, Pause, Play, RotateCcw, Volume2, X } from "lucide-react";
+import { ArrowLeft, Maximize, Pause, Play, RotateCcw, Volume2 } from "lucide-react";
 
 const WIDTH = 256;
 const HEIGHT = 240;
@@ -211,13 +211,13 @@ export function NesPlayer({
     <section className="nes-window overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#fc74b4] p-3">
         <div>
-          <h2 className="text-sm">Play current ROM</h2>
+          <h2 className="text-sm">Now playing · {snapshot.name}</h2>
           <p className="mt-1 text-[8px] text-muted-foreground">
             In-memory snapshot · no ROM file was downloaded or uploaded
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={onClose}>
-          <X className="size-4" /> Back to editor
+          <ArrowLeft className="size-4" /> Back to editor
         </Button>
       </div>
 
