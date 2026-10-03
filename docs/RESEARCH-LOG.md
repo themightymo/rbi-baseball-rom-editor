@@ -1,5 +1,17 @@
 # Research Log
 
+## 2026-10-03 — Phase 18 Ratings Lab
+
+- Added pure, deterministic batter and pitcher recommendation functions, documented in
+  [`RATINGS-GENERATOR.md`](RATINGS-GENERATOR.md).
+- Batter recommendations use average, isolated power, strikeout avoidance, home runs, and steals.
+  Pitcher recommendations use ERA, innings per appearance, K/9, BB/9, and entered fastball MPH.
+- The formulas are explicitly product heuristics, not reverse-engineered original rating formulas.
+  The UI calls every output “Suggested” and requires a separate apply action after manual review.
+- The generator module has no ROM dependency. The UI sends reviewed values through the existing
+  confirmed field writers, preserving record slots and all unknown bytes.
+- Pure tests cover exact formulas, range clamps, and invalid/impossible stat-line rejection.
+
 ## 2026-10-02 — Phase 17 atomic roster CSV
 
 - Added complete roster export/import using the documented schema in [`RBI-CSV.md`](RBI-CSV.md).

@@ -10,6 +10,8 @@ import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileSearch, List, Save, Table, Users } from "lucide-react";
+import { Gauge } from "lucide-react";
+import { RbiRatingsGenerator } from "@/components/RbiRatingsGenerator";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -57,6 +59,9 @@ function Shell() {
                 <TabsTrigger value="layouts" className="gap-1.5">
                   <Table className="size-4" /> Research Layouts
                 </TabsTrigger>
+                <TabsTrigger value="ratings" className="gap-1.5">
+                  <Gauge className="size-4" /> Ratings Lab
+                </TabsTrigger>
                 <TabsTrigger value="save" className="ml-auto gap-1.5">
                   <Save className="size-4" /> Save &amp; Export
                 </TabsTrigger>
@@ -69,6 +74,9 @@ function Shell() {
               </TabsContent>
               <TabsContent value="layouts">
                 <CustomLayoutTools />
+              </TabsContent>
+              <TabsContent value="ratings">
+                <RbiRatingsGenerator />
               </TabsContent>
               <TabsContent value="rosters">
                 <RbiRosterPanel />
