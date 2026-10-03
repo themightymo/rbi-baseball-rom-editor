@@ -13,6 +13,8 @@ export interface RbiRomProfile {
   /** Complete PRG+CHR fingerprint. Null means the family must not be auto-detected. */
   payloadCrc32: string | null;
   prgCrc32: string | null;
+  /** PRG bytes after the 10-team roster table; identifies editor-made roster derivatives. */
+  postRosterPrgCrc32: string | null;
   chrCrc32: string | null;
   canonicalMapper: number | null;
   acceptedMappers: readonly number[];
@@ -48,6 +50,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     label: "Original licensed (gray cartridge payload)",
     payloadCrc32: "3C5C81D4",
     prgCrc32: "42607A97",
+    postRosterPrgCrc32: "86F2190D",
   },
   {
     ...ORIGINAL_LAYOUT,
@@ -55,6 +58,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     label: "Original unlicensed (black cartridge payload)",
     payloadCrc32: "2E326A1D",
     prgCrc32: "203D32B5",
+    postRosterPrgCrc32: null,
   },
   {
     ...ORIGINAL_LAYOUT,
@@ -63,6 +67,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     family: "historical-hack",
     payloadCrc32: "C987A275",
     prgCrc32: "24FAA2AF",
+    postRosterPrgCrc32: "E068C135",
     canonicalMapper: 4,
     acceptedMappers: [4],
     expectedFileSizes: [98_320],
@@ -76,6 +81,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     support: "unsupported",
     payloadCrc32: null,
     prgCrc32: null,
+    postRosterPrgCrc32: null,
     chrCrc32: null,
     canonicalMapper: null,
     acceptedMappers: [],
@@ -95,6 +101,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     support: "unsupported",
     payloadCrc32: null,
     prgCrc32: null,
+    postRosterPrgCrc32: null,
     chrCrc32: null,
     canonicalMapper: null,
     acceptedMappers: [],
@@ -114,6 +121,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     support: "unsupported",
     payloadCrc32: null,
     prgCrc32: null,
+    postRosterPrgCrc32: null,
     chrCrc32: null,
     canonicalMapper: null,
     acceptedMappers: [],
@@ -133,6 +141,7 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     support: "unsupported",
     payloadCrc32: null,
     prgCrc32: null,
+    postRosterPrgCrc32: null,
     chrCrc32: null,
     canonicalMapper: null,
     acceptedMappers: [],

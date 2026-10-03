@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { matchExactRbiProfile } from "../src/games/rbi/detect.ts";
+import { matchEditedRosterRbiProfile, matchExactRbiProfile } from "../src/games/rbi/detect.ts";
 import {
   getRbiProfile,
   RBI_ROM_PROFILES,
@@ -42,6 +42,25 @@ test("the exact supplied modified image has its own supported profile", () => {
     }),
     null,
   );
+});
+
+test("edited roster derivatives retain their supported source profile", () => {
+  const common = {
+    payloadCrc32: "changed-by-roster-edit",
+    chrCrc32: "C36B03AE",
+    mapper: 4,
+    prgSize: 64 * 1024,
+    chrSize: 32 * 1024,
+  };
+  assert.equal(
+    matchEditedRosterRbiProfile({ ...common, postRosterPrgCrc32: "86F2190D" })?.id,
+    "rbi-usa-licensed",
+  );
+  assert.equal(
+    matchEditedRosterRbiProfile({ ...common, postRosterPrgCrc32: "E068C135" })?.id,
+    "rbi-usa-supplied-modified",
+  );
+  assert.equal(matchEditedRosterRbiProfile({ ...common, postRosterPrgCrc32: "00000000" }), null);
 });
 
 test("unfingerprinted expanded and historical families cannot auto-detect", () => {

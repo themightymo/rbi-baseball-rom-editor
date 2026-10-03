@@ -9,6 +9,43 @@ export interface RbiProfileFingerprint {
   chrSize: number;
 }
 
+export interface RbiEditedRosterFingerprint extends RbiProfileFingerprint {
+  postRosterPrgCrc32: string;
+  chrCrc32: string;
+}
+
+export function matchEditedRosterRbiProfile(
+  fingerprint: RbiEditedRosterFingerprint,
+): RbiRomProfile | null {
+  return (
+    RBI_ROM_PROFILES.find(
+      (profile) =>
+        profile.support === "supported" &&
+        profile.postRosterPrgCrc32 !== null &&
+        profile.postRosterPrgCrc32 === fingerprint.postRosterPrgCrc32 &&
+        profile.chrCrc32 === fingerprint.chrCrc32 &&
+        profile.acceptedMappers.includes(fingerprint.mapper) &&
+        profile.prgSize === fingerprint.prgSize &&
+        profile.chrSize === fingerprint.chrSize,
+    ) ?? null
+  );
+}
+
+const RBI_TEAM_COUNT = 10;
+const RBI_PLAYERS_PER_TEAM = 16;
+const RBI_PLAYER_RECORD_LENGTH = 16;
+const RBI_ROSTER_LENGTH = RBI_TEAM_COUNT * RBI_PLAYERS_PER_TEAM * RBI_PLAYER_RECORD_LENGTH;
+
+function hasRbiRosterRecordBoundaries(rom: Uint8Array, prgStart: number): boolean {
+  for (let team = 0; team < RBI_TEAM_COUNT; team++) {
+    for (let slot = 0; slot < RBI_PLAYERS_PER_TEAM; slot++) {
+      const offset = prgStart + team * 0x100 + slot * RBI_PLAYER_RECORD_LENGTH;
+      if (rom[offset] !== slot) return false;
+    }
+  }
+  return true;
+}
+
 export function matchExactRbiProfile(fingerprint: RbiProfileFingerprint): RbiRomProfile | null {
   return (
     RBI_ROM_PROFILES.find(
@@ -89,6 +126,29 @@ export function detectRbiRom(rom: Uint8Array): RbiDetectionResult {
       supported: exact.support === "supported",
       payloadCrc32,
       warnings,
+    };
+  }
+
+  const editedRosterProfile = matchEditedRosterRbiProfile({
+    payloadCrc32,
+    postRosterPrgCrc32: crc32(
+      rom.subarray(dataStart + RBI_ROSTER_LENGTH, dataStart + ines.prgSize),
+    ),
+    chrCrc32,
+    mapper: ines.mapper,
+    prgSize: ines.prgSize,
+    chrSize: ines.chrSize,
+  });
+  if (editedRosterProfile && hasRbiRosterRecordBoundaries(rom, dataStart)) {
+    return {
+      ...base,
+      isRbi: true,
+      confidence: "high",
+      profileId: editedRosterProfile.id,
+      profileLabel: `${editedRosterProfile.label} (edited roster)`,
+      supported: true,
+      payloadCrc32,
+      warnings: ["This ROM is an edited-roster derivative of a supported RBI Baseball profile."],
     };
   }
 
