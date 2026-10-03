@@ -54,19 +54,19 @@ Source: [NESdev mapper 206 documentation](https://www.nesdev.org/wiki/INES_Mappe
 
 ### Subject
 
-California roster slot 3, displayed in-game as `JACKSN` (Reggie Jackson), at file offset `0x40` in the supplied ROM.
+California roster slot 3, displayed in-game as `Jacksn` (Reggie Jackson), at file offset `0x40` in the supplied ROM.
 
 ### Evidence and conclusions
 
 - Community technical documentation identifies clean-ROM bytes `0000–1000`, relative to the cartridge data after the iNES header, as player/pitcher data and documents the loaded batter field order as handedness, average, HR, contact, power high/low in RAM, and speed.
 - Direct byte inspection found fixed 16-byte records beginning at file `0x10`; slot 3 therefore begins at file `0x40`.
-- The six glyph bytes correlate to the documented in-game abbreviation `JACKSN`.
+- The six glyph bytes correlate to the documented in-game abbreviation `Jacksn`.
 - `01` correlates with the documented left-handed value; California's documented right-handed batters contain `00` in the same field.
 - Average byte `0x7D` plus 150 equals the displayed `.275`. Repeating that calculation for all twelve California batters reproduces every manual value.
 - HR `0x27`, contact `0x17`, and speed `0x80` directly equal published decimal values 39, 23, and 128.
 - ROM bytes `B1 03` are little-endian power `0x03B1`, decimal 945, matching the published rating. The community RAM description lists high then low because the loaded RAM representation differs from this ROM record order.
 - Bytes `+14` and `+15` remain unknown and are preserved.
-- A second supplied image has the published licensed payload CRC32 `3C5C81D4`. Its 16-byte `JACKSN` record is identical, confirming this offset and layout in the licensed cartridge payload as well as the initially supplied modified PRG. That file's legacy header declares mapper 4, so its header is not treated as canonical.
+- A second supplied image has the published licensed payload CRC32 `3C5C81D4`. Its 16-byte `Jacksn` record is identical, confirming this offset and layout in the licensed cartridge payload as well as the initially supplied modified PRG. That file's legacy header declares mapper 4, so its header is not treated as canonical.
 
 ### Round-trip proof
 
@@ -86,7 +86,7 @@ No second batter, pitcher, team, lineup, or All-Star structure was parsed. The c
 
 ### Subject
 
-California pitcher slot 12, `WITT` (Mike Witt), at file offset `0xD0` in both supplied ROMs.
+California pitcher slot 12, `Witt` (Mike Witt), at file offset `0xD0` in both supplied ROMs.
 
 ### Evidence and conclusions
 
@@ -112,3 +112,27 @@ Pure tests change Stamina from 50 to 54, verify that only file offset `0xDD` cha
 ### Scope held
 
 No second pitcher, additional batter, team, lineup, or All-Star structure was parsed. Unknown 1 and Unknown 2 were not assigned speculative meanings.
+
+## 2026-10-02 — Phase 5 complete California decode
+
+### Structural gate
+
+- California is exactly one contiguous 256-byte block at file `0x10–0x10F`, or PRG-relative `0x00–0xFF`.
+- Sixteen consecutive records passed the established 16-byte parsers: batter slots `0–11`, then pitcher slots `12–15`.
+- Each record's first byte equals its expected slot. Both supplied ROMs contain a byte-identical California block, so no deviation triggered the required stop condition.
+- The parser rejects the whole team if a slot boundary is wrong or a player name contains an unknown glyph.
+
+### Decoded roster
+
+- Batters: Pettis, DCincs, Joyner, Jacksn, Dwning, Grich, Schfld, Boone, Burlsn, Hendrk, Wilfng, Jones.
+- Pitchers: Witt, Sutton, Corbet, Moore.
+- Every decoded statistic was checked against the published California reference values.
+- Name casing revealed separate contiguous uppercase and lowercase glyph ranges. The decoder now covers uppercase `A–Z`, space, and lowercase `a–z`; this corrects the earlier all-uppercase rendering without changing record bytes.
+
+### Unknown / deferred
+
+- Batter bytes `+14` and `+15` remain unknown for every California batter and are preserved verbatim.
+- Pitcher bytes `+14` and `+15` remain explicitly `unknown1` and `unknown2` for every California pitcher. Their raw values are retained; no meanings were invented.
+- The records establish California's inline player order, but no independent lineup table or player-pointer table was identified.
+- An exact byte search found each California 16-byte record and six-byte name only at its source location. Therefore the supplied licensed payload does not contain exact California record copies in an All-Star area. A compact reference scheme or altered copies remain possible, so All-Star reuse is unresolved until the surrounding teams are decoded.
+- No non-California player record was parsed.

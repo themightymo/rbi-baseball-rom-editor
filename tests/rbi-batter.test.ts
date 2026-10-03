@@ -20,7 +20,7 @@ function fixtureRom() {
   return rom;
 }
 
-test("decodes the verified California JACKSN record", () => {
+test("decodes the verified California Jacksn record", () => {
   const rom = fixtureRom();
   assert.equal(hasVerifiedJacksonRecord(rom), true);
   const batter = parseBatter(rom, JACKSON_OFFSET, 0);
@@ -41,7 +41,7 @@ test("decodes the verified California JACKSN record", () => {
     {
       teamId: 0,
       rosterSlot: 3,
-      name: "JACKSN",
+      name: "Jacksn",
       bats: "L",
       battingAverage: 275,
       homeRuns: 39,

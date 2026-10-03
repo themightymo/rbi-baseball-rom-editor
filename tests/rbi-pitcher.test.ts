@@ -21,7 +21,7 @@ function fixtureRom() {
   return rom;
 }
 
-test("decodes the verified California WITT record", () => {
+test("decodes the verified California Witt record", () => {
   const rom = fixtureRom();
   assert.equal(hasVerifiedWittRecord(rom), true);
   const pitcher = parsePitcher(rom, WITT_OFFSET, 0);
@@ -47,7 +47,7 @@ test("decodes the verified California WITT record", () => {
     {
       teamId: 0,
       rosterSlot: 12,
-      name: "WITT",
+      name: "Witt",
       throws: "R",
       delivery: "standard",
       earnedRunAverage: 284,

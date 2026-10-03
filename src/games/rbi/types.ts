@@ -38,3 +38,13 @@ export interface RbiPitcher {
   offset: number;
   rawBytes: Uint8Array;
 }
+
+export interface RbiTeam {
+  id: number;
+  name: string;
+  abbreviation: string;
+  offset: number;
+  rawBytes: Uint8Array;
+  batters: RbiBatter[];
+  pitchers: RbiPitcher[];
+}

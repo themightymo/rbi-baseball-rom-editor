@@ -1,22 +1,15 @@
-/**
- * Name glyphs verified for the single Phase 3 subject, Reggie Jackson (`JACKSN`).
- * Unknown glyphs remain `?` until independently correlated.
- */
-const CONFIRMED_NAME_GLYPHS: Readonly<Record<number, string>> = {
-  0x13: "J",
-  0x28: "A",
-  0x2a: "C",
-  0x32: "K",
-  0x35: "N",
-  0x3a: "S",
-  0x20: "W",
-  0x24: " ",
-  0x30: "I",
-  0x3b: "T",
-};
+const RBI_NAME_GLYPHS: Readonly<Record<number, string>> = (() => {
+  const glyphs: Record<number, string> = { 0x24: " " };
+  for (let index = 0; index < 26; index++) {
+    glyphs[0x0a + index] = String.fromCharCode(0x41 + index);
+    glyphs[0x28 + index] = String.fromCharCode(0x61 + index);
+  }
+  return glyphs;
+})();
 
+/** Unknown glyphs remain `?` instead of being guessed. */
 export function decodeRbiName(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => CONFIRMED_NAME_GLYPHS[byte] ?? "?")
+  return Array.from(bytes, (byte) => RBI_NAME_GLYPHS[byte] ?? "?")
     .join("")
     .trimEnd();
 }

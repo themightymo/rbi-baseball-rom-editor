@@ -28,7 +28,7 @@ Sources: [NES Directory cartridge records](https://nesdir.github.io/3C5C81D4_USA
 
 ## Game data
 
-Player names, team records, batter records, pitcher records, lineups, ratings, and text encoding are currently **unknown**. No player offsets or write rules are implemented in Phase 0/1.
+California's complete player block is confirmed below. Other teams, lineup tables, All-Star references, and non-player game data remain **unknown**.
 
 ## Address conventions
 
@@ -40,14 +40,41 @@ Player names, team records, batter records, pitcher records, lineups, ratings, a
 
 ## Confirmed annotated RBI regions
 
-### California batter slot 3 — `JACKSN`
+### California team player block
+
+California occupies file offsets `0x000010–0x00010F` (PRG-relative `0x000000–0x0000FF`): sixteen consecutive 16-byte records. Slots `0–11` are batters and slots `12–15` are pitchers. Every record begins with its expected slot byte in both supplied ROMs; no record deviated from either proven structure.
+
+| Slot | Type    | Name     | File offset |
+| ---: | ------- | -------- | ----------: |
+|    0 | Batter  | `Pettis` |      `0x10` |
+|    1 | Batter  | `DCincs` |      `0x20` |
+|    2 | Batter  | `Joyner` |      `0x30` |
+|    3 | Batter  | `Jacksn` |      `0x40` |
+|    4 | Batter  | `Dwning` |      `0x50` |
+|    5 | Batter  | `Grich`  |      `0x60` |
+|    6 | Batter  | `Schfld` |      `0x70` |
+|    7 | Batter  | `Boone`  |      `0x80` |
+|    8 | Batter  | `Burlsn` |      `0x90` |
+|    9 | Batter  | `Hendrk` |      `0xA0` |
+|   10 | Batter  | `Wilfng` |      `0xB0` |
+|   11 | Batter  | `Jones`  |      `0xC0` |
+|   12 | Pitcher | `Witt`   |      `0xD0` |
+|   13 | Pitcher | `Sutton` |      `0xE0` |
+|   14 | Pitcher | `Corbet` |      `0xF0` |
+|   15 | Pitcher | `Moore`  |     `0x100` |
+
+Slots `0–7` are the documented starting batters and `8–11` are bench batters. The player records are inline in this block; no separate California-to-player pointer was found or inferred. Each complete California record and six-byte name occurs only once in the supplied licensed payload, ruling out exact All-Star copies but not compact references or altered copies. That distinction remains unresolved.
+
+The name encoding uses uppercase `A–Z` at `0x0A–0x23`, space at `0x24`, and lowercase `a–z` at `0x28–0x41`. All glyphs needed by the California roster decode without substitution.
+
+### California batter slot 3 — `Jacksn`
 
 Both supplied ROMs store California's batter records immediately after the 16-byte iNES header. The selected record begins at file `0x000040` (PRG-relative `0x000030`) and is 16 bytes long.
 
 | Record byte |  File offset |                 Raw | Meaning           | Decoded value        | Confidence |
 | ----------: | -----------: | ------------------: | ----------------- | -------------------- | ---------- |
 |        `+0` |       `0x40` |                `03` | Roster slot       | 3                    | confirmed  |
-|    `+1..+6` | `0x41..0x46` | `13 28 2A 32 3A 35` | Display name      | `JACKSN`             | confirmed  |
+|    `+1..+6` | `0x41..0x46` | `13 28 2A 32 3A 35` | Display name      | `Jacksn`             | confirmed  |
 |        `+7` |       `0x47` |                `01` | Bats              | Left                 | confirmed  |
 |        `+8` |       `0x48` |                `7D` | Displayed average | `.275` (`125 + 150`) | confirmed  |
 |        `+9` |       `0x49` |                `27` | Home runs         | 39                   | confirmed  |
@@ -57,24 +84,22 @@ Both supplied ROMs store California's batter records immediately after the 16-by
 |       `+13` |       `0x4D` |                `80` | Speed             | 128                  | confirmed  |
 |  `+14..+15` | `0x4E..0x4F` |             `00 00` | Unknown           | preserved verbatim   | unknown    |
 
-The batting-average transformation was checked across all twelve California batter records solely to validate the field formula: `stored byte + 150` reproduces every published in-game average, including Pettis `.258`. Those other records have not been added to the application data model.
-
-The name glyph table currently includes only byte/character pairs required by `JACKSN`. Unverified glyphs decode as `?` rather than being guessed.
+The batting-average transformation was checked across all twelve California batter records: `stored byte + 150` reproduces every published in-game average, including Pettis `.258`. All twelve batters now use this same parsed model. Batter bytes `+14..+15` remain unknown and are preserved verbatim for every record.
 
 ## Phase 2 test-ROM observation
 
 The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
 
-The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its `JACKSN` record is byte-identical. Its legacy iNES header still declares mapper 4 rather than documented mapper 206, so it is evidence for the licensed payload and record layout but not a canonical header. The clean unlicensed payload remains untested.
+The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its complete California block is byte-identical. Its legacy iNES header still declares mapper 4 rather than documented mapper 206, so it is evidence for the licensed payload and record layout but not a canonical header. The clean unlicensed payload remains untested.
 
-### California pitcher slot 12 — `WITT`
+### California pitcher slot 12 — `Witt`
 
 Mike Witt's record begins at file `0x0000D0` (PRG-relative `0x0000C0`) and is 16 bytes long. It is byte-identical in both supplied ROMs.
 
 |       Record byte |  File offset |                 Raw | Meaning               | Decoded value                  | Confidence |
 | ----------------: | -----------: | ------------------: | --------------------- | ------------------------------ | ---------- |
 |              `+0` |       `0xD0` |                `0C` | Roster slot           | 12                             | confirmed  |
-|          `+1..+6` | `0xD1..0xD6` | `20 30 3B 3B 24 24` | Display name          | `WITT` plus two padding glyphs | confirmed  |
+|          `+1..+6` | `0xD1..0xD6` | `20 30 3B 3B 24 24` | Display name          | `Witt` plus two padding glyphs | confirmed  |
 |  `+7` high nibble |       `0xD7` |                 `4` | Drop/sinker rating    | 4                              | confirmed  |
 |   `+7` low nibble |       `0xD7` |                 `0` | Throws/delivery       | right, standard                | confirmed  |
 |              `+8` |       `0xD8` |                `B8` | Displayed ERA         | `2.84` (`184 + 100`)           | confirmed  |
@@ -87,4 +112,4 @@ Mike Witt's record begins at file `0x0000D0` (PRG-relative `0x0000C0`) and is 16
 |             `+14` |       `0xDE` |                `73` | Unknown 1             | raw value 115                  | unknown    |
 |             `+15` |       `0xDF` |                `8C` | Unknown 2             | raw value 140                  | unknown    |
 
-The low style nibble was validated against documented examples: `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm. The meanings of Unknown 1 and Unknown 2 are not documented or inferred; they remain raw and unchanged.
+The low style nibble was validated against documented examples: `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm. All four California pitchers use the same parsed structure. The meanings of Unknown 1 and Unknown 2 are not documented or inferred; each pitcher's raw values remain visible and unchanged.
