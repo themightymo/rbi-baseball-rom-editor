@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { Search } from "lucide-react";
 import { useRom } from "@/lib/romStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { searchString } from "@/lib/encoding";
-import { Search } from "lucide-react";
+import { hex } from "@/core/nes/addressing";
+import { encodeSearchText, searchRomText } from "@/core/rom/search";
 
-export function StringSearch() {
+export function StringSearch({ onJump }: { onJump: (offset: number) => void }) {
   const { rom, romMap } = useRom();
   const [needle, setNeedle] = useState("");
   const [hits, setHits] = useState<number[]>([]);
   const [ran, setRan] = useState(false);
+  const [encodingError, setEncodingError] = useState(false);
 
   if (!rom)
     return (
@@ -18,45 +20,71 @@ export function StringSearch() {
       </div>
     );
 
+  const runSearch = () => {
+    const result = searchRomText(rom, needle, romMap.encoding);
+    setEncodingError(result === null && needle.length > 0);
+    setHits(result ?? []);
+    setRan(true);
+  };
+  const encoded = encodeSearchText(needle, romMap.encoding);
+
   return (
-    <div className="nes-window p-4 space-y-3">
-      <div className="flex gap-2">
+    <section className="nes-window space-y-3 p-4">
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          runSearch();
+        }}
+      >
         <Input
-          placeholder="Search for text (e.g. team name) — type your own"
+          placeholder="Search ROM text"
           value={needle}
-          onChange={(e) => setNeedle(e.target.value)}
+          onChange={(event) => setNeedle(event.target.value)}
         />
-        <Button
-          onClick={() => {
-            setHits(searchString(rom, needle, romMap.encoding));
-            setRan(true);
-          }}
-        >
+        <Button type="submit">
           <Search className="size-4" /> Search
         </Button>
-      </div>
+      </form>
       <p className="text-xs text-muted-foreground">
-        Using {romMap.encoding.type} encoding. If nothing matches, try the Encoding panel to define
-        a custom character map.
+        Exact, case-sensitive {romMap.encoding.type === "ascii" ? "ASCII" : "custom-table"} byte
+        search.
+        {encoded && (
+          <>
+            {" "}
+            Query bytes:{" "}
+            <span className="font-mono">
+              {Array.from(encoded, (byte) => byte.toString(16).padStart(2, "0").toUpperCase()).join(
+                " ",
+              )}
+            </span>
+          </>
+        )}
       </p>
+      {encodingError && (
+        <p className="text-xs text-warning">
+          One or more query characters are not defined by the active encoding.
+        </p>
+      )}
       {ran && (
         <div className="max-h-64 overflow-auto rounded-md border bg-background/50 p-2 font-mono text-xs">
           {hits.length === 0 ? (
             <div className="text-muted-foreground">No matches.</div>
           ) : (
-            hits.map((h) => (
-              <div key={h} className="flex justify-between gap-4 py-0.5">
-                <span>0x{h.toString(16).toUpperCase().padStart(6, "0")}</span>
-                <span className="text-muted-foreground">
-                  {Array.from(rom.slice(h, h + needle.length + 8))
-                    .map((b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : "·"))
-                    .join("")}
-                </span>
-              </div>
+            hits.map((offset) => (
+              <button
+                key={offset}
+                type="button"
+                className="flex w-full justify-between gap-4 rounded px-1 py-0.5 text-left hover:bg-accent"
+                onClick={() => onJump(offset)}
+              >
+                <span>{hex(offset)}</span>
+                <span className="text-muted-foreground">Jump to hex viewer →</span>
+              </button>
             ))
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

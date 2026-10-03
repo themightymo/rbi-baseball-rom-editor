@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { HexViewer } from "@/components/HexViewer";
 import { StringSearch } from "@/components/StringSearch";
 import { DiffViewer } from "@/components/DiffViewer";
@@ -6,6 +7,7 @@ import { EncodingPanel } from "@/components/EncodingPanel";
 import { PlayerRosterEditor } from "@/components/PlayerRosterEditor";
 import { TeamEditor } from "@/components/TeamEditor";
 import { Info } from "lucide-react";
+import { ResearchPanel } from "@/components/ResearchPanel";
 
 /**
  * Power-user tools for ROM hackers. Casual users never need these — the
@@ -25,6 +27,7 @@ function HackerNotice() {
 }
 
 export function InspectRomTools() {
+  const [jumpOffset, setJumpOffset] = useState<number | null>(null);
   return (
     <div className="space-y-4">
       <HackerNotice />
@@ -32,9 +35,10 @@ export function InspectRomTools() {
         Look at the ROM's raw contents: search for text, browse bytes, and compare against the
         original file to see exactly what you've changed.
       </Explain>
+      <ResearchPanel />
       <EncodingPanel />
-      <StringSearch />
-      <HexViewer />
+      <StringSearch onJump={(offset) => setJumpOffset(offset)} />
+      <HexViewer jumpOffset={jumpOffset} />
       <DiffViewer />
     </div>
   );
@@ -45,10 +49,9 @@ export function CustomLayoutTools() {
     <div className="space-y-6">
       <HackerNotice />
       <Explain>
-        Teach the editor where a table of data lives in the ROM (where it starts, how big each entry
-        is, and what each byte means). Once a layout is described below, an editable table for it
-        appears underneath. Layouts are saved in this browser and can be exported from the Save
-        &amp; Share tab.
+        Experiment with candidate record starts, lengths, counts, fields, and byte order without
+        adding them to RBI-specific code. The editable preview exposes raw file offsets. These
+        browser-local layouts can be exported from Save &amp; Export.
       </Explain>
 
       <Section
@@ -61,7 +64,10 @@ export function CustomLayoutTools() {
         </div>
       </Section>
 
-      <Section title="Team data layout" hint="Describe a table with one entry per team.">
+      <Section
+        title="Candidate team layout"
+        hint="Describe a temporary table while researching team records."
+      >
         <RecordMapper section="teams" />
         <div className="mt-4 border-t pt-4">
           <TeamEditor />

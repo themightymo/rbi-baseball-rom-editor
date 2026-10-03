@@ -22,7 +22,11 @@ function readField(
   if (f.type === "text") return { raw, text: decodeText(rom, base + f.start, f.length, encoding) };
   if (f.type === "number" || f.type === "enum") {
     let n = 0;
-    for (let i = 0; i < f.length; i++) n = (n << 8) | raw[i];
+    if (f.endian === "little") {
+      for (let i = raw.length - 1; i >= 0; i--) n = n * 256 + raw[i];
+    } else {
+      for (let i = 0; i < raw.length; i++) n = n * 256 + raw[i];
+    }
     return { raw, num: n };
   }
   return { raw };
@@ -210,9 +214,10 @@ export function FieldEditor({
             if (field.min !== undefined) n = Math.max(field.min, n);
             if (field.max !== undefined) n = Math.min(field.max, n);
             const out = new Uint8Array(field.length);
-            for (let i = field.length - 1; i >= 0; i--) {
-              out[i] = n & 0xff;
-              n >>= 8;
+            for (let index = 0; index < field.length; index++) {
+              const target = field.endian === "little" ? index : field.length - index - 1;
+              out[target] = n & 0xff;
+              n = Math.floor(n / 256);
             }
             onWrite(out);
           }}

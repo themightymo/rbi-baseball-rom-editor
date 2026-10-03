@@ -57,7 +57,11 @@ export function ExportPanel() {
           <Button
             variant="outline"
             onClick={() =>
-              download("rom-map.json", JSON.stringify(romMap, null, 2), "application/json")
+              download(
+                "rbi-research-layout.json",
+                JSON.stringify(romMap, null, 2),
+                "application/json",
+              )
             }
           >
             <FileJson className="size-4" /> Export layout file

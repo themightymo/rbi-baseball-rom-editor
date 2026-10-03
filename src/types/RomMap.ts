@@ -8,6 +8,7 @@ export interface FieldDef {
   max?: number;
   values?: Record<string, string>; // enum byte(hex) -> label
   encoding?: string; // optional named encoding override
+  endian?: "little" | "big";
 }
 
 export interface PlayerRecordDef {
@@ -41,7 +42,7 @@ export interface RomMap {
 }
 
 export const DEFAULT_ROM_MAP: RomMap = {
-  game: "Tecmo Super Bowl",
+  game: "R.B.I. Baseball research",
   platform: "NES",
   romVersion: "unknown",
   hasINESHeader: true,

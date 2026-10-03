@@ -15,6 +15,8 @@ ROM bytes never leave the browser.
 
 Generic NES/container logic belongs under `src/core`. Game identity, verified offsets, record formats, and write rules belong under `src/games/rbi`. UI components consume those APIs and must not invent offsets.
 
+Pure research utilities now live in `core/nes/addressing.ts`, `core/rom/search.ts`, and `core/rom/annotations.ts`. The game-specific annotation registry is `games/rbi/annotations.ts`; an empty registry means no regions have been confirmed.
+
 This phase introduces `core/nes/ines.ts` and the RBI detection layer. Existing generic utilities remain under `src/lib` to avoid a broad refactor before useful RBI work. They can move incrementally without changing behavior.
 
 ## Inherited code

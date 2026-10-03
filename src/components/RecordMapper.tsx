@@ -92,9 +92,27 @@ export function RecordMapper({ section }: { section: Section }) {
             <div className="p-4 text-sm text-muted-foreground">No fields defined yet.</div>
           )}
           {Object.entries(def.fields).map(([key, f]) => (
-            <div key={key} className="grid items-end gap-2 p-3 sm:grid-cols-12">
+            <div
+              key={key}
+              className="grid items-end gap-2 p-3 sm:grid-cols-[repeat(14,minmax(0,1fr))]"
+            >
               <Labeled className="sm:col-span-3" label="Name">
                 <Input defaultValue={key} onBlur={(e) => renameField(key, e.target.value.trim())} />
+              </Labeled>
+              <Labeled className="sm:col-span-2" label="Byte order">
+                <Select
+                  value={f.endian ?? "big"}
+                  disabled={f.type !== "number" && f.type !== "enum"}
+                  onValueChange={(value) => updateField(key, { endian: value as "little" | "big" })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="little">little-endian</SelectItem>
+                    <SelectItem value="big">big-endian</SelectItem>
+                  </SelectContent>
+                </Select>
               </Labeled>
               <Labeled className="sm:col-span-2" label="Start (rel)">
                 <Input
