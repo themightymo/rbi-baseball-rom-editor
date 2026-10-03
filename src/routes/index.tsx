@@ -5,10 +5,11 @@ import { RomDropZone, RomToolbar } from "@/components/RomUploader";
 import { RbiDetectionPanel } from "@/components/RbiDetectionPanel";
 import { ExportPanel } from "@/components/ExportPanel";
 import { RbiRosterPanel } from "@/components/RbiRosterPanel";
+import { RbiAdvancedRosterEditor } from "@/components/RbiAdvancedRosterEditor";
 import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FileSearch, Save, Table, Users } from "lucide-react";
+import { FileSearch, List, Save, Table, Users } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -50,6 +51,9 @@ function Shell() {
                 <TabsTrigger value="inspect" className="gap-1.5">
                   <FileSearch className="size-4" /> Inspect ROM
                 </TabsTrigger>
+                <TabsTrigger value="advanced-rosters" className="gap-1.5">
+                  <List className="size-4" /> Advanced Rosters
+                </TabsTrigger>
                 <TabsTrigger value="layouts" className="gap-1.5">
                   <Table className="size-4" /> Research Layouts
                 </TabsTrigger>
@@ -59,6 +63,9 @@ function Shell() {
               </TabsList>
               <TabsContent value="inspect">
                 <InspectRomTools />
+              </TabsContent>
+              <TabsContent value="advanced-rosters">
+                <RbiAdvancedRosterEditor />
               </TabsContent>
               <TabsContent value="layouts">
                 <CustomLayoutTools />

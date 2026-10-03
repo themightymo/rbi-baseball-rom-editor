@@ -220,3 +220,10 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - Partial writes to packed style or curve bytes preserve the other field in the same byte.
 - Unknown 1 and Unknown 2 appear only in a collapsed Advanced section with raw hexadecimal and decimal values. They remain read-only and unnamed.
 - Pure tests write every confirmed field, verify packed-field preservation, verify slot and unknown bytes remain unchanged, and reject invalid byte/nibble ranges.
+
+## 2026-10-02 — Phase 11 advanced roster editor
+
+- Added Batters, Pitchers, and All Players table views for scanning the complete 160-player roster.
+- Batter and pitcher tables edit the same validated field APIs used by the game-style cards; they do not introduce a second byte-writing implementation.
+- Cells that differ from the immutable originally loaded ROM are highlighted in yellow.
+- The game-style roster and individual cards remain the primary interface; the table is a complementary power-user workflow.
