@@ -8,6 +8,7 @@ import { PlayerRosterEditor } from "@/components/PlayerRosterEditor";
 import { TeamEditor } from "@/components/TeamEditor";
 import { Info } from "lucide-react";
 import { ResearchPanel } from "@/components/ResearchPanel";
+import { ChrEditor } from "@/components/ChrEditor";
 
 /**
  * Power-user tools for ROM hackers. Casual users never need these — the
@@ -40,6 +41,7 @@ export function InspectRomTools() {
       <EncodingPanel />
       <StringSearch onJump={(offset) => setJumpOffset(offset)} />
       <HexViewer jumpOffset={jumpOffset} />
+      <ChrEditor />
       <DiffViewer />
     </div>
   );

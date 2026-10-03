@@ -11,6 +11,11 @@ Confidence labels used here: **confirmed**, **strongly inferred**, **suspected**
 | CHR ROM               |  `0x010010` | 32,768 bytes | confirmed | Four 8 KB iNES units         |
 | End of standard image |  `0x018010` |            — | confirmed | 98,320 bytes total           |
 
+The CHR region contains 2,048 consecutive 16-byte NES 2-bit planar tiles. That tile framing is a
+property of the NES format and is now editable by raw tile index. Individual tile meanings,
+metatile layouts, palette assignments, sprites, logos, and screen associations remain unknown;
+none are labeled as RBI-specific regions yet.
+
 The roadmap mentions a 98,448-byte file. That is 128 bytes longer than the standard iNES header plus 64 KB PRG plus 32 KB CHR. The detector accepts an exact verified cartridge-data match with trailing bytes and reports the discrepancy; the purpose of any 128-byte suffix is **unknown** and it is not parsed.
 
 ## Confirmed cartridge profiles

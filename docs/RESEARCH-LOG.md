@@ -1,5 +1,30 @@
 # Research Log
 
+## 2026-10-02 — Phase 15 generic CHR tools
+
+### Implemented and confirmed
+
+- Added pure encode/decode helpers for individual 8×8 NES 2-bit planar tiles and rectangular,
+  row-major tile grids.
+- Added boundary and pixel-value validation plus symmetry tests covering all four 2-bit values.
+- Added a raw tile editor bounded by the iNES-declared CHR range. It reports the tile index, file
+  offset, and CHR-relative byte offset, and writes only the selected tile's 16 bytes.
+- The preview intentionally uses neutral shades for plane indices 0–3. A pattern-table pixel does
+  not itself select an NES RGB color; the relevant attribute and palette state are separate.
+
+### RBI-specific status
+
+Both supplied ROMs have the same confirmed 32 KB CHR payload (`C36B03AE`), comprising 2,048 NES
+tiles. No tile has been assigned a sprite, logo, field, or interface meaning. Those associations,
+tile-grid dimensions, mirroring/copies, and runtime palette selection remain unresolved. The
+generic tools therefore make CHR research observable without treating Tecmo locations or layouts
+as RBI evidence.
+
+### Implementation boundary
+
+The planar bit ordering is generic NES behavior. Tecmo's broader pixel-editor concept informed the
+workflow, but no Tecmo graphics offset, tile identity, or game-specific layout was copied.
+
 ## 2026-10-02 — Phase 0/1 foundation and identification
 
 ### Confirmed
