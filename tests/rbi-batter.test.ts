@@ -6,6 +6,7 @@ import {
   encodeBatterPower,
   hasVerifiedJacksonRecord,
   parseBatter,
+  writeBatterFields,
   writeBatterPower,
 } from "../src/games/rbi/batters.ts";
 
@@ -82,4 +83,55 @@ test("changing Power back restores every original byte", () => {
   const changed = writeBatterPower(original, JACKSON_OFFSET, 1256);
   const restored = writeBatterPower(changed, JACKSON_OFFSET, 945);
   assert.deepEqual(restored, original);
+});
+
+test("writes every confirmed batter field without touching slot or unknown bytes", () => {
+  const original = fixtureRom();
+  const changed = writeBatterFields(original, JACKSON_OFFSET, {
+    name: "J.Rice",
+    bats: "R",
+    battingAverage: 300,
+    homeRuns: 40,
+    contact: 12,
+    power: 1000,
+    speed: 140,
+  });
+  const batter = parseBatter(changed, JACKSON_OFFSET, 0);
+  assert.deepEqual(
+    {
+      name: batter.name,
+      bats: batter.bats,
+      battingAverage: batter.battingAverage,
+      homeRuns: batter.homeRuns,
+      contact: batter.contact,
+      power: batter.power,
+      speed: batter.speed,
+    },
+    {
+      name: "J.Rice",
+      bats: "R",
+      battingAverage: 300,
+      homeRuns: 40,
+      contact: 12,
+      power: 1000,
+      speed: 140,
+    },
+  );
+  assert.equal(changed[JACKSON_OFFSET], original[JACKSON_OFFSET]);
+  assert.deepEqual(changed.subarray(JACKSON_OFFSET + 14, JACKSON_OFFSET + 16), Uint8Array.of(0, 0));
+  assert.deepEqual(original.subarray(JACKSON_OFFSET, JACKSON_OFFSET + 16), JACKSON_RECORD);
+});
+
+test("rejects invalid batter values and unsupported name glyphs", () => {
+  const original = fixtureRom();
+  assert.throws(
+    () => writeBatterFields(original, JACKSON_OFFSET, { battingAverage: 406 }),
+    /150 to 405/,
+  );
+  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { speed: -1 }), /0 to 255/);
+  assert.throws(
+    () => writeBatterFields(original, JACKSON_OFFSET, { name: "TOOLONG" }),
+    /at most 6/,
+  );
+  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { name: "José" }), /not in/);
 });

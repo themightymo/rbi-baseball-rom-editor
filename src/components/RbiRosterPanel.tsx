@@ -3,14 +3,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRom } from "@/lib/romStore";
 import { parseRbiTeams } from "@/games/rbi/teams";
 import type { RbiBatter, RbiPitcher } from "@/games/rbi/types";
+import { writeBatterFields, type RbiBatterChanges } from "@/games/rbi/batters";
+import { detectRbiRom } from "@/games/rbi/detect";
+import { RbiBatterCard } from "@/components/RbiBatterCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type RbiPlayer = RbiBatter | RbiPitcher;
+interface PlayerSelection {
+  type: "batter" | "pitcher";
+  teamId: number;
+  rosterSlot: number;
+}
 
 export function RbiRosterPanel() {
-  const { rom } = useRom();
+  const { rom, originalRom, setBytes } = useRom();
   const [selectedTeam, setSelectedTeam] = useState(0);
-  const [selectedPlayer, setSelectedPlayer] = useState<RbiPlayer | null>(null);
+  const [selection, setSelection] = useState<PlayerSelection | null>(null);
   const result = useMemo(() => {
     if (!rom) return null;
     try {
@@ -19,6 +27,18 @@ export function RbiRosterPanel() {
       return { teams: null, error: error instanceof Error ? error.message : String(error) };
     }
   }, [rom]);
+  const originalTeams = useMemo(() => {
+    if (!originalRom) return null;
+    try {
+      return parseRbiTeams(originalRom);
+    } catch {
+      return null;
+    }
+  }, [originalRom]);
+  const editable = useMemo(
+    () => (originalRom ? detectRbiRom(originalRom).supported : false),
+    [originalRom],
+  );
 
   if (!result) return null;
   if (!result.teams) {
@@ -32,9 +52,25 @@ export function RbiRosterPanel() {
 
   const teams = result.teams;
   const team = teams[selectedTeam] ?? teams[0];
+  const selectedPlayer = selection ? findPlayer(teams, selection) : null;
+  const originalPlayer = selection && originalTeams ? findPlayer(originalTeams, selection) : null;
   const chooseTeam = (teamId: number) => {
     setSelectedTeam((teamId + teams.length) % teams.length);
-    setSelectedPlayer(null);
+    setSelection(null);
+  };
+  const selectPlayer = (player: RbiPlayer) =>
+    setSelection({
+      type: isBatter(player) ? "batter" : "pitcher",
+      teamId: player.teamId,
+      rosterSlot: player.rosterSlot,
+    });
+  const changeBatter = (changes: RbiBatterChanges) => {
+    if (!rom || !selectedPlayer || !isBatter(selectedPlayer) || !editable) return;
+    const changed = writeBatterFields(rom, selectedPlayer.offset, changes);
+    setBytes(
+      selectedPlayer.offset,
+      changed.subarray(selectedPlayer.offset, selectedPlayer.offset + 16),
+    );
   };
 
   return (
@@ -42,26 +78,16 @@ export function RbiRosterPanel() {
       <header className="border-b-[3px] border-[#fc74b4] bg-[#0956e7] px-4 py-4 text-center">
         <p className="text-[8px] tracking-[0.3em] text-white/80">SELECT TEAM</p>
         <div className="mt-3 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            className="p-2 text-white hover:text-[#fcd800] focus-visible:outline-2 focus-visible:outline-white"
-            aria-label="Previous team"
-            onClick={() => chooseTeam(team.id - 1)}
-          >
+          <TeamArrow label="Previous team" onClick={() => chooseTeam(team.id - 1)}>
             <ChevronLeft className="size-5" />
-          </button>
+          </TeamArrow>
           <div className="min-w-64">
             <p className="text-2xl text-[#fcd800]">{team.abbreviation}</p>
             <h2 className="mt-2 text-sm text-white">{team.name}</h2>
           </div>
-          <button
-            type="button"
-            className="p-2 text-white hover:text-[#fcd800] focus-visible:outline-2 focus-visible:outline-white"
-            aria-label="Next team"
-            onClick={() => chooseTeam(team.id + 1)}
-          >
+          <TeamArrow label="Next team" onClick={() => chooseTeam(team.id + 1)}>
             <ChevronRight className="size-5" />
-          </button>
+          </TeamArrow>
         </div>
         <div className="mt-4 flex flex-wrap justify-center gap-1.5" aria-label="Teams">
           {teams.map((candidate) => (
@@ -87,12 +113,12 @@ export function RbiRosterPanel() {
         <RosterGroup
           title="Starting lineup"
           players={team.batters.slice(0, 8)}
-          onSelect={setSelectedPlayer}
+          onSelect={selectPlayer}
           numbered
         />
         <div className="space-y-6">
-          <RosterGroup title="Bench" players={team.batters.slice(8)} onSelect={setSelectedPlayer} />
-          <RosterGroup title="Pitchers" players={team.pitchers} onSelect={setSelectedPlayer} />
+          <RosterGroup title="Bench" players={team.batters.slice(8)} onSelect={selectPlayer} />
+          <RosterGroup title="Pitchers" players={team.pitchers} onSelect={selectPlayer} />
         </div>
       </div>
 
@@ -100,15 +126,48 @@ export function RbiRosterPanel() {
         Select a player to inspect their ROM-backed ratings
       </p>
 
-      <Dialog
-        open={selectedPlayer !== null}
-        onOpenChange={(open) => !open && setSelectedPlayer(null)}
-      >
-        <DialogContent className="max-w-lg border-2 border-white bg-black">
-          {selectedPlayer && <PlayerPreview player={selectedPlayer} teamName={team.name} />}
+      <Dialog open={selection !== null} onOpenChange={(open) => !open && setSelection(null)}>
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto border-2 border-white bg-black">
+          {selectedPlayer &&
+          originalPlayer &&
+          isBatter(selectedPlayer) &&
+          isBatter(originalPlayer) ? (
+            <>
+              <PlayerHeading teamName={team.name} playerName={selectedPlayer.name} />
+              <RbiBatterCard
+                player={selectedPlayer}
+                original={originalPlayer}
+                editable={editable}
+                onChange={changeBatter}
+              />
+            </>
+          ) : selectedPlayer ? (
+            <PlayerPreview player={selectedPlayer} teamName={team.name} />
+          ) : null}
         </DialogContent>
       </Dialog>
     </section>
+  );
+}
+
+function TeamArrow({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className="p-2 text-white hover:text-[#fcd800] focus-visible:outline-2 focus-visible:outline-white"
+      aria-label={label}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -154,20 +213,8 @@ function RosterGroup({
 function PlayerPreview({ player, teamName }: { player: RbiPlayer; teamName: string }) {
   return (
     <>
-      <DialogHeader>
-        <p className="text-[8px] text-[#fc74b4]">{teamName}</p>
-        <DialogTitle className="text-lg text-[#fcd800]">{player.name}</DialogTitle>
-      </DialogHeader>
-      {isBatter(player) ? (
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <Stat label="Bats" value={player.bats} />
-          <Stat label="Average" value={`.${player.battingAverage.toString().padStart(3, "0")}`} />
-          <Stat label="Home runs" value={player.homeRuns} />
-          <Stat label="Contact" value={player.contact} />
-          <Stat label="Power" value={player.power} />
-          <Stat label="Speed" value={player.speed} />
-        </div>
-      ) : (
+      <PlayerHeading teamName={teamName} playerName={player.name} />
+      {!isBatter(player) && (
         <div className="grid grid-cols-2 gap-4 text-xs">
           <Stat label="Throws" value={player.throws} />
           <Stat label="Delivery" value={player.delivery} />
@@ -182,9 +229,18 @@ function PlayerPreview({ player, teamName }: { player: RbiPlayer; teamName: stri
         </div>
       )}
       <p className="text-[8px] leading-relaxed text-muted-foreground">
-        Read-only roster card. Editing controls are introduced in the next phase.
+        Pitcher editing controls are introduced in the next phase.
       </p>
     </>
+  );
+}
+
+function PlayerHeading({ teamName, playerName }: { teamName: string; playerName: string }) {
+  return (
+    <DialogHeader>
+      <p className="text-[8px] text-[#fc74b4]">{teamName}</p>
+      <DialogTitle className="text-lg text-[#fcd800]">{playerName}</DialogTitle>
+    </DialogHeader>
   );
 }
 
@@ -195,6 +251,15 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <p className="mt-1">{value}</p>
     </div>
   );
+}
+
+function findPlayer(
+  teams: ReturnType<typeof parseRbiTeams>,
+  selection: PlayerSelection,
+): RbiPlayer | undefined {
+  const team = teams[selection.teamId];
+  const players = selection.type === "batter" ? team?.batters : team?.pitchers;
+  return players?.find((player) => player.rosterSlot === selection.rosterSlot);
 }
 
 function isBatter(player: RbiPlayer): player is RbiBatter {

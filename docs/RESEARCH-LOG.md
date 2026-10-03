@@ -203,3 +203,12 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - A compact team carousel follows the verified ten-team ROM order and uses only generic NES-inspired shapes, colors, and typography.
 - Each team is presented as eight starting batter records, four bench batter records, and four pitcher records. No ninth stored batter was invented; pitcher batting behavior is not represented as a separate ROM batter record.
 - Selecting a player opens a read-only game-style card backed entirely by the parsed ROM values. Editing remains gated for the dedicated batter and pitcher phases.
+
+## 2026-10-02 — Phase 9 batter editor
+
+- The batter card separates cosmetic historical statistics (AVG and HR) from gameplay ratings (Contact, Power, and Speed).
+- Name, handedness, AVG, HR, Contact, Power, and Speed use validated field writers. Roster slot and both unknown trailing bytes are not writable.
+- Every field shows its immutable original value, current value, changed state, and an individual reset control.
+- The documented first pinch-hit at-bat Power bonus is shown as a derived `base + 64` value and explicitly identified as game behavior rather than stored record data.
+- Editing permission is determined from the originally loaded ROM profile so a valid first edit does not disable subsequent edits when the working CRC changes.
+- Pure tests write all confirmed fields, reparse them, verify the input is unchanged, verify unknown bytes remain intact, and reject invalid ranges or unsupported name glyphs.

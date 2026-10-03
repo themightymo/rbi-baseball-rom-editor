@@ -1,8 +1,12 @@
-import { decodeRbiName } from "./encoding.ts";
+import { decodeRbiName, encodeRbiName } from "./encoding.ts";
 import type { RbiBatter, RbiHandedness } from "./types.ts";
 
 export const RBI_BATTER_RECORD_LENGTH = 16;
 export const RBI_BATTER_POWER_OFFSET = 11;
+
+export type RbiBatterChanges = Partial<
+  Pick<RbiBatter, "name" | "bats" | "battingAverage" | "homeRuns" | "contact" | "power" | "speed">
+>;
 
 const VERIFIED_JACKSN_RECORD = Uint8Array.of(
   0x03,
@@ -82,4 +86,50 @@ export function writeBatterPower(rom: Uint8Array, recordOffset: number, value: n
   const next = new Uint8Array(rom);
   next.set(encodeBatterPower(value), recordOffset + RBI_BATTER_POWER_OFFSET);
   return next;
+}
+
+/** Writes only confirmed batter fields; roster slot and unknown bytes are never exposed here. */
+export function writeBatterFields(
+  rom: Uint8Array,
+  recordOffset: number,
+  changes: RbiBatterChanges,
+): Uint8Array {
+  if (
+    !Number.isInteger(recordOffset) ||
+    recordOffset < 0 ||
+    recordOffset + RBI_BATTER_RECORD_LENGTH > rom.length
+  ) {
+    throw new RangeError("RBI batter record is outside the ROM.");
+  }
+  const next = new Uint8Array(rom);
+  if (changes.name !== undefined) next.set(encodeRbiName(changes.name), recordOffset + 1);
+  if (changes.bats !== undefined) next[recordOffset + 7] = changes.bats === "L" ? 1 : 0;
+  if (changes.battingAverage !== undefined) {
+    assertByte(changes.battingAverage - 150, "RBI batting average", 150);
+    next[recordOffset + 8] = changes.battingAverage - 150;
+  }
+  if (changes.homeRuns !== undefined) {
+    assertByte(changes.homeRuns, "RBI home runs");
+    next[recordOffset + 9] = changes.homeRuns;
+  }
+  if (changes.contact !== undefined) {
+    assertByte(changes.contact, "RBI batter contact");
+    next[recordOffset + 10] = changes.contact;
+  }
+  if (changes.power !== undefined) {
+    next.set(encodeBatterPower(changes.power), recordOffset + RBI_BATTER_POWER_OFFSET);
+  }
+  if (changes.speed !== undefined) {
+    assertByte(changes.speed, "RBI batter speed");
+    next[recordOffset + 13] = changes.speed;
+  }
+  return next;
+}
+
+function assertByte(value: number, label: string, displayOffset = 0): void {
+  if (!Number.isInteger(value) || value < 0 || value > 0xff) {
+    throw new RangeError(
+      `${label} must be an integer from ${displayOffset} to ${displayOffset + 255}.`,
+    );
+  }
 }

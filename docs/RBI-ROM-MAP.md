@@ -111,6 +111,8 @@ Both supplied ROMs store California's batter records immediately after the 16-by
 
 The batting-average transformation was checked across all twelve California batter records: `stored byte + 150` reproduces every published in-game average, including Pettis `.258`. All twelve batters now use this same parsed model. Batter bytes `+14..+15` remain unknown and are preserved verbatim for every record.
 
+Confirmed batter fields `+1..+13` are writable with field-specific validation. Names are fixed at six encoded glyph bytes and padded with the confirmed space glyph. Average accepts displayed values 150–405 and stores `value - 150`; one-byte ratings accept 0–255; Power accepts 0–65,535 and remains little-endian. Slot `+0` and unknown bytes `+14..+15` are deliberately excluded from the writer API.
+
 ## Phase 2 test-ROM observation
 
 The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
