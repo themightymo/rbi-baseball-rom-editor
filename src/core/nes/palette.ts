@@ -1,0 +1,22 @@
+/** FCEUX-compatible 64-entry NES reference palette. ROMs store indices, not RGB values. */
+// prettier-ignore
+export const NES_RGB: readonly string[] = [
+  "#747474", "#24188c", "#0000a8", "#44009c", "#8c0074", "#a80010", "#a40000", "#7c0800",
+  "#402c00", "#004400", "#005000", "#003c14", "#183c5c", "#000000", "#000000", "#000000",
+  "#bcbcbc", "#0070ec", "#2038ec", "#8000f0", "#bc00bc", "#e40058", "#d82800", "#c84c0c",
+  "#887000", "#009400", "#00a800", "#009038", "#008088", "#000000", "#000000", "#000000",
+  "#fcfcfc", "#3cbcfc", "#5c94fc", "#cc88fc", "#f478fc", "#fc74b4", "#fc7460", "#fc9838",
+  "#f0bc3c", "#80d010", "#4cdc48", "#58f898", "#00e8d8", "#787878", "#000000", "#000000",
+  "#fcfcfc", "#a8e4fc", "#c4d4fc", "#d4c8fc", "#fcc4fc", "#fcc4d8", "#fcbcb0", "#fcd8a8",
+  "#fce4a0", "#e0fca0", "#a8f0bc", "#b0fccc", "#9cfcf0", "#c4c4c4", "#000000", "#000000",
+];
+
+export function isNesColorIndex(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value < NES_RGB.length;
+}
+
+export function nesColor(value: number): string {
+  if (!isNesColorIndex(value))
+    throw new RangeError("NES color index must be an integer from 0 to 63.");
+  return NES_RGB[value];
+}

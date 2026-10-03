@@ -156,3 +156,7 @@ Published technical research identifies three separate end-paper name fields. It
 | End paper name 3 | `0x1464`     | `0x1474–0x1477` |      4 | region confirmed; encoding TBD |
 
 These bytes are identical in both supplied ROMs. They do not use the player-name glyph mapping directly and may include screen-specific tile/control semantics. Editing is intentionally withheld. Opening-screen lines are likewise documented at PRG-relative `0x2F37–0x2F8D`, but contain interleaved control data and are not yet modeled.
+
+## Palettes
+
+The generic NES palette model is confirmed: ROM palette values are 6-bit indices `0x00–0x3F`, presented through the 64-entry FCEUX-compatible reference palette. RBI-specific offsets for team cap/bat colors, jersey/pants colors, field colors, and interface palettes are still **unknown**. Values in this numeric range are common throughout code and data, so occurrence alone is not evidence of a palette table. No palette writer is enabled.

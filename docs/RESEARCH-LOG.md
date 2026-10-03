@@ -244,3 +244,12 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - These confirmed regions are annotated, but no metadata writer was added. Team-selection labels, roster labels, newspaper/end-paper names, and opening text remain separate until their exact tile/control encoding and fixed-space constraints are proven.
 
 Source: [RBI Baseball Technical Page](https://dee-nee.com/rbi/tech.shtml).
+
+## 2026-10-02 — Phase 14 colors and palettes
+
+- Extracted the inherited FCEUX-compatible 64-color NES palette into generic `core/nes` infrastructure with strict 0–63 index validation.
+- RBI stores NES palette indices rather than unrestricted RGB colors; any future picker will therefore use this exact indexed palette.
+- Historical editor documentation confirms separate cap/bat and jersey/pants colors and mentions field-color editing, but the clean 96 KB ROM offsets were not published in the accessible source.
+- No ROM byte was labeled or made writable merely because its value happened to fall within 0–63. Uniform, field, and interface palette locations remain unresolved pending trace-based verification.
+
+Source: [RBITool editor research thread](https://forums.dee-nee.com/index.php?topic=22874.0).
