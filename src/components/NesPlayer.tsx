@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { Controller, NES, type ButtonKey } from "jsnes";
+import { Controller, NES, type ButtonKey, type EmulatorData } from "jsnes";
 import { Button } from "@/components/ui/button";
 import type { NesPlaySnapshot } from "@/core/nes/play";
-import { ArrowLeft, Maximize, Pause, Play, RotateCcw, Volume2 } from "lucide-react";
+import {
+  ArrowLeft,
+  FastForward,
+  Maximize,
+  Pause,
+  Play,
+  Rewind,
+  RotateCcw,
+  Volume2,
+} from "lucide-react";
 
 const WIDTH = 256;
 const HEIGHT = 240;
 const FRAME_RATE = 60;
+const FAST_FORWARD_RATE = 2;
+const REWIND_SECONDS = 5;
+const MAX_REWIND_SECONDS = 15;
 
 const KEYS: Readonly<Record<string, ButtonKey>> = {
   ArrowUp: Controller.BUTTON_UP,
@@ -20,6 +32,7 @@ const KEYS: Readonly<Record<string, ButtonKey>> = {
   Enter: Controller.BUTTON_START,
   Tab: Controller.BUTTON_SELECT,
 };
+const CONTROLLER_BUTTONS = [...new Set(Object.values(KEYS))];
 
 export function NesPlayer({
   snapshot,
@@ -32,8 +45,14 @@ export function NesPlayer({
   const playerRef = useRef<HTMLDivElement>(null);
   const nesRef = useRef<NES | null>(null);
   const playingRef = useRef(true);
+  const speedRef = useRef(1);
+  const clearAudioRef = useRef<(() => void) | null>(null);
+  const rewindRef = useRef<(() => void) | null>(null);
+  const resetRewindRef = useRef<(() => void) | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
   const [paused, setPaused] = useState(false);
+  const [fastForwarding, setFastForwarding] = useState(false);
+  const [rewindReady, setRewindReady] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [status, setStatus] = useState(`Loading ${snapshot.name}…`);
 
@@ -41,7 +60,10 @@ export function NesPlayer({
     const canvas = canvasRef.current;
     if (!canvas) return;
     playingRef.current = true;
+    speedRef.current = 1;
     setPaused(false);
+    setFastForwarding(false);
+    setRewindReady(false);
     setAudioReady(false);
     setStatus(`Loading ${snapshot.name}…`);
     const context = canvas.getContext("2d", { alpha: false });
@@ -61,6 +83,9 @@ export function NesPlayer({
     const right = new Float32Array(queueSize);
     let read = 0;
     let write = 0;
+    clearAudioRef.current = () => {
+      read = write;
+    };
     const audioNode = audio.createScriptProcessor(1024, 0, 2);
     audioNode.onaudioprocess = (event) => {
       const outputLeft = event.outputBuffer.getChannelData(0);
@@ -87,6 +112,7 @@ export function NesPlayer({
         context.putImageData(image, 0, 0);
       },
       onAudioSample: (sampleLeft, sampleRight) => {
+        if (speedRef.current > 1) return;
         const next = (write + 1) & queueMask;
         if (next === read) read = (read + 1) & queueMask;
         left[write] = sampleLeft;
@@ -96,8 +122,12 @@ export function NesPlayer({
     });
     nesRef.current = nes;
 
+    let frameNumber = 0;
+    const rewindHistory: Array<{ frame: number; state: EmulatorData }> = [];
+
     try {
       nes.loadROM(snapshot.bytes);
+      rewindHistory.push({ frame: frameNumber, state: nes.toJSON() });
       setStatus(`Now playing · ${snapshot.name}`);
       canvas.focus({ preventScroll: true });
     } catch (error) {
@@ -119,10 +149,16 @@ export function NesPlayer({
       if (previous !== null) {
         const elapsed = timestamp - previous;
         if (elapsed >= 0 && elapsed <= 100) {
-          budget += (elapsed * FRAME_RATE) / 1000;
+          budget += (elapsed * FRAME_RATE * speedRef.current) / 1000;
           try {
             while (budget >= 1) {
               nes.frame();
+              frameNumber++;
+              if (frameNumber % FRAME_RATE === 0) {
+                rewindHistory.push({ frame: frameNumber, state: nes.toJSON() });
+                while (rewindHistory.length > MAX_REWIND_SECONDS + 1) rewindHistory.shift();
+                setRewindReady(rewindHistory.length > 1);
+              }
               budget--;
             }
           } catch (error) {
@@ -142,6 +178,32 @@ export function NesPlayer({
     const release = () => {
       for (const button of held) nes.buttonUp(1, button);
       held.clear();
+    };
+    rewindRef.current = () => {
+      if (rewindHistory.length < 2) return;
+      const targetFrame = frameNumber - REWIND_SECONDS * FRAME_RATE;
+      let targetIndex = rewindHistory.findIndex(({ frame }) => frame > targetFrame) - 1;
+      if (targetIndex < 0) targetIndex = 0;
+      const target = rewindHistory[targetIndex];
+      const seconds = Math.max(1, Math.round((frameNumber - target.frame) / FRAME_RATE));
+      release();
+      nes.fromJSON(target.state);
+      for (const button of CONTROLLER_BUTTONS) nes.buttonUp(1, button);
+      nes.frame();
+      frameNumber = target.frame + 1;
+      rewindHistory.splice(targetIndex + 1);
+      rewindHistory[targetIndex] = { frame: frameNumber, state: nes.toJSON() };
+      speedRef.current = 1;
+      setFastForwarding(false);
+      setRewindReady(rewindHistory.length > 1);
+      clearAudioRef.current?.();
+      setStatus(`Rewound ${seconds} second${seconds === 1 ? "" : "s"} · ${snapshot.name}`);
+      canvas.focus({ preventScroll: true });
+    };
+    resetRewindRef.current = () => {
+      frameNumber = 0;
+      rewindHistory.splice(0, rewindHistory.length, { frame: 0, state: nes.toJSON() });
+      setRewindReady(false);
     };
     const keyDown = (event: KeyboardEvent) => {
       if (document.activeElement !== canvas || event.repeat) return;
@@ -186,6 +248,9 @@ export function NesPlayer({
       audioNode.disconnect();
       void audio.close();
       audioRef.current = null;
+      clearAudioRef.current = null;
+      rewindRef.current = null;
+      resetRewindRef.current = null;
       nesRef.current = null;
     };
   }, [snapshot]);
@@ -205,6 +270,14 @@ export function NesPlayer({
     setPaused(next);
     playingRef.current = !next;
     if (!next) canvasRef.current?.focus({ preventScroll: true });
+  };
+
+  const toggleFastForward = () => {
+    const next = !fastForwarding;
+    speedRef.current = next ? FAST_FORWARD_RATE : 1;
+    clearAudioRef.current?.();
+    setFastForwarding(next);
+    canvasRef.current?.focus({ preventScroll: true });
   };
 
   return (
@@ -241,9 +314,29 @@ export function NesPlayer({
           <Button
             type="button"
             size="sm"
+            variant={fastForwarding ? "default" : "secondary"}
+            aria-pressed={fastForwarding}
+            onClick={toggleFastForward}
+          >
+            <FastForward /> {fastForwarding ? `${FAST_FORWARD_RATE}× speed` : "Speed up"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={!rewindReady}
+            onClick={() => rewindRef.current?.()}
+          >
+            <Rewind /> Rewind {REWIND_SECONDS}s
+          </Button>
+          <Button
+            type="button"
+            size="sm"
             variant="secondary"
             onClick={() => {
               nesRef.current?.reset();
+              resetRewindRef.current?.();
+              clearAudioRef.current?.();
               playingRef.current = true;
               setPaused(false);
               canvasRef.current?.focus({ preventScroll: true });
@@ -281,7 +374,8 @@ export function NesPlayer({
         <div>
           <h3 className="font-semibold">Focus</h3>
           <p className="mt-2 text-muted-foreground">
-            Click the game screen to play and enable audio. Press Escape to release keyboard focus.
+            Click the game screen to play and enable audio. Rewind keeps the last 15 seconds.
+            Fast-forward runs at 2× with audio muted. Press Escape to release keyboard focus.
           </p>
         </div>
       </div>
