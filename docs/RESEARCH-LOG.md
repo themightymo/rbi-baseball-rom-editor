@@ -196,3 +196,10 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - IPS generation now rejects unequal original/modified lengths instead of silently ignoring length changes.
 - Changed ranges larger than the IPS 65,535-byte record limit are split into valid records.
 - An offset that exceeds the format's 24-bit range now produces an explicit error instead of being skipped.
+
+## 2026-10-02 — Phase 8 primary roster interface
+
+- The decoded RBI roster is now the application's default post-load screen rather than a research-only table.
+- A compact team carousel follows the verified ten-team ROM order and uses only generic NES-inspired shapes, colors, and typography.
+- Each team is presented as eight starting batter records, four bench batter records, and four pitcher records. No ninth stored batter was invented; pitcher batting behavior is not represented as a separate ROM batter record.
+- Selecting a player opens a read-only game-style card backed entirely by the parsed ROM values. Editing remains gated for the dedicated batter and pitcher phases.

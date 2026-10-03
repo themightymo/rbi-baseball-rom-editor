@@ -22,12 +22,12 @@ function Index() {
 
 function Shell() {
   const { rom } = useRom();
-  const [tab, setTab] = useState("inspect");
+  const [tab, setTab] = useState("rosters");
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="nes-rule bg-card">
         <div className="mx-auto max-w-7xl px-4 py-5">
-          <p className="text-[10px] tracking-[0.2em] text-muted-foreground">NES RESEARCH TOOL</p>
+          <p className="text-[10px] tracking-[0.2em] text-muted-foreground">NES ROM EDITOR</p>
           <h1 className="mt-2 text-lg leading-relaxed text-foreground">
             R.B.I. Baseball ROM Editor
           </h1>
@@ -44,14 +44,14 @@ function Shell() {
             <RbiDetectionPanel />
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="flex h-auto w-full flex-wrap justify-start">
+                <TabsTrigger value="rosters" className="gap-1.5">
+                  <Users className="size-4" /> RBI Rosters
+                </TabsTrigger>
                 <TabsTrigger value="inspect" className="gap-1.5">
                   <FileSearch className="size-4" /> Inspect ROM
                 </TabsTrigger>
                 <TabsTrigger value="layouts" className="gap-1.5">
                   <Table className="size-4" /> Research Layouts
-                </TabsTrigger>
-                <TabsTrigger value="rosters" className="gap-1.5">
-                  <Users className="size-4" /> RBI Rosters
                 </TabsTrigger>
                 <TabsTrigger value="save" className="ml-auto gap-1.5">
                   <Save className="size-4" /> Save &amp; Export
