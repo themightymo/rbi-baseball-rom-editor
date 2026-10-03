@@ -1,5 +1,15 @@
 # Research Log
 
+## 2026-10-03 — Slider-based stat editing
+
+- Replaced numeric text fields on the primary batter and pitcher cards with a shared NES-styled
+  slider interface.
+- Every slider shows the live exact value, range endpoints, and a pink marker for the immutable
+  original value. Minus/plus buttons and keyboard arrow control retain single-unit precision for
+  wide ranges such as batter Power.
+- Existing changed indicators, individual reset buttons, validation ranges, and confirmed ROM
+  writer APIs remain unchanged. Names and categorical fields retain their appropriate controls.
+
 ## 2026-10-03 — In-browser play and supplied modified profile
 
 - Added an in-memory play snapshot: “Save and Play Game” copies the current working ROM bytes into

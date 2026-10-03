@@ -2,6 +2,7 @@ import { RotateCcw } from "lucide-react";
 import type { RbiHandedness, RbiPitcher, RbiPitcherDelivery } from "@/games/rbi/types";
 import type { RbiPitcherChanges } from "@/games/rbi/pitchers";
 import { Input } from "@/components/ui/input";
+import { RbiStatSlider } from "@/components/RbiStatSlider";
 
 export function RbiPitcherCard({
   player,
@@ -214,17 +215,15 @@ function NumberField({
       disabled={disabled}
       onReset={() => onChange(original)}
     >
-      <Input
-        type="number"
+      <RbiStatSlider
+        label={label}
         value={value}
+        original={original}
         min={min}
         max={max}
         disabled={disabled}
-        aria-label={label}
-        onChange={(event) => {
-          const next = Number(event.target.value);
-          if (Number.isInteger(next) && next >= min && next <= max) onChange(next);
-        }}
+        display={display}
+        onChange={onChange}
       />
     </Field>
   );
