@@ -9,8 +9,8 @@ export function TeamEditor() {
   if (!rom || t.offset === null || !t.recordLength || !t.count) {
     return (
       <div className="nes-window border-dashed p-6 text-sm text-muted-foreground">
-        Fill in the starting offset, entry size, and number of teams above, then add at least
-        one field — an editable table of teams will appear here.
+        Fill in the starting offset, entry size, and number of teams above, then add at least one
+        field — an editable table of teams will appear here.
       </div>
     );
   }

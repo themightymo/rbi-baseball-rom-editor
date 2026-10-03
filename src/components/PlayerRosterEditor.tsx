@@ -12,7 +12,12 @@ interface FieldValue {
   num?: number;
 }
 
-function readField(rom: Uint8Array, base: number, f: FieldDef, encoding: RomMap["encoding"]): FieldValue {
+function readField(
+  rom: Uint8Array,
+  base: number,
+  f: FieldDef,
+  encoding: RomMap["encoding"],
+): FieldValue {
   const raw = rom.slice(base + f.start, base + f.start + f.length);
   if (f.type === "text") return { raw, text: decodeText(rom, base + f.start, f.length, encoding) };
   if (f.type === "number" || f.type === "enum") {
@@ -40,8 +45,8 @@ export function PlayerRosterEditor() {
   if (!ready) {
     return (
       <div className="nes-window border-dashed p-6 text-sm text-muted-foreground">
-        Fill in the starting offset, entry size, player count, and players per team above,
-        then add at least one field — an editable table of players will appear here.
+        Fill in the starting offset, entry size, player count, and players per team above, then add
+        at least one field — an editable table of players will appear here.
       </div>
     );
   }
@@ -120,9 +125,7 @@ export function PlayerRosterEditor() {
                 const base = p.offset! + idx * p.recordLength!;
                 return (
                   <tr key={idx} className="border-t hover:bg-accent/30">
-                    <td className="p-2 font-mono text-xs text-muted-foreground">
-                      {idx + 1}
-                    </td>
+                    <td className="p-2 font-mono text-xs text-muted-foreground">{idx + 1}</td>
                     {fieldEntries.map(([k, f]) => (
                       <td key={k} className="p-1.5">
                         <FieldEditor
@@ -140,7 +143,10 @@ export function PlayerRosterEditor() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={fieldEntries.length + 1} className="p-6 text-center text-muted-foreground">
+                  <td
+                    colSpan={fieldEntries.length + 1}
+                    className="p-6 text-center text-muted-foreground"
+                  >
                     No players match.
                   </td>
                 </tr>
@@ -221,7 +227,9 @@ export function FieldEditor({
     <div className="flex items-center gap-2">
       <Input
         className={`h-8 font-mono ${changed ? "border-warning" : ""}`}
-        value={Array.from(cur.raw).map((b) => b.toString(16).padStart(2, "0").toUpperCase()).join(" ")}
+        value={Array.from(cur.raw)
+          .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
+          .join(" ")}
         onChange={(e) => {
           const parts = e.target.value.split(/\s+/).filter(Boolean).slice(0, field.length);
           const out = new Uint8Array(field.length);

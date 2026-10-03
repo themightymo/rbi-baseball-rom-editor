@@ -9,17 +9,16 @@ import { Info } from "lucide-react";
 
 /**
  * Power-user tools for ROM hackers. Casual users never need these — the
- * Team Roster view works automatically on a standard ROM.
+ * RBI-specific editing will be added only after its byte layout is verified.
  */
 function HackerNotice() {
   return (
     <div className="flex items-start gap-2 rounded-lg border bg-muted/30 p-3 text-sm">
       <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <p className="text-muted-foreground">
-        <strong className="text-foreground">You probably don't need this.</strong> These tools are
-        for ROM hackers working with modified or unusual ROMs, or editing parts of the game this
-        editor doesn't handle automatically yet. Rosters, names and ratings already work on the
-        other tabs.
+        <strong className="text-foreground">Research tools.</strong> Use these to inspect bytes,
+        search strings, describe candidate records, and verify exactly what a change affects. RBI
+        player parsing is intentionally disabled until its layout is proven.
       </p>
     </div>
   );
@@ -52,7 +51,10 @@ export function CustomLayoutTools() {
         &amp; Share tab.
       </Explain>
 
-      <Section title="Player data layout" hint="Describe a table with one entry per player.">
+      <Section
+        title="Candidate player layout"
+        hint="Describe a temporary table while researching player records."
+      >
         <RecordMapper section="players" />
         <div className="mt-4 border-t pt-4">
           <PlayerRosterEditor />

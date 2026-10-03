@@ -1,7 +1,13 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { diffBytes, type DiffRange } from "@/lib/diff";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const LABELS = [
   "unknown",
@@ -33,10 +39,7 @@ export function DiffViewer() {
         <FileSlot label="Original ROM" inputRef={aRef} loaded={!!a} onPick={(f) => load(f, setA)} />
         <FileSlot label="Modified ROM" inputRef={bRef} loaded={!!b} onPick={(f) => load(f, setB)} />
       </div>
-      <Button
-        disabled={!a || !b}
-        onClick={() => a && b && setRanges(diffBytes(a, b))}
-      >
+      <Button disabled={!a || !b} onClick={() => a && b && setRanges(diffBytes(a, b))}>
         Compare
       </Button>
       {ranges.length > 0 && (

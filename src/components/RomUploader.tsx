@@ -52,18 +52,18 @@ export function RomDropZone() {
         <FileUp className="size-10 text-highlight" />
       </div>
       <div className="space-y-1">
-        <h2 className="text-xl leading-relaxed text-highlight">Open your Tecmo Super Bowl ROM</h2>
+        <h2 className="text-xl leading-relaxed text-highlight">Open your R.B.I. Baseball ROM</h2>
         <p className="text-sm text-muted-foreground">
-          Drag and drop a <span className="font-mono">.nes</span> file here, or choose one from
-          your computer.
+          Drag and drop a <span className="font-mono">.nes</span> file here, or choose one from your
+          computer.
         </p>
       </div>
       <Button size="lg" onClick={browse} className="gap-2">
         <Upload className="size-5" /> Choose ROM file
       </Button>
       <p className="max-w-md text-xs text-muted-foreground">
-        Your ROM never leaves your computer — everything happens right here in your browser.
-        Use a ROM you legally own.
+        Your ROM never leaves your computer — everything happens right here in your browser. Use a
+        ROM you legally own.
       </p>
       {input}
     </div>
@@ -89,7 +89,8 @@ export function RomToolbar() {
               ? "No changes yet"
               : `${editCount} unsaved change${editCount === 1 ? "" : "s"}`}
             <span className="hidden sm:inline">
-              {" "}· {rom.length.toLocaleString()} bytes · CRC32 {romChecksum}
+              {" "}
+              · {rom.length.toLocaleString()} bytes · CRC32 {romChecksum}
             </span>
           </div>
         </div>
@@ -107,8 +108,8 @@ export function RomToolbar() {
       {!hasINES && (
         <div className="mt-3 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning">
           <FileWarning className="size-4 shrink-0" />
-          This file has no standard NES header. Editing may still work, but double-check the
-          results in an emulator.
+          This file has no standard NES header. Editing may still work, but double-check the results
+          in an emulator.
         </div>
       )}
     </div>

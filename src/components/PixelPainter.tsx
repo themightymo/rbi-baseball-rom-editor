@@ -2,7 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TRANSPARENT, pixelsToDataUrl, type Pixels } from "@/lib/pixels";
-import { Eraser, FlipHorizontal2, Grid3x3, PaintBucket, PaintbrushVertical, Pencil, Pipette, Redo2, Undo2 } from "lucide-react";
+import {
+  Eraser,
+  FlipHorizontal2,
+  Grid3x3,
+  PaintBucket,
+  PaintbrushVertical,
+  Pencil,
+  Pipette,
+  Redo2,
+  Undo2,
+} from "lucide-react";
 
 // Shared pixel-art editor behind the headshot and helmet painters. Render it inside a
 // DialogContent; it supplies the title, canvas, tools and Save / Revert buttons.
@@ -57,9 +67,27 @@ interface Props {
 }
 
 export function PixelPainter({
-  title, description, width, height, eraseColor, initial, blank, palettes, customColor,
-  defaultColor, previewBackground, canvasBackground, previewScales = [1, 2], startOptions, loadError,
-  saveLabel, downloadName, onRevert, revertTitle, onSave, onClose,
+  title,
+  description,
+  width,
+  height,
+  eraseColor,
+  initial,
+  blank,
+  palettes,
+  customColor,
+  defaultColor,
+  previewBackground,
+  canvasBackground,
+  previewScales = [1, 2],
+  startOptions,
+  loadError,
+  saveLabel,
+  downloadName,
+  onRevert,
+  revertTitle,
+  onSave,
+  onClose,
 }: Props) {
   const scale = Math.floor(CANVAS_PX / width);
   const [pixels, setPixelsState] = useState<Pixels>(blank);
@@ -88,23 +116,26 @@ export function PixelPainter({
     setPixels(p);
   };
 
-  const startFrom = useCallback(async (source: Source, undoable: boolean) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const p = await source();
-      if (undoable) {
-        setUndo((u) => [...u, pxRef.current]);
-        setRedo([]);
+  const startFrom = useCallback(
+    async (source: Source, undoable: boolean) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const p = await source();
+        if (undoable) {
+          setUndo((u) => [...u, pxRef.current]);
+          setRedo([]);
+        }
+        pxRef.current = p;
+        setPixelsState(p);
+      } catch {
+        setError(loadError);
+      } finally {
+        setLoading(false);
       }
-      pxRef.current = p;
-      setPixelsState(p);
-    } catch {
-      setError(loadError);
-    } finally {
-      setLoading(false);
-    }
-  }, [loadError]);
+    },
+    [loadError],
+  );
 
   // Open on the current image.
   useEffect(() => {
@@ -205,17 +236,27 @@ export function PixelPainter({
 
   /** Paints a straight line of cells so fast strokes don't leave gaps. */
   const paintLine = (next: Pixels, from: number, to: number, c: string) => {
-    let x0 = from % width, y0 = Math.floor(from / width);
-    const x1 = to % width, y1 = Math.floor(to / width);
-    const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
-    const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let x0 = from % width,
+      y0 = Math.floor(from / width);
+    const x1 = to % width,
+      y1 = Math.floor(to / width);
+    const dx = Math.abs(x1 - x0),
+      dy = -Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1,
+      sy = y0 < y1 ? 1 : -1;
     let err = dx + dy;
     for (;;) {
       for (const j of withMirror(y0 * width + x0)) next[j] = c;
       if (x0 === x1 && y0 === y1) break;
       const e2 = 2 * err;
-      if (e2 >= dy) { err += dy; x0 += sx; }
-      if (e2 <= dx) { err += dx; y0 += sy; }
+      if (e2 >= dy) {
+        err += dy;
+        x0 += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        y0 += sy;
+      }
     }
   };
 
@@ -268,7 +309,9 @@ export function PixelPainter({
     setPixels(next);
   };
 
-  const endStroke = () => { lastCell.current = null; };
+  const endStroke = () => {
+    lastCell.current = null;
+  };
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -285,7 +328,8 @@ export function PixelPainter({
   };
 
   const preview = pixelsToDataUrl(pixels, width, height);
-  const eraserLabel = eraseColor === TRANSPARENT ? "Eraser (makes pixels see-through)" : "Eraser (paints background)";
+  const eraserLabel =
+    eraseColor === TRANSPARENT ? "Eraser (makes pixels see-through)" : "Eraser (paints background)";
 
   return (
     <div className="space-y-3">
@@ -298,7 +342,9 @@ export function PixelPainter({
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted-foreground">Start from:</span>
         {startOptions((source) => startFrom(source, true))}
-        <Button size="sm" variant="secondary" onClick={() => replaceWith(blank())}>Blank</Button>
+        <Button size="sm" variant="secondary" onClick={() => replaceWith(blank())}>
+          Blank
+        </Button>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -313,23 +359,49 @@ export function PixelPainter({
             onPointerUp={endStroke}
             onPointerCancel={endStroke}
             className="block w-full touch-none border-2 border-foreground"
-            style={{ aspectRatio: `${width} / ${height}`, imageRendering: "pixelated", cursor: tool === "pick" ? "copy" : "crosshair" }}
+            style={{
+              aspectRatio: `${width} / ${height}`,
+              imageRendering: "pixelated",
+              cursor: tool === "pick" ? "copy" : "crosshair",
+            }}
           />
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 text-xs">Loading…</div>
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 text-xs">
+              Loading…
+            </div>
           )}
         </div>
 
         {/* Tools, colours, preview */}
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap gap-1">
-            <ToolBtn label="Pencil" active={tool === "pencil"} onClick={() => setTool("pencil")}><Pencil /></ToolBtn>
-            <ToolBtn label={eraserLabel} active={tool === "eraser"} onClick={() => setTool("eraser")}><Eraser /></ToolBtn>
-            <ToolBtn label="Fill" active={tool === "fill"} onClick={() => setTool("fill")}><PaintBucket /></ToolBtn>
-            <ToolBtn label="Pick colour from canvas" active={tool === "pick"} onClick={() => setTool("pick")}><Pipette /></ToolBtn>
+            <ToolBtn label="Pencil" active={tool === "pencil"} onClick={() => setTool("pencil")}>
+              <Pencil />
+            </ToolBtn>
+            <ToolBtn
+              label={eraserLabel}
+              active={tool === "eraser"}
+              onClick={() => setTool("eraser")}
+            >
+              <Eraser />
+            </ToolBtn>
+            <ToolBtn label="Fill" active={tool === "fill"} onClick={() => setTool("fill")}>
+              <PaintBucket />
+            </ToolBtn>
+            <ToolBtn
+              label="Pick colour from canvas"
+              active={tool === "pick"}
+              onClick={() => setTool("pick")}
+            >
+              <Pipette />
+            </ToolBtn>
             <span className="mx-1 w-px bg-border" />
-            <ToolBtn label="Mirror left/right" active={mirror} onClick={() => setMirror(!mirror)}><FlipHorizontal2 /></ToolBtn>
-            <ToolBtn label="Show grid" active={grid} onClick={() => setGrid(!grid)}><Grid3x3 /></ToolBtn>
+            <ToolBtn label="Mirror left/right" active={mirror} onClick={() => setMirror(!mirror)}>
+              <FlipHorizontal2 />
+            </ToolBtn>
+            <ToolBtn label="Show grid" active={grid} onClick={() => setGrid(!grid)}>
+              <Grid3x3 />
+            </ToolBtn>
             {canvasBackground && (
               <ToolBtn
                 label="Show background colour behind see-through pixels (not saved)"
@@ -340,8 +412,12 @@ export function PixelPainter({
               </ToolBtn>
             )}
             <span className="mx-1 w-px bg-border" />
-            <ToolBtn label="Undo (Ctrl+Z)" disabled={!undo.length} onClick={doUndo}><Undo2 /></ToolBtn>
-            <ToolBtn label="Redo (Ctrl+Shift+Z)" disabled={!redo.length} onClick={doRedo}><Redo2 /></ToolBtn>
+            <ToolBtn label="Undo (Ctrl+Z)" disabled={!undo.length} onClick={doUndo}>
+              <Undo2 />
+            </ToolBtn>
+            <ToolBtn label="Redo (Ctrl+Shift+Z)" disabled={!redo.length} onClick={doRedo}>
+              <Redo2 />
+            </ToolBtn>
           </div>
 
           {palettes.map((p) => (
@@ -349,10 +425,21 @@ export function PixelPainter({
               <p className="text-[10px] text-muted-foreground">{p.label}</p>
               <div
                 className={p.columns ? "grid gap-0.5" : "flex flex-wrap gap-1"}
-                style={p.columns ? { gridTemplateColumns: `repeat(${p.columns}, minmax(0, 1fr))` } : undefined}
+                style={
+                  p.columns
+                    ? { gridTemplateColumns: `repeat(${p.columns}, minmax(0, 1fr))` }
+                    : undefined
+                }
               >
                 {p.colors.map(({ c, name }) => (
-                  <Swatch key={c} color={c} name={name} small={!!p.columns} selected={color === c} onClick={() => pickColor(c)} />
+                  <Swatch
+                    key={c}
+                    color={c}
+                    name={name}
+                    small={!!p.columns}
+                    selected={color === c}
+                    onClick={() => pickColor(c)}
+                  />
                 ))}
               </div>
             </div>
@@ -360,7 +447,12 @@ export function PixelPainter({
           {customColor && (
             <label className="flex items-center gap-2 text-[10px] text-muted-foreground">
               Custom
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-6 w-10 cursor-pointer bg-transparent" />
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-6 w-10 cursor-pointer bg-transparent"
+              />
               <span className="font-mono">{color}</span>
             </label>
           )}
@@ -388,23 +480,54 @@ export function PixelPainter({
       <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
         <div className="flex gap-2">
           {onRevert && (
-            <Button size="sm" variant="outline" onClick={() => { onRevert(); onClose(); }} title={revertTitle}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                onRevert();
+                onClose();
+              }}
+              title={revertTitle}
+            >
               Revert to original
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={download}>Download PNG</Button>
+          <Button size="sm" variant="ghost" onClick={download}>
+            Download PNG
+          </Button>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={() => { onSave(pxRef.current); onClose(); }} disabled={loading}>{saveLabel}</Button>
+          <Button size="sm" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(pxRef.current);
+              onClose();
+            }}
+            disabled={loading}
+          >
+            {saveLabel}
+          </Button>
         </div>
       </div>
     </div>
   );
 }
 
-function ToolBtn({ label, active, disabled, onClick, children }: {
-  label: string; active?: boolean; disabled?: boolean; onClick: () => void; children: React.ReactNode;
+function ToolBtn({
+  label,
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
@@ -415,7 +538,9 @@ function ToolBtn({ label, active, disabled, onClick, children }: {
       disabled={disabled}
       onClick={onClick}
       className={`rounded border-2 p-1.5 transition [&_svg]:size-4 disabled:opacity-40 ${
-        active ? "border-foreground bg-primary text-primary-foreground" : "border-transparent hover:bg-accent"
+        active
+          ? "border-foreground bg-primary text-primary-foreground"
+          : "border-transparent hover:bg-accent"
       }`}
     >
       {children}
@@ -423,8 +548,18 @@ function ToolBtn({ label, active, disabled, onClick, children }: {
   );
 }
 
-function Swatch({ color, name, selected, small, onClick }: {
-  color: string; name: string; selected: boolean; small?: boolean; onClick: () => void;
+function Swatch({
+  color,
+  name,
+  selected,
+  small,
+  onClick,
+}: {
+  color: string;
+  name: string;
+  selected: boolean;
+  small?: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -434,7 +569,9 @@ function Swatch({ color, name, selected, small, onClick }: {
       aria-pressed={selected}
       onClick={onClick}
       className={`${small ? "aspect-square w-full" : "size-7"} rounded-sm border ${
-        selected ? "ring-2 ring-highlight ring-offset-1 ring-offset-background" : "border-foreground/30"
+        selected
+          ? "ring-2 ring-highlight ring-offset-1 ring-offset-background"
+          : "border-foreground/30"
       }`}
       style={{ background: color }}
     />

@@ -48,7 +48,11 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className="inline-flex items-center gap-2 rounded-md border bg-card py-1.5 pl-2 pr-3 text-sm font-medium shadow-sm transition hover:bg-accent">
         <span className="rounded p-0.5 text-[16px]" style={{ background: BG }}>
-          {isAllStarTeam(teamIdx) ? <AllStarBadge team={teamIdx} /> : <Helmet pixels={helmets[teamIdx]} />}
+          {isAllStarTeam(teamIdx) ? (
+            <AllStarBadge team={teamIdx} />
+          ) : (
+            <Helmet pixels={helmets[teamIdx]} />
+          )}
         </span>
         {teamName(teamIdx)}
         <ChevronDown className="size-4 text-muted-foreground" />
@@ -79,7 +83,12 @@ export function TeamSelect({ teamIdx, onTeamChange, allStars = false }: Props) {
             <div role="group" aria-label="All Stars" className="mt-[1.25em] pl-[3em]">
               {ALL_STAR_TEAMS.map((t, i) => (
                 <div key={t} className="flex items-center gap-[1em]">
-                  <AllStarButton team={t} name={teamName(t)} selected={t === teamIdx} onClick={() => choose(t)} />
+                  <AllStarButton
+                    team={t}
+                    name={teamName(t)}
+                    selected={t === teamIdx}
+                    onClick={() => choose(t)}
+                  />
                   {i === 0 && <span style={{ color: HIGHLIGHT }}>SELECT TEAM</span>}
                 </div>
               ))}
@@ -171,7 +180,10 @@ function AllStarButton({
       className="group flex h-[2em] items-center gap-[0.5em] outline-none focus-visible:bg-white/15"
     >
       <Cursor visible={selected} />
-      <span className="group-hover:text-[#f858a5]" style={selected ? { color: HIGHLIGHT } : undefined}>
+      <span
+        className="group-hover:text-[#f858a5]"
+        style={selected ? { color: HIGHLIGHT } : undefined}
+      >
         {name.toUpperCase()}
       </span>
     </button>

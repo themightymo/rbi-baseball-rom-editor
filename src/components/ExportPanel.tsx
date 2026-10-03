@@ -33,7 +33,10 @@ export function ExportPanel() {
             disabled={!rom || !originalRom || editCount === 0}
             onClick={() => {
               if (!rom || !originalRom) return;
-              download((romName ?? "rom").replace(/\.nes$/i, "") + ".ips", buildIPS(originalRom, rom));
+              download(
+                (romName ?? "rom").replace(/\.nes$/i, "") + ".ips",
+                buildIPS(originalRom, rom),
+              );
             }}
           >
             <FileCode className="size-4" /> Download IPS patch
@@ -46,92 +49,88 @@ export function ExportPanel() {
           Advanced: work-in-progress &amp; layout files
         </summary>
         <p className="mt-2 text-xs text-muted-foreground">
-          A <em>project file</em> saves your list of changes so you can re-apply them to a fresh
-          ROM later. A <em>layout file</em> holds any custom data layouts you described in the
-          Custom Data Layouts tab.
+          A <em>project file</em> saves your list of changes so you can re-apply them to a fresh ROM
+          later. A <em>layout file</em> holds any custom data layouts you described in the Custom
+          Data Layouts tab.
         </p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <Button
-          variant="outline"
-          onClick={() =>
-            download(
-              "rom-map.json",
-              JSON.stringify(romMap, null, 2),
-              "application/json",
-            )
-          }
-        >
-          <FileJson className="size-4" /> Export layout file
-        </Button>
-        <Button variant="outline" onClick={() => importRef.current?.click()}>
-          <Upload className="size-4" /> Import layout file
-        </Button>
-        <input
-          ref={importRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (!f) return;
-            const text = await f.text();
-            try {
-              const parsed = JSON.parse(text) as RomMap;
-              setRomMap({ ...DEFAULT_ROM_MAP, ...parsed });
-            } catch {
-              alert("That doesn't look like a valid layout file.");
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            onClick={() =>
+              download("rom-map.json", JSON.stringify(romMap, null, 2), "application/json")
             }
-            e.target.value = "";
-          }}
-        />
-
-        <Button
-          variant="outline"
-          disabled={editCount === 0}
-          onClick={() => {
-            const editList = Array.from(edits.entries()).map(([offset, value]) => ({
-              offset,
-              value,
-              original: originalRom?.[offset] ?? null,
-            }));
-            download(
-              "edits-project.json",
-              JSON.stringify(
-                { kind: "tecmo-edit-project", romMapChecksum: null, edits: editList },
-                null,
-                2,
-              ),
-              "application/json",
-            );
-          }}
-        >
-          <FileJson className="size-4" /> Save project file
-        </Button>
-        <Button variant="outline" onClick={() => projectRef.current?.click()} disabled={!rom}>
-          <Upload className="size-4" /> Open project file
-        </Button>
-        <input
-          ref={projectRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (!f || !rom) return;
-            try {
-              const data = JSON.parse(await f.text()) as {
-                edits: { offset: number; value: number }[];
-              };
-              for (const { offset, value } of data.edits) {
-                setBytes(offset, new Uint8Array([value]));
+          >
+            <FileJson className="size-4" /> Export layout file
+          </Button>
+          <Button variant="outline" onClick={() => importRef.current?.click()}>
+            <Upload className="size-4" /> Import layout file
+          </Button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const text = await f.text();
+              try {
+                const parsed = JSON.parse(text) as RomMap;
+                setRomMap({ ...DEFAULT_ROM_MAP, ...parsed });
+              } catch {
+                alert("That doesn't look like a valid layout file.");
               }
-            } catch {
-              alert("That doesn't look like a valid project file.");
-            }
-            e.target.value = "";
-          }}
-        />
-      </div>
+              e.target.value = "";
+            }}
+          />
+
+          <Button
+            variant="outline"
+            disabled={editCount === 0}
+            onClick={() => {
+              const editList = Array.from(edits.entries()).map(([offset, value]) => ({
+                offset,
+                value,
+                original: originalRom?.[offset] ?? null,
+              }));
+              download(
+                "edits-project.json",
+                JSON.stringify(
+                  { kind: "rbi-edit-project", romMapChecksum: null, edits: editList },
+                  null,
+                  2,
+                ),
+                "application/json",
+              );
+            }}
+          >
+            <FileJson className="size-4" /> Save project file
+          </Button>
+          <Button variant="outline" onClick={() => projectRef.current?.click()} disabled={!rom}>
+            <Upload className="size-4" /> Open project file
+          </Button>
+          <input
+            ref={projectRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f || !rom) return;
+              try {
+                const data = JSON.parse(await f.text()) as {
+                  edits: { offset: number; value: number }[];
+                };
+                for (const { offset, value } of data.edits) {
+                  setBytes(offset, new Uint8Array([value]));
+                }
+              } catch {
+                alert("That doesn't look like a valid project file.");
+              }
+              e.target.value = "";
+            }}
+          />
+        </div>
       </details>
 
       {editCount > 0 && originalRom && rom && (
@@ -153,7 +152,9 @@ export function ExportPanel() {
                 .map(([off, val]) => (
                   <tr key={off} className="border-t">
                     <td className="p-2">0x{off.toString(16).toUpperCase()}</td>
-                    <td className="p-2">{originalRom[off].toString(16).padStart(2, "0").toUpperCase()}</td>
+                    <td className="p-2">
+                      {originalRom[off].toString(16).padStart(2, "0").toUpperCase()}
+                    </td>
                     <td className="p-2 text-warning">
                       {val.toString(16).padStart(2, "0").toUpperCase()}
                     </td>
@@ -167,7 +168,15 @@ export function ExportPanel() {
   );
 }
 
-function Option({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
+function Option({
+  title,
+  body,
+  children,
+}: {
+  title: string;
+  body: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-3 nes-window p-4">
       <div>

@@ -41,9 +41,7 @@ export function HexViewer() {
           <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.max(0, p - 1))}>
             ◀
           </Button>
-          <span className="px-2 font-mono text-xs text-muted-foreground">
-            page {page + 1}
-          </span>
+          <span className="px-2 font-mono text-xs text-muted-foreground">page {page + 1}</span>
           <Button size="sm" variant="outline" onClick={() => setPage((p) => p + 1)}>
             ▶
           </Button>

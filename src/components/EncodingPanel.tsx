@@ -96,9 +96,7 @@ export function EncodingPanel() {
           {rom && (
             <div className="rounded-md border bg-background/30 p-2 font-mono text-xs">
               Preview @0x0:{" "}
-              <span className="text-foreground">
-                {decodeText(rom, 0, 32, romMap.encoding)}
-              </span>
+              <span className="text-foreground">{decodeText(rom, 0, 32, romMap.encoding)}</span>
             </div>
           )}
         </>

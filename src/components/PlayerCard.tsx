@@ -27,7 +27,12 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 // Where each rating lives: byte index within the player's record, and which nibble.
 // `label` is split into lines exactly as the game wraps it; later lines are indented.
-interface Ability { label: string[]; byte: number; hi: boolean; kind: "physical" | "skill" }
+interface Ability {
+  label: string[];
+  byte: number;
+  hi: boolean;
+  kind: "physical" | "skill";
+}
 
 const PHYSICAL: Ability[] = [
   { label: ["RUNNING SPEED"], byte: 0, hi: false, kind: "physical" },
@@ -96,8 +101,16 @@ export function PlayerCard({ teamIdx, posIdx, onClose, onNavigate }: Props) {
   );
 }
 
-function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
-  teamIdx: number; posIdx: number; onNavigate: (p: number) => void; onClose: () => void;
+function CardBody({
+  teamIdx,
+  posIdx,
+  onNavigate,
+  onClose,
+}: {
+  teamIdx: number;
+  posIdx: number;
+  onNavigate: (p: number) => void;
+  onClose: () => void;
 }) {
   const { rom, originalRom, hasINES, setBytes } = useRom();
   const { name: teamName } = useTeamNames();
@@ -108,7 +121,8 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   const names = usePlayerNames();
 
   const base = useMemo(
-    () => (originalRom ? resolveBase(originalRom, readStoredBase(), detectBase(originalRom)) : null),
+    () =>
+      originalRom ? resolveBase(originalRom, readStoredBase(), detectBase(originalRom)) : null,
     [originalRom],
   );
 
@@ -138,13 +152,12 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   const jerseyText = `${jersey}-`;
   const fullName = first ? `${first} ${last}` : last;
   const shortName =
-    jerseyText.length + fullName.length > NAME_WIDTH && first
-      ? `${first[0]}.${last}`
-      : fullName;
+    jerseyText.length + fullName.length > NAME_WIDTH && first ? `${first[0]}.${last}` : fullName;
 
   // Keep the full name showing while focus moves between the first/last name boxes.
   const endNameEdit = (e: React.FocusEvent) => {
-    if (!(e.relatedTarget as HTMLElement | null)?.hasAttribute("data-name-input")) setEditingName(false);
+    if (!(e.relatedTarget as HTMLElement | null)?.hasAttribute("data-name-input"))
+      setEditingName(false);
   };
 
   // Abilities
@@ -163,7 +176,8 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
   };
   const face = recOff !== null ? (rom[recOff + 2] ?? 0) : 0;
   const origFace = recOff !== null ? (originalRom[recOff + 2] ?? 0) : 0;
-  const setFace = (id: number) => recOff !== null && setBytes(recOff + 2, new Uint8Array([id & 0xff]));
+  const setFace = (id: number) =>
+    recOff !== null && setBytes(recOff + 2, new Uint8Array([id & 0xff]));
 
   const skills = SKILLS[pos.type];
   const prev = (posIdx + POSITIONS.length - 1) % POSITIONS.length;
@@ -201,7 +215,8 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                     marginLeft: "2em",
                     background: SKY,
                     boxShadow: "0.75em 0.75em 0 #000",
-                    outline: face !== origFace || customFace ? `0.125em solid ${CHANGED}` : undefined,
+                    outline:
+                      face !== origFace || customFace ? `0.125em solid ${CHANGED}` : undefined,
                   }}
                 >
                   {customFace ? (
@@ -223,23 +238,44 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                   )}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-3 normal-case" align="start" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+              <PopoverContent
+                className="w-auto p-3 normal-case"
+                align="start"
+                style={{ maxHeight: "70vh", overflowY: "auto" }}
+              >
                 {customFace && (
                   <div className="mb-3 flex items-center gap-2 rounded border border-highlight bg-highlight/10 p-2 text-xs">
-                    <img src={customFace} alt="" width={32} height={32} style={{ imageRendering: "pixelated" }} />
+                    <img
+                      src={customFace}
+                      alt=""
+                      width={32}
+                      height={32}
+                      style={{ imageRendering: "pixelated" }}
+                    />
                     <span className="flex-1">
-                      Showing a custom headshot. The original face below is kept and the game still uses it.
+                      Showing a custom headshot. The original face below is kept and the game still
+                      uses it.
                     </span>
-                    <Button size="sm" variant="outline" onClick={() => clearCustomFace(src.team, src.slot)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => clearCustomFace(src.team, src.slot)}
+                    >
                       Revert to original
                     </Button>
                   </div>
                 )}
                 <FacePickerGrid
                   value={face}
-                  onPick={(id) => { setFace(id); setFaceOpen(false); }}
+                  onPick={(id) => {
+                    setFace(id);
+                    setFaceOpen(false);
+                  }}
                   onChange={setFace}
-                  onPaint={() => { setFaceOpen(false); setPainterOpen(true); }}
+                  onPaint={() => {
+                    setFaceOpen(false);
+                    setPainterOpen(true);
+                  }}
                 />
               </PopoverContent>
             </Popover>
@@ -261,7 +297,13 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                   width={Math.max(1, String(jersey).length)}
                   changed={jersey !== origJersey}
                   inputMode="numeric"
-                  onChange={(v) => names.setJersey(src.team, src.slot, parseInt(v.replace(/\D/g, "").slice(-2) || "0"))}
+                  onChange={(v) =>
+                    names.setJersey(
+                      src.team,
+                      src.slot,
+                      parseInt(v.replace(/\D/g, "").slice(-2) || "0"),
+                    )
+                  }
                 />
                 <span>-</span>
                 {editingName || shortName === fullName ? (
@@ -300,7 +342,10 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
                     title="Click to edit name"
                     onClick={() => setEditingName(true)}
                     className="uppercase hover:underline"
-                    style={{ color: first !== origFirst || last !== origLast ? CHANGED : undefined, textUnderlineOffset: "0.25em" }}
+                    style={{
+                      color: first !== origFirst || last !== origLast ? CHANGED : undefined,
+                      textUnderlineOffset: "0.25em",
+                    }}
                   >
                     {shortName}
                   </button>
@@ -319,22 +364,40 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
 
           {/* ABILITY */}
           <div style={{ marginTop: "1.75em", paddingLeft: "10em" }}>
-            <span style={{ borderBottom: "0.125em solid #c5c3db", paddingBottom: "0.25em" }}>ABILITY</span>
+            <span style={{ borderBottom: "0.125em solid #c5c3db", paddingBottom: "0.25em" }}>
+              ABILITY
+            </span>
           </div>
 
           {recOff === null ? (
-            <p className="normal-case" style={{ marginTop: "2em", fontSize: "0.75em", lineHeight: 1.5 }}>
-              Ratings couldn't be located in this ROM. Set their location from Advanced › Edit Players.
+            <p
+              className="normal-case"
+              style={{ marginTop: "2em", fontSize: "0.75em", lineHeight: 1.5 }}
+            >
+              Ratings couldn't be located in this ROM. Set their location from Advanced › Edit
+              Players.
             </p>
           ) : (
             <div style={{ marginTop: "1.25em" }}>
               {PHYSICAL.map((a, i) => (
-                <AbilityRow key={i} ability={a} value={level(rom, a)} changed={level(rom, a) !== level(originalRom, a)} onChange={(v) => setLevel(a, v)} />
+                <AbilityRow
+                  key={i}
+                  ability={a}
+                  value={level(rom, a)}
+                  changed={level(rom, a) !== level(originalRom, a)}
+                  onChange={(v) => setLevel(a, v)}
+                />
               ))}
               {/* The game leaves a gap before the position skills, except for QBs (no room). */}
               {skills.length > 0 && pos.type !== "qb" && <div style={{ height: "2em" }} />}
               {skills.map((a, i) => (
-                <AbilityRow key={i} ability={a} value={level(rom, a)} changed={level(rom, a) !== level(originalRom, a)} onChange={(v) => setLevel(a, v)} />
+                <AbilityRow
+                  key={i}
+                  ability={a}
+                  value={level(rom, a)}
+                  changed={level(rom, a) !== level(originalRom, a)}
+                  onChange={(v) => setLevel(a, v)}
+                />
               ))}
             </div>
           )}
@@ -344,13 +407,20 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
       {/* ── Controls (outside the game screen) ───────────────────────── */}
       <div className="flex items-center justify-between gap-2 bg-card px-3 py-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <CtrlBtn label="Previous player" onClick={() => onNavigate(prev)}><ChevronLeft className="size-4" /></CtrlBtn>
+          <CtrlBtn label="Previous player" onClick={() => onNavigate(prev)}>
+            <ChevronLeft className="size-4" />
+          </CtrlBtn>
           <span className="w-12 text-center font-mono">{POSITION_NAMES[posIdx]}</span>
-          <CtrlBtn label="Next player" onClick={() => onNavigate(next)}><ChevronRight className="size-4" /></CtrlBtn>
+          <CtrlBtn label="Next player" onClick={() => onNavigate(next)}>
+            <ChevronRight className="size-4" />
+          </CtrlBtn>
         </div>
         {editingName ? (
           <span className="flex items-center gap-2">
-            <span className={names.pool.free <= 0 ? "text-warning" : undefined} title="All player names share one fixed block of ROM space">
+            <span
+              className={names.pool.free <= 0 ? "text-warning" : undefined}
+              title="All player names share one fixed block of ROM space"
+            >
               {names.pool.free} letter{names.pool.free === 1 ? "" : "s"} of name space free
             </span>
             {canInitial && (
@@ -369,20 +439,30 @@ function CardBody({ teamIdx, posIdx, onNavigate, onClose }: {
             )}
           </span>
         ) : (
-        <span className="hidden text-muted-foreground sm:inline">
-          {isAllStarTeam(teamIdx)
-            ? `${teamName(teamIdx)} · edits also apply on the ${teamName(src.team)}`
-            : "Click a bar, name, number or face to edit"}
-        </span>
+          <span className="hidden text-muted-foreground sm:inline">
+            {isAllStarTeam(teamIdx)
+              ? `${teamName(teamIdx)} · edits also apply on the ${teamName(src.team)}`
+              : "Click a bar, name, number or face to edit"}
+          </span>
         )}
-        <CtrlBtn label="Close" onClick={onClose}><X className="size-4" /></CtrlBtn>
+        <CtrlBtn label="Close" onClick={onClose}>
+          <X className="size-4" />
+        </CtrlBtn>
       </div>
     </>
   );
 }
 
-function AbilityRow({ ability, value, changed, onChange }: {
-  ability: Ability; value: number; changed: boolean; onChange: (v: number) => void;
+function AbilityRow({
+  ability,
+  value,
+  changed,
+  onChange,
+}: {
+  ability: Ability;
+  value: number;
+  changed: boolean;
+  onChange: (v: number) => void;
 }) {
   const barRef = useRef<HTMLDivElement>(null);
   const color = ability.kind === "physical" ? PINK : SKY;
@@ -405,7 +485,9 @@ function AbilityRow({ ability, value, changed, onChange }: {
   return (
     <div style={{ marginBottom: 0 }}>
       {leading.map((l) => (
-        <div key={l} style={{ height: "1em" }}>{l}</div>
+        <div key={l} style={{ height: "1em" }}>
+          {l}
+        </div>
       ))}
       <div className="flex items-center" style={{ height: "1em" }}>
         <span style={{ width: "14em", paddingLeft: leading.length ? "3em" : 0 }}>{lastLine}</span>
@@ -426,13 +508,27 @@ function AbilityRow({ ability, value, changed, onChange }: {
             if (e.currentTarget.hasPointerCapture(e.pointerId)) onChange(levelAt(e.clientX));
           }}
           onKeyDown={(e) => {
-            if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); onChange(value + 1); }
-            if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); onChange(value - 1); }
+            if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+              e.preventDefault();
+              onChange(value + 1);
+            }
+            if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+              e.preventDefault();
+              onChange(value - 1);
+            }
           }}
           className="relative cursor-pointer touch-none outline-none focus-visible:ring-2 focus-visible:ring-white"
-          style={{ width: "8em", height: "0.625em", border: "0.125em solid #fff", boxSizing: "border-box" }}
+          style={{
+            width: "8em",
+            height: "0.625em",
+            border: "0.125em solid #fff",
+            boxSizing: "border-box",
+          }}
         >
-          <div className="absolute inset-y-0 left-0" style={{ width: `${TSB_ATTRIBUTE_SCALE[value]}%`, background: color }} />
+          <div
+            className="absolute inset-y-0 left-0"
+            style={{ width: `${TSB_ATTRIBUTE_SCALE[value]}%`, background: color }}
+          />
         </div>
         <span className="text-right" style={{ width: "5em", color: changed ? CHANGED : undefined }}>
           {TSB_ATTRIBUTE_SCALE[value]}
@@ -442,8 +538,19 @@ function AbilityRow({ ability, value, changed, onChange }: {
   );
 }
 
-function PixelInput({ label, value, width, changed, onChange, ...rest }: {
-  label: string; value: string; width: number; changed: boolean; onChange: (v: string) => void;
+function PixelInput({
+  label,
+  value,
+  width,
+  changed,
+  onChange,
+  ...rest
+}: {
+  label: string;
+  value: string;
+  width: number;
+  changed: boolean;
+  onChange: (v: string) => void;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "width">) {
   return (
     <input
@@ -465,9 +572,22 @@ function PixelInput({ label, value, width, changed, onChange, ...rest }: {
   );
 }
 
-function CtrlBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function CtrlBtn({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <button aria-label={label} title={label} onClick={onClick} className="rounded p-1.5 hover:bg-white/10 hover:text-white">
+    <button
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="rounded p-1.5 hover:bg-white/10 hover:text-white"
+    >
       {children}
     </button>
   );

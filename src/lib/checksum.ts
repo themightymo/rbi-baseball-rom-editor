@@ -17,12 +17,4 @@ export function crc32(bytes: Uint8Array): string {
   return ((crc ^ 0xffffffff) >>> 0).toString(16).padStart(8, "0").toUpperCase();
 }
 
-export function detectINES(bytes: Uint8Array): boolean {
-  return (
-    bytes.length >= 4 &&
-    bytes[0] === 0x4e &&
-    bytes[1] === 0x45 &&
-    bytes[2] === 0x53 &&
-    bytes[3] === 0x1a
-  );
-}
+export { detectINES } from "@/core/nes/ines";

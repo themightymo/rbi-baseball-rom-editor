@@ -40,7 +40,11 @@ export function HelmetPainter({ teamIdx }: { teamIdx: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={isCustom ? "border-warning bg-warning/10" : undefined}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={isCustom ? "border-warning bg-warning/10" : undefined}
+        >
           <Paintbrush /> {isCustom ? "Edit custom helmet" : "Paint helmet"}
         </Button>
       </DialogTrigger>
@@ -86,14 +90,24 @@ function PainterBody({ teamIdx, onClose }: { teamIdx: number; onClose: () => voi
       previewScales={[1, 2, 4]}
       startOptions={(load) => (
         <>
-          <Button size="sm" variant="secondary" onClick={() => load(() => helmetToPixels(original))}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => load(() => helmetToPixels(original))}
+          >
             Original
           </Button>
           <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
             <PopoverTrigger asChild>
-              <Button size="sm" variant="secondary">Another team…</Button>
+              <Button size="sm" variant="secondary">
+                Another team…
+              </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-2" align="start" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <PopoverContent
+              className="w-auto p-2"
+              align="start"
+              style={{ maxHeight: "70vh", overflowY: "auto" }}
+            >
               <div
                 className="grid grid-cols-7 gap-1 rounded p-1 text-[16px]"
                 style={{ background: SCREEN_BG }}
@@ -104,7 +118,10 @@ function PainterBody({ teamIdx, onClose }: { teamIdx: number; onClose: () => voi
                     type="button"
                     title={teamName(t)}
                     aria-label={teamName(t)}
-                    onClick={() => { setPickerOpen(false); load(() => helmetToPixels(helmets[t]!)); }}
+                    onClick={() => {
+                      setPickerOpen(false);
+                      load(() => helmetToPixels(helmets[t]!));
+                    }}
                     className="flex flex-col items-center rounded p-1 font-mono text-[9px] text-white hover:bg-white/20"
                   >
                     <Helmet pixels={helmets[t]} />

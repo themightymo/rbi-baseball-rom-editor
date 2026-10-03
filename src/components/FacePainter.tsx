@@ -57,7 +57,13 @@ export function FacePainter({ open, onOpenChange, ...rest }: Props) {
   );
 }
 
-function PainterBody({ team, slot, faceId, playerLabel, onClose }: Omit<Props, "open" | "onOpenChange"> & { onClose: () => void }) {
+function PainterBody({
+  team,
+  slot,
+  faceId,
+  playerLabel,
+  onClose,
+}: Omit<Props, "open" | "onOpenChange"> & { onClose: () => void }) {
   const custom = useCustomFace(team, slot);
   const [pickerOpen, setPickerOpen] = useState(false);
   const hasOriginal = isValidFaceId(faceId);
@@ -75,24 +81,40 @@ function PainterBody({ team, slot, faceId, playerLabel, onClose }: Omit<Props, "
       height={FACE_H}
       eraseColor={SKY}
       // Open on the player's current headshot: their custom one, else the original.
-      initial={custom ? () => loadCustomFace(custom) : hasOriginal ? () => loadOriginalFace(faceId) : null}
+      initial={
+        custom ? () => loadCustomFace(custom) : hasOriginal ? () => loadOriginalFace(faceId) : null
+      }
       blank={blank}
       palettes={PALETTES}
       customColor
       defaultColor="#000000"
       startOptions={(load) => (
         <>
-          <Button size="sm" variant="secondary" disabled={!hasOriginal} onClick={() => load(() => loadOriginalFace(faceId))}>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!hasOriginal}
+            onClick={() => load(() => loadOriginalFace(faceId))}
+          >
             Original{hasOriginal ? ` (${hexId(faceId)})` : ""}
           </Button>
           <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
             <PopoverTrigger asChild>
-              <Button size="sm" variant="secondary">Another face…</Button>
+              <Button size="sm" variant="secondary">
+                Another face…
+              </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-3" align="start" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <PopoverContent
+              className="w-auto p-3"
+              align="start"
+              style={{ maxHeight: "70vh", overflowY: "auto" }}
+            >
               <FacePickerGrid
                 value={faceId}
-                onPick={(id) => { setPickerOpen(false); load(() => loadOriginalFace(id)); }}
+                onPick={(id) => {
+                  setPickerOpen(false);
+                  load(() => loadOriginalFace(id));
+                }}
                 onChange={() => {}}
                 hideDirect
               />

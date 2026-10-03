@@ -67,7 +67,11 @@ export function pixelsToHelmet(px: Pixels): Int8Array {
  * Every team's helmet as shown in the editor (the custom one if saved), plus the
  * originals decoded from the unmodified ROM. Empty until a ROM is loaded.
  */
-export function useHelmets(): { helmets: Int8Array[]; originals: Int8Array[]; custom: Record<number, Int8Array> } {
+export function useHelmets(): {
+  helmets: Int8Array[];
+  originals: Int8Array[];
+  custom: Record<number, Int8Array>;
+} {
   const { originalRom, hasINES } = useRom();
   const originals = useMemo(
     () => (originalRom ? TEAM_NAMES.map((_, t) => decodeHelmet(originalRom, hasINES, t)) : []),

@@ -36,8 +36,8 @@ export function StringSearch() {
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Using {romMap.encoding.type} encoding. If nothing matches, try the Encoding panel
-        to define a custom character map.
+        Using {romMap.encoding.type} encoding. If nothing matches, try the Encoding panel to define
+        a custom character map.
       </p>
       {ran && (
         <div className="max-h-64 overflow-auto rounded-md border bg-background/50 p-2 font-mono text-xs">

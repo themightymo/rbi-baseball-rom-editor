@@ -49,8 +49,7 @@ export function createBrowserStore<T>(storageKey: string) {
         () => null,
       ),
     /** The whole store, re-rendering when anything changes. */
-    useAll: (): Store =>
-      useSyncExternalStore(subscribe, load, () => EMPTY as Store),
+    useAll: (): Store => useSyncExternalStore(subscribe, load, () => EMPTY as Store),
   };
 }
 

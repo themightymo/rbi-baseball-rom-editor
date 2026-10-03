@@ -1,7 +1,13 @@
 import { useRom } from "@/lib/romStore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trash2, Plus } from "lucide-react";
 import type { FieldDef, FieldType, RomMap } from "@/types/RomMap";
 
@@ -67,9 +73,7 @@ export function RecordMapper({ section }: { section: Section }) {
 
       <div className="rounded-md border">
         <div className="flex items-center justify-between border-b p-2">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">
-            Fields
-          </div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Fields</div>
           <Button
             size="sm"
             variant="outline"
@@ -85,25 +89,18 @@ export function RecordMapper({ section }: { section: Section }) {
         </div>
         <div className="divide-y">
           {Object.entries(def.fields).length === 0 && (
-            <div className="p-4 text-sm text-muted-foreground">
-              No fields defined yet.
-            </div>
+            <div className="p-4 text-sm text-muted-foreground">No fields defined yet.</div>
           )}
           {Object.entries(def.fields).map(([key, f]) => (
             <div key={key} className="grid items-end gap-2 p-3 sm:grid-cols-12">
               <Labeled className="sm:col-span-3" label="Name">
-                <Input
-                  defaultValue={key}
-                  onBlur={(e) => renameField(key, e.target.value.trim())}
-                />
+                <Input defaultValue={key} onBlur={(e) => renameField(key, e.target.value.trim())} />
               </Labeled>
               <Labeled className="sm:col-span-2" label="Start (rel)">
                 <Input
                   type="number"
                   value={f.start}
-                  onChange={(e) =>
-                    updateField(key, { start: parseInt(e.target.value || "0", 10) })
-                  }
+                  onChange={(e) => updateField(key, { start: parseInt(e.target.value || "0", 10) })}
                 />
               </Labeled>
               <Labeled className="sm:col-span-2" label="Length">
@@ -155,11 +152,7 @@ export function RecordMapper({ section }: { section: Section }) {
                 />
               </Labeled>
               <div className="sm:col-span-1 flex justify-end">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => updateField(key, null)}
-                >
+                <Button size="icon" variant="ghost" onClick={() => updateField(key, null)}>
                   <Trash2 className="size-4 text-destructive" />
                 </Button>
               </div>
@@ -182,9 +175,7 @@ function Labeled({
 }) {
   return (
     <div className={className}>
-      <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
+      <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       {children}
     </div>
   );

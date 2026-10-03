@@ -20,11 +20,7 @@ export function decodeText(
   return out;
 }
 
-export function encodeText(
-  text: string,
-  length: number,
-  encoding: RomMap["encoding"],
-): Uint8Array {
+export function encodeText(text: string, length: number, encoding: RomMap["encoding"]): Uint8Array {
   const out = new Uint8Array(length);
   // Build reverse map for custom encoding.
   let reverse: Record<string, number> | null = null;
@@ -59,8 +55,7 @@ export function searchString(
   if (!needle) return [];
   const encoded = encodeText(needle, needle.length, encoding);
   const lower = caseInsensitive;
-  const matchByte = (a: number, b: number) =>
-    lower ? (a | 0x20) === (b | 0x20) : a === b;
+  const matchByte = (a: number, b: number) => (lower ? (a | 0x20) === (b | 0x20) : a === b);
   const hits: number[] = [];
   for (let i = 0; i <= bytes.length - encoded.length; i++) {
     let ok = true;

@@ -18,7 +18,10 @@ export function NamePoolMeter({ className = "" }: { className?: string }) {
         </span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-        <div className={`h-full ${full ? "bg-warning" : "bg-primary"}`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full ${full ? "bg-warning" : "bg-primary"}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
       {full && (
         <p className="mt-1 text-muted-foreground">

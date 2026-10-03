@@ -2,11 +2,21 @@ type SavePickerWindow = Window & {
   showSaveFilePicker?: (opts: {
     suggestedName?: string;
     types?: { description: string; accept: Record<string, string[]> }[];
-  }) => Promise<{ createWritable: () => Promise<{ write: (d: Blob) => Promise<void>; close: () => Promise<void> }> }>;
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (d: Blob) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
 };
 
-export function download(name: string, data: Uint8Array | string, mime = "application/octet-stream") {
-  const part: BlobPart = typeof data === "string" ? data : (new Uint8Array(data).buffer as ArrayBuffer);
+export function download(
+  name: string,
+  data: Uint8Array | string,
+  mime = "application/octet-stream",
+) {
+  const part: BlobPart =
+    typeof data === "string" ? data : (new Uint8Array(data).buffer as ArrayBuffer);
   const blob = new Blob([part], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

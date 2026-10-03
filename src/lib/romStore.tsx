@@ -21,7 +21,7 @@ interface RomState {
 
 const Ctx = createContext<RomState | null>(null);
 
-const LS_MAP = "tecmo.rommap.v1";
+const LS_MAP = "rbi.rommap.v1";
 
 export function RomProvider({ children }: { children: ReactNode }) {
   const [rom, setRomBytes] = useState<Uint8Array | null>(null);
@@ -43,7 +43,9 @@ export function RomProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem(LS_MAP, JSON.stringify(romMap));
-    } catch {}
+    } catch {
+      // localStorage can be unavailable in private or restricted browser contexts.
+    }
   }, [romMap]);
 
   const value: RomState = useMemo(
@@ -79,7 +81,8 @@ export function RomProvider({ children }: { children: ReactNode }) {
           next[offset + i] = bytes[i];
           // Only count bytes that differ from the original, so rewriting a block
           // (like the repacked name table) doesn't inflate the change count.
-          if (originalRom && originalRom[offset + i] === bytes[i]) editsRef.current.delete(offset + i);
+          if (originalRom && originalRom[offset + i] === bytes[i])
+            editsRef.current.delete(offset + i);
           else editsRef.current.set(offset + i, bytes[i]);
         }
         setRomBytes(next);

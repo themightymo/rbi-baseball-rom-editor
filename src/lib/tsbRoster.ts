@@ -3,10 +3,36 @@
 // subtract 0x10 for a headerless ROM.
 
 export const POSITION_NAMES = [
-  "QB1", "QB2", "RB1", "RB2", "RB3", "RB4", "WR1", "WR2", "WR3", "WR4", "TE1", "TE2",
-  "C", "LG", "RG", "LT", "RT",
-  "RE", "NT", "LE", "ROLB", "RILB", "LILB", "LOLB", "RCB", "LCB", "FS", "SS",
-  "K", "P",
+  "QB1",
+  "QB2",
+  "RB1",
+  "RB2",
+  "RB3",
+  "RB4",
+  "WR1",
+  "WR2",
+  "WR3",
+  "WR4",
+  "TE1",
+  "TE2",
+  "C",
+  "LG",
+  "RG",
+  "LT",
+  "RT",
+  "RE",
+  "NT",
+  "LE",
+  "ROLB",
+  "RILB",
+  "LILB",
+  "LOLB",
+  "RCB",
+  "LCB",
+  "FS",
+  "SS",
+  "K",
+  "P",
 ] as const;
 
 export type PositionName = (typeof POSITION_NAMES)[number];
@@ -16,17 +42,39 @@ export const posIndex = (p: PositionName) => POSITION_NAMES.indexOf(p);
 // Team order matches the ROM's pointer tables (Buffalo first).
 export const TEAM_NAMES = [
   // AFC East (0–4)
-  "Buffalo Bills", "Indianapolis Colts", "Miami Dolphins", "New England Patriots", "New York Jets",
+  "Buffalo Bills",
+  "Indianapolis Colts",
+  "Miami Dolphins",
+  "New England Patriots",
+  "New York Jets",
   // AFC Central (5–8)
-  "Cincinnati Bengals", "Cleveland Browns", "Houston Oilers", "Pittsburgh Steelers",
+  "Cincinnati Bengals",
+  "Cleveland Browns",
+  "Houston Oilers",
+  "Pittsburgh Steelers",
   // AFC West (9–13)
-  "Denver Broncos", "Kansas City Chiefs", "Los Angeles Raiders", "San Diego Chargers", "Seattle Seahawks",
+  "Denver Broncos",
+  "Kansas City Chiefs",
+  "Los Angeles Raiders",
+  "San Diego Chargers",
+  "Seattle Seahawks",
   // NFC East (14–18)
-  "Washington Redskins", "New York Giants", "Philadelphia Eagles", "Phoenix Cardinals", "Dallas Cowboys",
+  "Washington Redskins",
+  "New York Giants",
+  "Philadelphia Eagles",
+  "Phoenix Cardinals",
+  "Dallas Cowboys",
   // NFC Central (19–23)
-  "Chicago Bears", "Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Tampa Bay Buccaneers",
+  "Chicago Bears",
+  "Detroit Lions",
+  "Green Bay Packers",
+  "Minnesota Vikings",
+  "Tampa Bay Buccaneers",
   // NFC West (24–27)
-  "San Francisco 49ers", "Los Angeles Rams", "New Orleans Saints", "Atlanta Falcons",
+  "San Francisco 49ers",
+  "Los Angeles Rams",
+  "New Orleans Saints",
+  "Atlanta Falcons",
 ];
 
 export const fileOffset = (headeredOffset: number, hasINES: boolean) =>
@@ -52,9 +100,12 @@ const FORMATIONS = 0x21fe0;
 export function readFormation(rom: Uint8Array, hasINES: boolean, team: number): Formation {
   if ((rom[fileOffset(FORMATION_HACK, hasINES)] ?? 0xa0) === 0xa0) return "2RB_2WR_1TE";
   switch (rom[fileOffset(FORMATIONS, hasINES) + team]) {
-    case 0x01: return "1RB_4WR";
-    case 0x02: return "1RB_3WR_1TE";
-    default: return "2RB_2WR_1TE";
+    case 0x01:
+      return "1RB_4WR";
+    case 0x02:
+      return "1RB_3WR_1TE";
+    default:
+      return "2RB_2WR_1TE";
   }
 }
 
@@ -71,7 +122,18 @@ const STARTERS: Record<Formation, PositionName[]> = {
 };
 
 const SKILL: PositionName[] = [
-  "QB1", "QB2", "RB1", "RB2", "RB3", "RB4", "WR1", "WR2", "WR3", "WR4", "TE1", "TE2",
+  "QB1",
+  "QB2",
+  "RB1",
+  "RB2",
+  "RB3",
+  "RB4",
+  "WR1",
+  "WR2",
+  "WR3",
+  "WR4",
+  "TE1",
+  "TE2",
 ];
 
 /** Offensive skill players split into starters and "team area" (bench), as the game shows them. */
@@ -84,17 +146,49 @@ export function splitStarters(formation: Formation) {
 // (FCEUX palette). Oilers ($01), Eagles ($09) and Raiders ($00) are sampled from the game;
 // the rest are approximations from team colours — adjust if you spot one that's off.
 const NES: Record<number, string> = {
-  0x00: "#737373", 0x01: "#24188e", 0x02: "#0000a8", 0x03: "#44009c", 0x04: "#8c0074",
-  0x05: "#a80010", 0x06: "#a40000", 0x07: "#7c0800", 0x08: "#402c00", 0x09: "#004500",
-  0x0a: "#005000", 0x0b: "#003c14", 0x0c: "#183c5c",
+  0x00: "#737373",
+  0x01: "#24188e",
+  0x02: "#0000a8",
+  0x03: "#44009c",
+  0x04: "#8c0074",
+  0x05: "#a80010",
+  0x06: "#a40000",
+  0x07: "#7c0800",
+  0x08: "#402c00",
+  0x09: "#004500",
+  0x0a: "#005000",
+  0x0b: "#003c14",
+  0x0c: "#183c5c",
 };
 const TEAM_SCREEN_COLOR = [
-  0x02, 0x01, 0x0c, 0x02, 0x09, // AFC East: Bills, Colts, Dolphins, Patriots, Jets
-  0x07, 0x08, 0x01, 0x08,       // AFC Central: Bengals, Browns, Oilers, Steelers
-  0x07, 0x06, 0x00, 0x01, 0x0c, // AFC West: Broncos, Chiefs, Raiders, Chargers, Seahawks
-  0x04, 0x02, 0x09, 0x05, 0x01, // NFC East: Redskins, Giants, Eagles, Cardinals, Cowboys
-  0x0c, 0x02, 0x0a, 0x03, 0x07, // NFC Central: Bears, Lions, Packers, Vikings, Buccaneers
-  0x06, 0x02, 0x08, 0x05,       // NFC West: 49ers, Rams, Saints, Falcons
+  0x02,
+  0x01,
+  0x0c,
+  0x02,
+  0x09, // AFC East: Bills, Colts, Dolphins, Patriots, Jets
+  0x07,
+  0x08,
+  0x01,
+  0x08, // AFC Central: Bengals, Browns, Oilers, Steelers
+  0x07,
+  0x06,
+  0x00,
+  0x01,
+  0x0c, // AFC West: Broncos, Chiefs, Raiders, Chargers, Seahawks
+  0x04,
+  0x02,
+  0x09,
+  0x05,
+  0x01, // NFC East: Redskins, Giants, Eagles, Cardinals, Cowboys
+  0x0c,
+  0x02,
+  0x0a,
+  0x03,
+  0x07, // NFC Central: Bears, Lions, Packers, Vikings, Buccaneers
+  0x06,
+  0x02,
+  0x08,
+  0x05, // NFC West: 49ers, Rams, Saints, Falcons
 ];
 export const teamScreenColor = (team: number) => NES[TEAM_SCREEN_COLOR[team] ?? 0x01]!;
 
@@ -102,20 +196,55 @@ export const teamScreenColor = (team: number) => NES[TEAM_SCREEN_COLOR[team] ?? 
 // screen draws them as graphics; the editable text versions live in the team string table
 // (see readTeamText) and differ for a few teams (JETS, GIA., RAI., RAMS).
 export const TEAM_ABBR = [
-  "BUF.", "IND.", "MIA.", "N.E.", "NYJ.",
-  "CIN.", "CLE.", "HOU.", "PIT.",
-  "DEN.", "K.C.", "L.A.", "S.D.", "SEA.",
-  "WAS.", "NYG.", "PHI.", "PHX.", "DAL.",
-  "CHI.", "DET.", "G.B.", "MIN.", "T.B.",
-  "S.F.", "RAM.", "N.O.", "ATL.",
+  "BUF.",
+  "IND.",
+  "MIA.",
+  "N.E.",
+  "NYJ.",
+  "CIN.",
+  "CLE.",
+  "HOU.",
+  "PIT.",
+  "DEN.",
+  "K.C.",
+  "L.A.",
+  "S.D.",
+  "SEA.",
+  "WAS.",
+  "NYG.",
+  "PHI.",
+  "PHX.",
+  "DAL.",
+  "CHI.",
+  "DET.",
+  "G.B.",
+  "MIN.",
+  "T.B.",
+  "S.F.",
+  "RAM.",
+  "N.O.",
+  "ATL.",
 ];
 
 /** Team indices grouped the way the TEAM DATA screen lays them out: conference → division column. */
 export const CONFERENCES = [
-  { name: "AFC", divisions: [[0, 1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12, 13]] },
-  { name: "NFC", divisions: [[14, 15, 16, 17, 18], [19, 20, 21, 22, 23], [24, 25, 26, 27]] },
+  {
+    name: "AFC",
+    divisions: [
+      [0, 1, 2, 3, 4],
+      [5, 6, 7, 8],
+      [9, 10, 11, 12, 13],
+    ],
+  },
+  {
+    name: "NFC",
+    divisions: [
+      [14, 15, 16, 17, 18],
+      [19, 20, 21, 22, 23],
+      [24, 25, 26, 27],
+    ],
+  },
 ];
-
 
 // ─── All-Star (Pro Bowl) teams ────────────────────────────────────────────────
 // The two All-Star teams have no players of their own: each of their 30 roster slots
@@ -141,20 +270,27 @@ export const teamAbbr = (team: number) =>
 export const allStarSlotOffset = (hasINES: boolean, allStarTeam: number, slot: number) =>
   fileOffset(ALL_STARS + (allStarTeam - AFC_ALL_STARS) * 60 + slot * 2, hasINES);
 
-export interface PlayerRef { team: number; slot: number }
+export interface PlayerRef {
+  team: number;
+  slot: number;
+}
 
 /**
  * The regular-team player who actually fills (team, slot). For a regular team that's
  * the player themself; for an All-Star team it follows the ROM's reference.
  */
-export function resolvePlayer(rom: Uint8Array, hasINES: boolean, team: number, slot: number): PlayerRef {
+export function resolvePlayer(
+  rom: Uint8Array,
+  hasINES: boolean,
+  team: number,
+  slot: number,
+): PlayerRef {
   if (!isAllStarTeam(team)) return { team, slot };
   const o = allStarSlotOffset(hasINES, team, slot);
   const src = { team: rom[o] ?? 0, slot: rom[o + 1] ?? 0 };
   // Guard against junk in hacked ROMs so callers can always index a real team.
   return src.team < TEAM_NAMES.length && src.slot < POSITION_NAMES.length ? src : { team: 0, slot };
 }
-
 
 // ─── Team city / nickname strings ─────────────────────────────────────────────
 // A table of 120 little-endian CPU pointers into a block of packed, unterminated
@@ -233,8 +369,7 @@ export interface TeamText {
 export function readTeamText(rom: Uint8Array, hasINES: boolean): TeamText | null {
   const t = readTeamTextTable(rom, hasINES);
   if (!t) return null;
-  const pick = (base: number) =>
-    TEAM_NAMES.map((_, i) => ascii(t.strings[base + i]!).trim());
+  const pick = (base: number) => TEAM_NAMES.map((_, i) => ascii(t.strings[base + i]!).trim());
   return { city: pick(CITY_BASE), nickname: pick(NICKNAME_BASE), abbr: pick(ABBR_BASE) };
 }
 

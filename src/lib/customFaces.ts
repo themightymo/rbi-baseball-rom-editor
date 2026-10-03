@@ -45,7 +45,8 @@ async function imageToPixels(src: Blob | string): Promise<Pixels> {
   ctx.drawImage(bmp, 0, 0);
   const d = ctx.getImageData(0, 0, FACE_W, FACE_H).data;
   const out: Pixels = [];
-  for (let i = 0; i < d.length; i += 4) out.push(`#${hex(d[i]!)}${hex(d[i + 1]!)}${hex(d[i + 2]!)}`);
+  for (let i = 0; i < d.length; i += 4)
+    out.push(`#${hex(d[i]!)}${hex(d[i + 1]!)}${hex(d[i + 2]!)}`);
   return out;
 }
 
