@@ -1,5 +1,14 @@
 # Research Log
 
+## 2026-10-03 — Direct batter stat-to-rating relationships
+
+- Ratings Lab now ties Contact only to batting average, Power only to home runs, and Speed only to
+  stolen-base rate. The visible input form was reduced to those source stats plus at-bats.
+- Stolen bases remain a recommendation-only input. No ROM offset was assigned because no stored
+  stolen-base field has been confirmed.
+- Added the same single-file GitHub Pages deployment and pre-push build guard used by the Tecmo
+  editor so every push to `main` can publish the current application build.
+
 ## 2026-10-03 — Slider-based stat editing
 
 - Replaced numeric text fields on the primary batter and pitcher cards with a shared NES-styled
@@ -27,7 +36,7 @@
 
 - Added pure, deterministic batter and pitcher recommendation functions, documented in
   [`RATINGS-GENERATOR.md`](RATINGS-GENERATOR.md).
-- Batter recommendations use average, isolated power, strikeout avoidance, home runs, and steals.
+- Batter recommendations use direct average/contact, home-run/power, and stolen-base/speed links.
   Pitcher recommendations use ERA, innings per appearance, K/9, BB/9, and entered fastball MPH.
 - The formulas are explicitly product heuristics, not reverse-engineered original rating formulas.
   The UI calls every output “Suggested” and requires a separate apply action after manual review.

@@ -11,20 +11,20 @@ bytes remain untouched.
 
 ## Batter recommendations
 
-Inputs are at-bats, hits, doubles, triples, home runs, stolen bases, and strikeouts.
+Inputs are at-bats, hits, home runs, and stolen bases. Each playable rating is deliberately tied to
+one familiar result: Contact to batting average, Power to home runs, and Speed to stolen-base rate.
 
 ```text
 Average = round(H / AB × 1000), clamped 150–405
 Home Runs = HR, clamped 0–255
-Contact = round((1 − SO / AB) × 32), clamped 0–255
-ISO = (2B + 2×3B + 3×HR) / AB
-Power = round(650 + ISO × 1200), clamped 0–65535
+Contact = round(H / AB × 80), clamped 0–255
+Power = 650 + HR × 8, clamped 0–65535
 Speed = round(110 + SB / AB × 500), clamped 0–255
 ```
 
-The ISO expression is equivalent to slugging percentage minus batting average when the supplied hit
-components are internally consistent. The constants place ordinary historical stat lines near the
-observed RBI scale; they are editorial choices and can be changed later without changing ROM code.
+The constants place ordinary historical stat lines near the observed RBI scale; they are editorial
+choices and can be changed later without changing ROM code. Stolen bases are a recommendation input,
+not a newly decoded ROM field; the generated Speed value is the only value written from that input.
 
 ## Pitcher recommendations
 

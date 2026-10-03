@@ -14,11 +14,8 @@ type Draft = Record<string, string>;
 const BATTER_INPUTS = [
   ["atBats", "At-bats"],
   ["hits", "Hits"],
-  ["doubles", "Doubles"],
-  ["triples", "Triples"],
   ["homeRuns", "Home runs"],
   ["stolenBases", "Stolen bases"],
-  ["strikeouts", "Strikeouts"],
 ] as const;
 const PITCHER_INPUTS = [
   ["inningsPitched", "Innings pitched (decimal)"],
@@ -84,11 +81,8 @@ export function RbiRatingsGenerator() {
           ? suggestBatterRatings({
               atBats: integer(stats.atBats),
               hits: integer(stats.hits),
-              doubles: integer(stats.doubles),
-              triples: integer(stats.triples),
               homeRuns: integer(stats.homeRuns),
               stolenBases: integer(stats.stolenBases),
-              strikeouts: integer(stats.strikeouts),
             })
           : suggestPitcherRatings({
               inningsPitched: number(stats.inningsPitched),
@@ -147,6 +141,13 @@ export function RbiRatingsGenerator() {
         not original-game formulas or canonical ratings. Nothing is written until you review,
         manually adjust, and apply the result.
       </p>
+      {mode === "batter" && (
+        <p className="mt-2 border-l-2 border-[#fcd800] pl-3 text-[9px] leading-relaxed text-muted-foreground">
+          Contact follows batting average · Power follows home runs · Speed follows stolen bases.
+          Stolen bases are a recommendation input only; RBI does not have a confirmed stored
+          stolen-base field.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {(["batter", "pitcher"] as const).map((candidate) => (

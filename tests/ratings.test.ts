@@ -7,14 +7,48 @@ test("suggests deterministic batter ratings from a real stat line", () => {
     suggestBatterRatings({
       atBats: 500,
       hits: 150,
-      doubles: 30,
-      triples: 5,
       homeRuns: 25,
       stolenBases: 20,
-      strikeouts: 100,
     }),
-    { battingAverage: 300, homeRuns: 25, contact: 26, power: 926, speed: 130 },
+    { battingAverage: 300, homeRuns: 25, contact: 24, power: 850, speed: 130 },
   );
+});
+
+test("ties each batter rating to its named source statistic", () => {
+  const baseline = suggestBatterRatings({
+    atBats: 500,
+    hits: 150,
+    homeRuns: 25,
+    stolenBases: 20,
+  });
+  const moreHits = suggestBatterRatings({
+    atBats: 500,
+    hits: 160,
+    homeRuns: 25,
+    stolenBases: 20,
+  });
+  const moreHomeRuns = suggestBatterRatings({
+    atBats: 500,
+    hits: 150,
+    homeRuns: 30,
+    stolenBases: 20,
+  });
+  const moreStolenBases = suggestBatterRatings({
+    atBats: 500,
+    hits: 150,
+    homeRuns: 25,
+    stolenBases: 30,
+  });
+
+  assert.equal(moreHits.contact > baseline.contact, true);
+  assert.equal(moreHits.power, baseline.power);
+  assert.equal(moreHits.speed, baseline.speed);
+  assert.equal(moreHomeRuns.contact, baseline.contact);
+  assert.equal(moreHomeRuns.power > baseline.power, true);
+  assert.equal(moreHomeRuns.speed, baseline.speed);
+  assert.equal(moreStolenBases.contact, baseline.contact);
+  assert.equal(moreStolenBases.power, baseline.power);
+  assert.equal(moreStolenBases.speed > baseline.speed, true);
 });
 
 test("suggests deterministic pitcher ratings from statistics and fastball velocity", () => {
@@ -44,11 +78,8 @@ test("suggestions clamp to confirmed writable ROM ranges", () => {
   const batter = suggestBatterRatings({
     atBats: 1,
     hits: 1,
-    doubles: 0,
-    triples: 0,
     homeRuns: 1,
     stolenBases: 10,
-    strikeouts: 0,
   });
   assert.equal(batter.battingAverage, 405);
   assert.equal(batter.speed, 255);
@@ -71,14 +102,11 @@ test("rejects impossible or incomplete stat lines", () => {
     () =>
       suggestBatterRatings({
         atBats: 100,
-        hits: 20,
-        doubles: 15,
-        triples: 5,
+        hits: 101,
         homeRuns: 5,
         stolenBases: 0,
-        strikeouts: 20,
       }),
-    /Extra-base hits/,
+    /Hits cannot exceed/,
   );
   assert.throws(
     () =>

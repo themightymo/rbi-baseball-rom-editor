@@ -1,11 +1,8 @@
 export interface BatterStatLine {
   atBats: number;
   hits: number;
-  doubles: number;
-  triples: number;
   homeRuns: number;
   stolenBases: number;
-  strikeouts: number;
 }
 
 export interface SuggestedBatterRatings {
@@ -38,33 +35,27 @@ export interface SuggestedPitcherRatings {
 
 /**
  * Transparent recommendations, not a reconstruction of RBI Baseball's original rating method.
- * Power uses isolated power; Contact uses strikeout avoidance; Speed uses steals per at-bat.
+ * Each playable rating has one visible statistical source: Contact uses batting average,
+ * Power uses home runs, and Speed uses stolen-base rate.
  */
 export function suggestBatterRatings(stats: BatterStatLine): SuggestedBatterRatings {
   validateCount(stats.atBats, "At-bats", 1);
   for (const [label, value] of [
     ["Hits", stats.hits],
-    ["Doubles", stats.doubles],
-    ["Triples", stats.triples],
     ["Home runs", stats.homeRuns],
     ["Stolen bases", stats.stolenBases],
-    ["Strikeouts", stats.strikeouts],
   ] as const) {
     validateCount(value, label);
   }
   if (stats.hits > stats.atBats) throw new RangeError("Hits cannot exceed at-bats.");
-  if (stats.doubles + stats.triples + stats.homeRuns > stats.hits) {
-    throw new RangeError("Extra-base hits cannot exceed total hits.");
-  }
-  if (stats.strikeouts > stats.atBats) throw new RangeError("Strikeouts cannot exceed at-bats.");
+  if (stats.homeRuns > stats.hits) throw new RangeError("Home runs cannot exceed hits.");
 
   const average = stats.hits / stats.atBats;
-  const isolatedPower = (stats.doubles + stats.triples * 2 + stats.homeRuns * 3) / stats.atBats;
   return {
     battingAverage: clamp(Math.round(average * 1000), 150, 405),
     homeRuns: clamp(stats.homeRuns, 0, 255),
-    contact: clamp(Math.round((1 - stats.strikeouts / stats.atBats) * 32), 0, 255),
-    power: clamp(Math.round(650 + isolatedPower * 1200), 0, 65535),
+    contact: clamp(Math.round(average * 80), 0, 255),
+    power: clamp(650 + stats.homeRuns * 8, 0, 65535),
     speed: clamp(Math.round(110 + (stats.stolenBases / stats.atBats) * 500), 0, 255),
   };
 }

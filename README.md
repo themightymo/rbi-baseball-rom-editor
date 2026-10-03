@@ -4,6 +4,11 @@ A browser-only research and editing foundation for the original NES release of *
 
 No ROM data is included or uploaded. Supply a legally obtained ROM; all processing happens in browser memory.
 
+**[Open the RBI Baseball ROM Editor online](https://themightymo.github.io/rbi-baseball-rom-editor/)**
+
+The hosted app is a single self-contained HTML page. Every push to `main` builds and publishes the
+current code through [GitHub Actions](.github/workflows/deploy.yml).
+
 ## Run locally
 
 Requires Node.js 18 or newer.
@@ -18,6 +23,14 @@ Production verification:
 ```bash
 npm run build
 npm run lint
+```
+
+`npm run build` creates `dist/index.html` with the JavaScript, CSS, and image assets inlined. It can
+be served by any static host or opened locally. To run the same build check automatically before
+each push, enable the repository hook once:
+
+```bash
+git config core.hooksPath .githooks
 ```
 
 ## Current scope

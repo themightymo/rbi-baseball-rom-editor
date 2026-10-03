@@ -1,0 +1,10 @@
+#!/bin/sh
+# Rebuild dist/index.html before every push, and cancel the push if verification fails.
+# Enable once per clone with: git config core.hooksPath .githooks
+# Skip once with: git push --no-verify
+
+echo "pre-push: running tests and production build..."
+if ! npm test || ! npm run build --silent; then
+  echo "pre-push: verification failed, push cancelled." >&2
+  exit 1
+fi
