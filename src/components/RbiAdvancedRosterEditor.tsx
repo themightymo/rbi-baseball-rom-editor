@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRom } from "@/lib/romStore";
-import { parseRbiTeams } from "@/games/rbi/teams";
+import { detectedRbiTeamDataOffset, parseRbiTeams, RBI_TEAM_DATA_OFFSET } from "@/games/rbi/teams";
 import { detectRbiRom } from "@/games/rbi/detect";
 import { writeBatterFields, type RbiBatterChanges } from "@/games/rbi/batters";
 import { writePitcherFields, type RbiPitcherChanges } from "@/games/rbi/pitchers";
@@ -11,20 +11,29 @@ type View = "batters" | "pitchers" | "all";
 export function RbiAdvancedRosterEditor() {
   const { rom, originalRom, setBytes } = useRom();
   const [view, setView] = useState<View>("batters");
-  const teams = useMemo(() => {
+  const teamDataOffset = useMemo(() => {
+    if (!originalRom) return null;
     try {
-      return rom ? parseRbiTeams(rom) : null;
-    } catch {
-      return null;
-    }
-  }, [rom]);
-  const originals = useMemo(() => {
-    try {
-      return originalRom ? parseRbiTeams(originalRom) : null;
+      return detectedRbiTeamDataOffset(originalRom);
     } catch {
       return null;
     }
   }, [originalRom]);
+  const rosterOffset = teamDataOffset ?? RBI_TEAM_DATA_OFFSET;
+  const teams = useMemo(() => {
+    try {
+      return rom ? parseRbiTeams(rom, rosterOffset) : null;
+    } catch {
+      return null;
+    }
+  }, [rom, rosterOffset]);
+  const originals = useMemo(() => {
+    try {
+      return originalRom ? parseRbiTeams(originalRom, rosterOffset) : null;
+    } catch {
+      return null;
+    }
+  }, [originalRom, rosterOffset]);
   const editable = originalRom ? detectRbiRom(originalRom).supported : false;
   if (!rom || !teams || !originals)
     return (

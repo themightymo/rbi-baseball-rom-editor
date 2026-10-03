@@ -5,10 +5,10 @@ import { detectRbiRom } from "@/games/rbi/detect";
 import { getRbiAnnotations } from "@/games/rbi/annotations";
 
 export function ResearchPanel() {
-  const { rom, romChecksum } = useRom();
+  const { rom, originalRom, romChecksum } = useRom();
   const layout = useMemo(() => (rom ? getNesRomLayout(rom) : null), [rom]);
-  const detection = useMemo(() => (rom ? detectRbiRom(rom) : null), [rom]);
-  const annotations = useMemo(() => getRbiAnnotations(rom), [rom]);
+  const detection = useMemo(() => (originalRom ? detectRbiRom(originalRom) : null), [originalRom]);
+  const annotations = useMemo(() => getRbiAnnotations(originalRom), [originalRom]);
   if (!rom || !detection) return null;
 
   return (

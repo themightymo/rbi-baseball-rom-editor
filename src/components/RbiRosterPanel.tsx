@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRom } from "@/lib/romStore";
-import { parseRbiTeams } from "@/games/rbi/teams";
+import { detectedRbiTeamDataOffset, parseRbiTeams, RBI_TEAM_DATA_OFFSET } from "@/games/rbi/teams";
 import type { RbiBatter, RbiPitcher } from "@/games/rbi/types";
 import { writeBatterFields, type RbiBatterChanges } from "@/games/rbi/batters";
 import { writePitcherFields, type RbiPitcherChanges } from "@/games/rbi/pitchers";
@@ -21,22 +21,31 @@ export function RbiRosterPanel() {
   const { rom, originalRom, setBytes } = useRom();
   const [selectedTeam, setSelectedTeam] = useState(0);
   const [selection, setSelection] = useState<PlayerSelection | null>(null);
-  const result = useMemo(() => {
-    if (!rom) return null;
-    try {
-      return { teams: parseRbiTeams(rom), error: null };
-    } catch (error) {
-      return { teams: null, error: error instanceof Error ? error.message : String(error) };
-    }
-  }, [rom]);
-  const originalTeams = useMemo(() => {
+  const teamDataOffset = useMemo(() => {
     if (!originalRom) return null;
     try {
-      return parseRbiTeams(originalRom);
+      return detectedRbiTeamDataOffset(originalRom);
     } catch {
       return null;
     }
   }, [originalRom]);
+  const rosterOffset = teamDataOffset ?? RBI_TEAM_DATA_OFFSET;
+  const result = useMemo(() => {
+    if (!rom) return null;
+    try {
+      return { teams: parseRbiTeams(rom, rosterOffset), error: null };
+    } catch (error) {
+      return { teams: null, error: error instanceof Error ? error.message : String(error) };
+    }
+  }, [rom, rosterOffset]);
+  const originalTeams = useMemo(() => {
+    if (!originalRom) return null;
+    try {
+      return parseRbiTeams(originalRom, rosterOffset);
+    } catch {
+      return null;
+    }
+  }, [originalRom, rosterOffset]);
   const editable = useMemo(
     () => (originalRom ? detectRbiRom(originalRom).supported : false),
     [originalRom],

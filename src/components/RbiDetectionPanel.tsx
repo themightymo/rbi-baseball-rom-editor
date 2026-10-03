@@ -4,8 +4,8 @@ import { useRom } from "@/lib/romStore";
 import { detectRbiRom } from "@/games/rbi/detect";
 
 export function RbiDetectionPanel() {
-  const { rom } = useRom();
-  const result = useMemo(() => (rom ? detectRbiRom(rom) : null), [rom]);
+  const { originalRom } = useRom();
+  const result = useMemo(() => (originalRom ? detectRbiRom(originalRom) : null), [originalRom]);
   if (!result) return null;
 
   const recognized = result.isRbi;
@@ -23,7 +23,7 @@ export function RbiDetectionPanel() {
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
             {result.supported
-              ? "This clean original profile is supported by the current research baseline."
+              ? "This exact original payload is supported by the current research baseline."
               : "You may inspect and export this file, but RBI roster editing is disabled."}
           </p>
         </div>

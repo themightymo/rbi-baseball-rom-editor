@@ -22,14 +22,33 @@ The roadmap mentions a 98,448-byte file. That is 128 bytes longer than the stand
 
 Checksums below cover PRG+CHR cartridge bytes and deliberately exclude the mutable 16-byte iNES header.
 
-| Variant                    | Mapper |   PRG |   CHR | PRG+CHR CRC32 | Support   |
-| -------------------------- | -----: | ----: | ----: | ------------- | --------- |
-| Licensed gray cartridge    |    206 | 64 KB | 32 KB | `3C5C81D4`    | supported |
-| Unlicensed black cartridge |    206 | 64 KB | 32 KB | `2E326A1D`    | supported |
+| Variant                    | Canonical mapper | Accepted header |   PRG |   CHR | PRG+CHR CRC32 | Support   |
+| -------------------------- | ---------------: | --------------: | ----: | ----: | ------------- | --------- |
+| Licensed gray cartridge    |              206 |       206 or 4¹ | 64 KB | 32 KB | `3C5C81D4`    | supported |
+| Unlicensed black cartridge |              206 |       206 or 4¹ | 64 KB | 32 KB | `2E326A1D`    | supported |
+
+¹ Mapper 4 is accepted only when the complete PRG+CHR payload hash is exact. It is a common legacy
+iNES header for the supplied licensed payload, not a claim that mapper 4 is the canonical cartridge
+hardware. The UI reports the discrepancy.
 
 Shared CHR CRC32: `C36B03AE`. Licensed PRG CRC32: `42607A97`. Unlicensed PRG CRC32: `203D32B5`.
 
 Sources: [NES Directory cartridge records](https://nesdir.github.io/3C5C81D4_USA.html) and [NesCartDB unlicensed cartridge record](https://nescartdb.com/profile/view/447/rbi-baseball).
+
+## Expanded and historical profile families
+
+Variant knowledge is centralized in `src/games/rbi/profiles.ts`. Every data offset there is relative
+to its declared iNES region; file offsets are resolved from the header rather than from file length.
+Profiles without a complete payload checksum are never selected automatically.
+
+| Family                   | Reported file size | Team/player PRG offset | Automatic support |
+| ------------------------ | -----------------: | ---------------------: | ----------------- |
+| Stuffed licensed         |            unknown |                unknown | no                |
+| Overstuffed licensed     |      196,924 bytes |              `0x10000` | no                |
+| Overstuffed unlicensed   |      262,160 bytes |              `0x10000` | no                |
+| Historical ten-team hack |             varies |                unknown | no                |
+
+The overstuffed offsets and sizes come from the community [RBI Baseball Technical Page](https://dee-nee.com/rbi/tech.shtml), which says those images contain two player-data copies and the copy at `PRG +0x10000` is editable. No verified payload checksums were published there. The separate [RBI ROMs page](https://dee-nee.com/rbi/roms/) uses “stuffed” and “overstuffed” inconsistently, so the editor does not collapse those labels or infer missing offsets. Historical hacks can derive from either layout and require individual checksums before support.
 
 ## Game data
 
@@ -122,7 +141,7 @@ Confirmed batter fields `+1..+13` are writable with field-specific validation. N
 
 The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
 
-The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its complete California block is byte-identical. Its legacy iNES header still declares mapper 4 rather than documented mapper 206, so it is evidence for the licensed payload and record layout but not a canonical header. The clean unlicensed payload remains untested.
+The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its complete roster table is byte-identical. Its legacy iNES header declares mapper 4 rather than canonical mapper 206. Phase 16 now accepts this exact payload/header pairing for editing while visibly warning about the header discrepancy. A mapper-4 header never bypasses the full checksum requirement. The clean unlicensed payload remains untested.
 
 ### California pitcher slot 12 — `Witt`
 

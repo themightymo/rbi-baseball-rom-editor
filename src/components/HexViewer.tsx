@@ -17,14 +17,14 @@ const ROW_LENGTH = 16;
 const PAGE_LENGTH = 32 * ROW_LENGTH;
 
 export function HexViewer({ jumpOffset }: { jumpOffset?: number | null }) {
-  const { rom } = useRom();
+  const { rom, originalRom } = useRom();
   const [offsetInput, setOffsetInput] = useState("0x000000");
   const [pageStart, setPageStart] = useState(0);
   const [selectionStart, setSelectionStart] = useState<number | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
   const layout = useMemo(() => (rom ? getNesRomLayout(rom) : null), [rom]);
-  const annotations = useMemo(() => getRbiAnnotations(rom), [rom]);
+  const annotations = useMemo(() => getRbiAnnotations(originalRom), [originalRom]);
   const selection = useMemo(() => {
     if (selectionStart === null) return null;
     const end = selectionEnd ?? selectionStart;

@@ -1,6 +1,26 @@
 import { crc32 } from "../../lib/checksum.ts";
 import { parseINES } from "../../core/nes/ines.ts";
-import { RBI_ROM_PROFILES } from "./profiles.ts";
+import { RBI_ROM_PROFILES, type RbiRomProfile } from "./profiles.ts";
+
+export interface RbiProfileFingerprint {
+  payloadCrc32: string;
+  mapper: number;
+  prgSize: number;
+  chrSize: number;
+}
+
+export function matchExactRbiProfile(fingerprint: RbiProfileFingerprint): RbiRomProfile | null {
+  return (
+    RBI_ROM_PROFILES.find(
+      (profile) =>
+        profile.payloadCrc32 !== null &&
+        profile.payloadCrc32 === fingerprint.payloadCrc32 &&
+        profile.acceptedMappers.includes(fingerprint.mapper) &&
+        profile.prgSize === fingerprint.prgSize &&
+        profile.chrSize === fingerprint.chrSize,
+    ) ?? null
+  );
+}
 
 export interface RbiDetectionResult {
   isRbi: boolean;
@@ -41,21 +61,25 @@ export function detectRbiRom(rom: Uint8Array): RbiDetectionResult {
   const payloadCrc32 = crc32(rom.subarray(dataStart, payloadEnd));
   const prgCrc32 = crc32(rom.subarray(dataStart, dataStart + ines.prgSize));
   const chrCrc32 = crc32(rom.subarray(dataStart + ines.prgSize, payloadEnd));
-  const exact = RBI_ROM_PROFILES.find(
-    (profile) =>
-      profile.payloadCrc32 === payloadCrc32 &&
-      profile.mapper === ines.mapper &&
-      profile.prgSize === ines.prgSize &&
-      profile.chrSize === ines.chrSize,
-  );
+  const exact = matchExactRbiProfile({
+    payloadCrc32,
+    mapper: ines.mapper,
+    prgSize: ines.prgSize,
+    chrSize: ines.chrSize,
+  });
 
   if (exact) {
-    const warnings =
-      rom.length === ines.expectedFileSize
-        ? []
-        : [
-            `The file has ${rom.length - ines.expectedFileSize} trailing byte(s); cartridge data still matches the clean dump.`,
-          ];
+    const warnings: string[] = [];
+    if (exact.canonicalMapper !== null && ines.mapper !== exact.canonicalMapper) {
+      warnings.push(
+        `The complete cartridge payload is exact, but this legacy header declares mapper ${ines.mapper}; the canonical cartridge mapper is ${exact.canonicalMapper}.`,
+      );
+    }
+    if (rom.length !== ines.expectedFileSize) {
+      warnings.push(
+        `The file has ${rom.length - ines.expectedFileSize} trailing byte(s); cartridge data still matches the clean dump.`,
+      );
+    }
     return {
       ...base,
       isRbi: true,
@@ -70,11 +94,14 @@ export function detectRbiRom(rom: Uint8Array): RbiDetectionResult {
 
   const layoutMatches = RBI_ROM_PROFILES.some(
     (profile) =>
-      profile.mapper === ines.mapper &&
+      profile.payloadCrc32 !== null &&
+      profile.acceptedMappers.includes(ines.mapper) &&
       profile.prgSize === ines.prgSize &&
       profile.chrSize === ines.chrSize,
   );
-  const chrMatches = RBI_ROM_PROFILES.some((profile) => profile.chrCrc32 === chrCrc32);
+  const chrMatches = RBI_ROM_PROFILES.some(
+    (profile) => profile.chrCrc32 !== null && profile.chrCrc32 === chrCrc32,
+  );
   const prgMatch = RBI_ROM_PROFILES.find((profile) => profile.prgCrc32 === prgCrc32);
 
   if (layoutMatches && chrMatches) {

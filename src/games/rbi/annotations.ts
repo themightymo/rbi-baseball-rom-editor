@@ -1,11 +1,11 @@
 import type { RomAnnotation } from "@/core/rom/annotations";
-import { parseRbiTeams } from "@/games/rbi/teams";
+import { parseDetectedRbiTeams } from "@/games/rbi/teams";
 
 /** Show labels only when every RBI team block passes structural parsing. */
 export function getRbiAnnotations(rom: Uint8Array | null): readonly RomAnnotation[] {
   if (!rom) return [];
   try {
-    const teams = parseRbiTeams(rom);
+    const teams = parseDetectedRbiTeams(rom);
     const annotations: RomAnnotation[] = [];
     for (const team of teams) {
       annotations.push({

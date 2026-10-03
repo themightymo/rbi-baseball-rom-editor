@@ -1,5 +1,33 @@
 # Research Log
 
+## 2026-10-02 — Phase 16 profile-based ROM variants
+
+### Profile architecture
+
+- All variant-specific player, team, and CHR base offsets now live in typed profiles and are
+  relative to the iNES PRG/CHR regions. The parser accepts a resolved team base instead of
+  scattering file-size conditionals.
+- Only a complete known PRG+CHR checksum can select a profile automatically. Expected file sizes
+  and structural similarity are never sufficient to enable editing.
+- The exact licensed and unlicensed payload profiles accept canonical mapper 206 and the common
+  legacy mapper-4 iNES header. The latter always produces a warning and is accepted only after the
+  complete payload checksum matches.
+- The supplied `[!]` image therefore becomes editable as the exact licensed payload; the other
+  supplied image remains inspection-only because its modified PRG has no verified checksum.
+
+### Expanded/hacked families
+
+The community [technical page](https://dee-nee.com/rbi/tech.shtml) reports overstuffed licensed and
+unlicensed sizes of 196,924 and 262,160 bytes, two copies of player data, and an editable copy at
+PRG-relative `0x10000`. Those facts are recorded in unsupported profiles. The distinct stuffed
+licensed image is described as having relocated data, but its exact offset and checksum were not
+published and remain null. Historical ten-team hacks vary by base image, so their offsets also
+remain null pending an individually verified payload.
+
+The [RBI ROMs page](https://dee-nee.com/rbi/roms/) describes the families but uses size/naming that
+does not cleanly agree with the technical page. No family-only profile is auto-detected, and no
+offset was invented to resolve that inconsistency.
+
 ## 2026-10-02 — Phase 15 generic CHR tools
 
 ### Implemented and confirmed
