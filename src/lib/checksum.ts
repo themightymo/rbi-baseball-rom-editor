@@ -17,4 +17,4 @@ export function crc32(bytes: Uint8Array): string {
   return ((crc ^ 0xffffffff) >>> 0).toString(16).padStart(8, "0").toUpperCase();
 }
 
-export { detectINES } from "@/core/nes/ines";
+export { detectINES } from "../core/nes/ines.ts";

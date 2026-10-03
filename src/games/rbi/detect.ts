@@ -1,6 +1,6 @@
-import { crc32 } from "@/lib/checksum";
-import { parseINES } from "@/core/nes/ines";
-import { RBI_ROM_PROFILES } from "@/games/rbi/profiles";
+import { crc32 } from "../../lib/checksum.ts";
+import { parseINES } from "../../core/nes/ines.ts";
+import { RBI_ROM_PROFILES } from "./profiles.ts";
 
 export interface RbiDetectionResult {
   isRbi: boolean;

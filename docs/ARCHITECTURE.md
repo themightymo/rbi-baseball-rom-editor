@@ -38,3 +38,5 @@ The repository still contains dormant Tecmo-specific modules (rosters, abilities
 ## Round-trip guarantees
 
 Phase 7 exercises the complete 98,320-byte image rather than comparing only player records. Automated tests prove that an unchanged working copy exports identically, known batter and pitcher edits affect only their mapped bytes, restoring original values restores the whole image, and an independent IPS reader reproduces the same modified image as direct export.
+
+RBI project files are versioned data, not arbitrary write lists. They bind edits to the full source-file CRC32 and detected profile, retain each expected original byte, validate every range and byte before returning a new ROM, and never mutate the supplied source.

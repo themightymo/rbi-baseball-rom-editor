@@ -227,3 +227,11 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - Batter and pitcher tables edit the same validated field APIs used by the game-style cards; they do not introduce a second byte-writing implementation.
 - Cells that differ from the immutable originally loaded ROM are highlighted in yellow.
 - The game-style roster and individual cards remain the primary interface; the table is a complementary power-user workflow.
+
+## 2026-10-02 — Phase 12 save and share
+
+- Full-ROM and IPS export continue to use the Phase 7 verified paths.
+- RBI project files now identify `game`, format `version`, full source-file CRC32, detected profile, and sorted edits with expected original bytes.
+- Project import rejects the wrong CRC/profile, malformed values, out-of-range offsets, and original-byte mismatches before exposing a modified ROM.
+- Import applies the complete validated result in one state update, fixing the inherited multiple-`setBytes` batching hazard.
+- The changed-byte table now uses confirmed annotations to describe player records and known fields; unconfirmed offsets remain labeled `Unannotated byte`.

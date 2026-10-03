@@ -5,6 +5,9 @@ import { buildIPS } from "@/lib/diff";
 import { download, saveFileAs } from "@/lib/download";
 import { Save, Upload, FileJson, FileCode } from "lucide-react";
 import { DEFAULT_ROM_MAP, type RomMap } from "@/types/RomMap";
+import { buildRbiProject, applyRbiProject } from "@/games/rbi/project";
+import { getRbiAnnotations } from "@/games/rbi/annotations";
+import { annotationsAt } from "@/core/rom/annotations";
 
 export function ExportPanel() {
   const { rom, originalRom, romName, edits, romMap, setRomMap, setBytes } = useRom();
@@ -12,6 +15,7 @@ export function ExportPanel() {
   const projectRef = useRef<HTMLInputElement>(null);
 
   const editCount = edits.size;
+  const annotations = getRbiAnnotations(originalRom);
 
   return (
     <div className="space-y-4">
@@ -92,18 +96,10 @@ export function ExportPanel() {
             variant="outline"
             disabled={editCount === 0}
             onClick={() => {
-              const editList = Array.from(edits.entries()).map(([offset, value]) => ({
-                offset,
-                value,
-                original: originalRom?.[offset] ?? null,
-              }));
+              if (!originalRom) return;
               download(
-                "edits-project.json",
-                JSON.stringify(
-                  { kind: "rbi-edit-project", romMapChecksum: null, edits: editList },
-                  null,
-                  2,
-                ),
+                "rbi-baseball-project.json",
+                JSON.stringify(buildRbiProject(originalRom, edits), null, 2),
                 "application/json",
               );
             }}
@@ -120,16 +116,14 @@ export function ExportPanel() {
             className="hidden"
             onChange={async (e) => {
               const f = e.target.files?.[0];
-              if (!f || !rom) return;
+              if (!f || !originalRom) return;
               try {
-                const data = JSON.parse(await f.text()) as {
-                  edits: { offset: number; value: number }[];
-                };
-                for (const { offset, value } of data.edits) {
-                  setBytes(offset, new Uint8Array([value]));
-                }
-              } catch {
-                alert("That doesn't look like a valid project file.");
+                const applied = applyRbiProject(originalRom, JSON.parse(await f.text()));
+                setBytes(0, applied);
+              } catch (error) {
+                alert(
+                  error instanceof Error ? error.message : "That isn't a valid RBI project file.",
+                );
               }
               e.target.value = "";
             }}
@@ -148,6 +142,7 @@ export function ExportPanel() {
                 <th className="p-2">Offset</th>
                 <th className="p-2">Original</th>
                 <th className="p-2">New</th>
+                <th className="p-2">Description</th>
               </tr>
             </thead>
             <tbody>
@@ -161,6 +156,9 @@ export function ExportPanel() {
                     </td>
                     <td className="p-2 text-warning">
                       {val.toString(16).padStart(2, "0").toUpperCase()}
+                    </td>
+                    <td className="p-2 text-muted-foreground">
+                      {describeOffset(annotations, off)}
                     </td>
                   </tr>
                 ))}
@@ -190,4 +188,9 @@ function Option({
       <div className="mt-auto">{children}</div>
     </div>
   );
+}
+
+function describeOffset(annotations: ReturnType<typeof getRbiAnnotations>, offset: number): string {
+  const matches = annotationsAt(annotations, offset);
+  return matches.at(-1)?.label ?? "Unannotated byte";
 }
