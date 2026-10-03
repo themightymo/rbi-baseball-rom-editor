@@ -18,7 +18,8 @@ export function RbiPitcherCard({
     <div className="space-y-5">
       {!editable && (
         <p className="border border-warning p-2 text-[8px] leading-relaxed text-warning">
-          Editing is disabled because the originally loaded ROM is not a supported clean profile.
+          Editing is disabled because the originally loaded ROM is not an exact supported payload
+          profile.
         </p>
       )}
       <section>
