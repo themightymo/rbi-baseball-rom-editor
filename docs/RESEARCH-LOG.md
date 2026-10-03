@@ -1,5 +1,14 @@
 # Research Log
 
+## 2026-10-03 — Safe batter gameplay limits
+
+- Replaced storage-width maxima in normal editors and CSV import with authentic gameplay limits:
+  Contact `0–40`, Power `640–975`, and Speed `118–148`.
+- Contact is now identified as a penalty where lower values are better. Ratings Lab maps a higher
+  average to a lower Contact penalty rather than increasing it.
+- Raw byte experimentation remains possible through the explicitly advanced hex and custom-layout
+  research tools, while roster writers reject values likely to create unstable gameplay.
+
 ## 2026-10-03 — Direct batter stat-to-rating relationships
 
 - Ratings Lab now ties Contact only to batting average, Power only to home runs, and Speed only to

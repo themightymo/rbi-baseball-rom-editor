@@ -2,7 +2,11 @@ import { useMemo, useState } from "react";
 import { useRom } from "@/lib/romStore";
 import { detectedRbiTeamDataOffset, parseRbiTeams, RBI_TEAM_DATA_OFFSET } from "@/games/rbi/teams";
 import { detectRbiRom } from "@/games/rbi/detect";
-import { writeBatterFields, type RbiBatterChanges } from "@/games/rbi/batters";
+import {
+  RBI_BATTER_GAMEPLAY_LIMITS,
+  writeBatterFields,
+  type RbiBatterChanges,
+} from "@/games/rbi/batters";
 import { writePitcherFields, type RbiPitcherChanges } from "@/games/rbi/pitchers";
 import type { RbiBatter, RbiPitcher } from "@/games/rbi/types";
 
@@ -59,7 +63,8 @@ export function RbiAdvancedRosterEditor() {
         <div>
           <h2 className="text-sm">Advanced roster editor</h2>
           <p className="mt-1 text-[8px] text-muted-foreground">
-            Yellow cells differ from the originally loaded ROM.
+            Yellow cells differ from the originally loaded ROM. Contact is a penalty, so lower is
+            better. Gameplay fields use authentic safe limits.
           </p>
         </div>
         <div className="flex gap-1">
@@ -167,19 +172,24 @@ function BatterTable({
                   value={player.contact}
                   changed={player.contact !== original.contact}
                   disabled={!editable}
+                  min={RBI_BATTER_GAMEPLAY_LIMITS.contact.min}
+                  max={RBI_BATTER_GAMEPLAY_LIMITS.contact.max}
                   write={(contact) => write(player, { contact })}
                 />
                 <Numeric
                   value={player.power}
                   changed={player.power !== original.power}
                   disabled={!editable}
-                  max={65535}
+                  min={RBI_BATTER_GAMEPLAY_LIMITS.power.min}
+                  max={RBI_BATTER_GAMEPLAY_LIMITS.power.max}
                   write={(power) => write(player, { power })}
                 />
                 <Numeric
                   value={player.speed}
                   changed={player.speed !== original.speed}
                   disabled={!editable}
+                  min={RBI_BATTER_GAMEPLAY_LIMITS.speed.min}
+                  max={RBI_BATTER_GAMEPLAY_LIMITS.speed.max}
                   write={(speed) => write(player, { speed })}
                 />
               </tr>

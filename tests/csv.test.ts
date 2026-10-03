@@ -21,7 +21,7 @@ function makeRosterRom(): Uint8Array {
         rom[offset + 8] = 100;
         rom[offset + 9] = 10;
         rom[offset + 10] = 20;
-        rom[offset + 11] = 0xe8;
+        rom[offset + 11] = 0xb1;
         rom[offset + 12] = 0x03;
         rom[offset + 13] = 120;
       } else {
@@ -69,19 +69,19 @@ test("exports and imports the complete 160-row roster symmetrically", () => {
 
 test("applies a valid CSV edit only to its confirmed field bytes", () => {
   const rom = makeRosterRom();
-  const csv = editCell(exportRbiRosterCsv(rom), 1, "power", "1256");
+  const csv = editCell(exportRbiRosterCsv(rom), 1, "power", "950");
   const result = importRbiRosterCsv(rom, csv);
   assert.equal(result.ok, true);
   if (!result.ok) return;
   const changed = [...result.rom.keys()].filter((offset) => result.rom[offset] !== rom[offset]);
-  assert.deepEqual(changed, [0x1c]);
-  assert.deepEqual([...result.rom.subarray(0x1b, 0x1d)], [0xe8, 0x04]);
+  assert.deepEqual(changed, [0x1b]);
+  assert.deepEqual([...result.rom.subarray(0x1b, 0x1d)], [0xb6, 0x03]);
 });
 
 test("reports row errors and returns no partially modified ROM", () => {
   const rom = makeRosterRom();
   const snapshot = new Uint8Array(rom);
-  let csv = editCell(exportRbiRosterCsv(rom), 1, "power", "1256");
+  let csv = editCell(exportRbiRosterCsv(rom), 1, "power", "950");
   csv = editCell(csv, 2, "speed", "999");
   const result = importRbiRosterCsv(rom, csv);
   assert.equal(result.ok, false);

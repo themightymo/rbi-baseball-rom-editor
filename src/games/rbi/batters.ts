@@ -3,6 +3,11 @@ import type { RbiBatter, RbiHandedness } from "./types.ts";
 
 export const RBI_BATTER_RECORD_LENGTH = 16;
 export const RBI_BATTER_POWER_OFFSET = 11;
+export const RBI_BATTER_GAMEPLAY_LIMITS = {
+  contact: { min: 0, max: 40 },
+  power: { min: 640, max: 975 },
+  speed: { min: 118, max: 148 },
+} as const;
 
 export type RbiBatterChanges = Partial<
   Pick<RbiBatter, "name" | "bats" | "battingAverage" | "homeRuns" | "contact" | "power" | "speed">
@@ -113,17 +118,39 @@ export function writeBatterFields(
     next[recordOffset + 9] = changes.homeRuns;
   }
   if (changes.contact !== undefined) {
-    assertByte(changes.contact, "RBI batter contact");
+    assertRange(
+      changes.contact,
+      "RBI batter contact",
+      RBI_BATTER_GAMEPLAY_LIMITS.contact.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.contact.max,
+    );
     next[recordOffset + 10] = changes.contact;
   }
   if (changes.power !== undefined) {
+    assertRange(
+      changes.power,
+      "RBI batter power",
+      RBI_BATTER_GAMEPLAY_LIMITS.power.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.power.max,
+    );
     next.set(encodeBatterPower(changes.power), recordOffset + RBI_BATTER_POWER_OFFSET);
   }
   if (changes.speed !== undefined) {
-    assertByte(changes.speed, "RBI batter speed");
+    assertRange(
+      changes.speed,
+      "RBI batter speed",
+      RBI_BATTER_GAMEPLAY_LIMITS.speed.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.speed.max,
+    );
     next[recordOffset + 13] = changes.speed;
   }
   return next;
+}
+
+function assertRange(value: number, label: string, minimum: number, maximum: number): void {
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new RangeError(`${label} must be an integer from ${minimum} to ${maximum}.`);
+  }
 }
 
 function assertByte(value: number, label: string, displayOffset = 0): void {

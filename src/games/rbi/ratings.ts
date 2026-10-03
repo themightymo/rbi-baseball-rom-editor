@@ -1,3 +1,5 @@
+import { RBI_BATTER_GAMEPLAY_LIMITS } from "./batters.ts";
+
 export interface BatterStatLine {
   atBats: number;
   hits: number;
@@ -54,9 +56,21 @@ export function suggestBatterRatings(stats: BatterStatLine): SuggestedBatterRati
   return {
     battingAverage: clamp(Math.round(average * 1000), 150, 405),
     homeRuns: clamp(stats.homeRuns, 0, 255),
-    contact: clamp(Math.round(average * 80), 0, 255),
-    power: clamp(650 + stats.homeRuns * 8, 0, 65535),
-    speed: clamp(Math.round(110 + (stats.stolenBases / stats.atBats) * 500), 0, 255),
+    contact: clamp(
+      Math.round((0.405 - average) * 100),
+      RBI_BATTER_GAMEPLAY_LIMITS.contact.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.contact.max,
+    ),
+    power: clamp(
+      650 + stats.homeRuns * 8,
+      RBI_BATTER_GAMEPLAY_LIMITS.power.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.power.max,
+    ),
+    speed: clamp(
+      Math.round(118 + (stats.stolenBases / stats.atBats) * 300),
+      RBI_BATTER_GAMEPLAY_LIMITS.speed.min,
+      RBI_BATTER_GAMEPLAY_LIMITS.speed.max,
+    ),
   };
 }
 

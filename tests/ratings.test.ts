@@ -10,7 +10,7 @@ test("suggests deterministic batter ratings from a real stat line", () => {
       homeRuns: 25,
       stolenBases: 20,
     }),
-    { battingAverage: 300, homeRuns: 25, contact: 24, power: 850, speed: 130 },
+    { battingAverage: 300, homeRuns: 25, contact: 11, power: 850, speed: 130 },
   );
 });
 
@@ -40,7 +40,7 @@ test("ties each batter rating to its named source statistic", () => {
     stolenBases: 30,
   });
 
-  assert.equal(moreHits.contact > baseline.contact, true);
+  assert.equal(moreHits.contact < baseline.contact, true);
   assert.equal(moreHits.power, baseline.power);
   assert.equal(moreHits.speed, baseline.speed);
   assert.equal(moreHomeRuns.contact, baseline.contact);
@@ -82,7 +82,8 @@ test("suggestions clamp to confirmed writable ROM ranges", () => {
     stolenBases: 10,
   });
   assert.equal(batter.battingAverage, 405);
-  assert.equal(batter.speed, 255);
+  assert.equal(batter.speed, 148);
+  assert.equal(batter.power, 658);
 
   const pitcher = suggestPitcherRatings({
     inningsPitched: 1,

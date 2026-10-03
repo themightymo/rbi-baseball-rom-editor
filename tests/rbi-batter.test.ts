@@ -93,7 +93,7 @@ test("writes every confirmed batter field without touching slot or unknown bytes
     battingAverage: 300,
     homeRuns: 40,
     contact: 12,
-    power: 1000,
+    power: 950,
     speed: 140,
   });
   const batter = parseBatter(changed, JACKSON_OFFSET, 0);
@@ -113,7 +113,7 @@ test("writes every confirmed batter field without touching slot or unknown bytes
       battingAverage: 300,
       homeRuns: 40,
       contact: 12,
-      power: 1000,
+      power: 950,
       speed: 140,
     },
   );
@@ -128,7 +128,9 @@ test("rejects invalid batter values and unsupported name glyphs", () => {
     () => writeBatterFields(original, JACKSON_OFFSET, { battingAverage: 406 }),
     /150 to 405/,
   );
-  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { speed: -1 }), /0 to 255/);
+  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { contact: 255 }), /0 to 40/);
+  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { power: 65535 }), /640 to 975/);
+  assert.throws(() => writeBatterFields(original, JACKSON_OFFSET, { speed: 255 }), /118 to 148/);
   assert.throws(
     () => writeBatterFields(original, JACKSON_OFFSET, { name: "TOOLONG" }),
     /at most 6/,

@@ -16,9 +16,9 @@ and doubled quotes inside quoted fields.
 | `bats`            | `L` or `R` | blank      | Confirmed handedness                     |
 | `avg`             | editable   | blank      | `.NNN`, from `.150` through `.405`       |
 | `hr`              | editable   | blank      | Integer `0`–`255`                        |
-| `contact`         | editable   | blank      | Integer `0`–`255`                        |
-| `power`           | editable   | blank      | Integer `0`–`65535`                      |
-| `speed`           | editable   | blank      | Integer `0`–`255`                        |
+| `contact`         | editable   | blank      | Integer `0`–`40`; lower is better        |
+| `power`           | editable   | blank      | Integer `640`–`975`                      |
+| `speed`           | editable   | blank      | Integer `118`–`148`                      |
 | `throws`          | blank      | `L` or `R` | Confirmed handedness                     |
 | `delivery`        | blank      | editable   | `standard` or `sidearm`                  |
 | `era`             | blank      | editable   | `N.NN`, from `1.00` through `3.55`       |

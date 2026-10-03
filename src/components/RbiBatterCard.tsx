@@ -1,6 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import type { RbiBatter, RbiHandedness } from "@/games/rbi/types";
-import type { RbiBatterChanges } from "@/games/rbi/batters";
+import { RBI_BATTER_GAMEPLAY_LIMITS, type RbiBatterChanges } from "@/games/rbi/batters";
 import { Input } from "@/components/ui/input";
 import { RbiStatSlider } from "@/components/RbiStatSlider";
 
@@ -96,11 +96,11 @@ export function RbiBatterCard({
       <section>
         <h3 className="nes-rule mb-3 pb-2 text-xs text-[#fc74b4]">Game ratings</h3>
         <NumberField
-          label="Contact"
+          label="Contact penalty (lower is better)"
           value={player.contact}
           original={original.contact}
-          min={0}
-          max={255}
+          min={RBI_BATTER_GAMEPLAY_LIMITS.contact.min}
+          max={RBI_BATTER_GAMEPLAY_LIMITS.contact.max}
           disabled={!editable}
           onChange={(contact) => onChange({ contact })}
         />
@@ -108,8 +108,8 @@ export function RbiBatterCard({
           label="Power"
           value={player.power}
           original={original.power}
-          min={0}
-          max={65535}
+          min={RBI_BATTER_GAMEPLAY_LIMITS.power.min}
+          max={RBI_BATTER_GAMEPLAY_LIMITS.power.max}
           disabled={!editable}
           onChange={(power) => onChange({ power })}
         />
@@ -117,8 +117,8 @@ export function RbiBatterCard({
           label="Speed"
           value={player.speed}
           original={original.speed}
-          min={0}
-          max={255}
+          min={RBI_BATTER_GAMEPLAY_LIMITS.speed.min}
+          max={RBI_BATTER_GAMEPLAY_LIMITS.speed.max}
           disabled={!editable}
           onChange={(speed) => onChange({ speed })}
         />

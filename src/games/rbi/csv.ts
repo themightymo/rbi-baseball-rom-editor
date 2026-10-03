@@ -1,4 +1,4 @@
-import { writeBatterFields } from "./batters.ts";
+import { RBI_BATTER_GAMEPLAY_LIMITS, writeBatterFields } from "./batters.ts";
 import { writePitcherFields } from "./pitchers.ts";
 import {
   parseRbiTeams,
@@ -178,9 +178,30 @@ export function importRbiRosterCsv(
       requireEmpty(row, PITCHER_ONLY_COLUMNS, rowNumber, errors);
       const battingAverage = readAverage(row.avg, rowNumber, errors);
       const homeRuns = readInteger(row.hr, "hr", rowNumber, 0, 255, errors);
-      const contact = readInteger(row.contact, "contact", rowNumber, 0, 255, errors);
-      const power = readInteger(row.power, "power", rowNumber, 0, 65535, errors);
-      const speed = readInteger(row.speed, "speed", rowNumber, 0, 255, errors);
+      const contact = readInteger(
+        row.contact,
+        "contact",
+        rowNumber,
+        RBI_BATTER_GAMEPLAY_LIMITS.contact.min,
+        RBI_BATTER_GAMEPLAY_LIMITS.contact.max,
+        errors,
+      );
+      const power = readInteger(
+        row.power,
+        "power",
+        rowNumber,
+        RBI_BATTER_GAMEPLAY_LIMITS.power.min,
+        RBI_BATTER_GAMEPLAY_LIMITS.power.max,
+        errors,
+      );
+      const speed = readInteger(
+        row.speed,
+        "speed",
+        rowNumber,
+        RBI_BATTER_GAMEPLAY_LIMITS.speed.min,
+        RBI_BATTER_GAMEPLAY_LIMITS.speed.max,
+        errors,
+      );
       validateUnknown(row.unknown_1, player.unknown[0], "unknown_1", rowNumber, errors);
       validateUnknown(row.unknown_2, player.unknown[1], "unknown_2", rowNumber, errors);
       if ([bats, battingAverage, homeRuns, contact, power, speed].some((value) => value === null)) {

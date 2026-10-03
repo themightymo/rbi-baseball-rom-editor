@@ -17,9 +17,9 @@ one familiar result: Contact to batting average, Power to home runs, and Speed t
 ```text
 Average = round(H / AB × 1000), clamped 150–405
 Home Runs = HR, clamped 0–255
-Contact = round(H / AB × 80), clamped 0–255
-Power = 650 + HR × 8, clamped 0–65535
-Speed = round(110 + SB / AB × 500), clamped 0–255
+Contact penalty = round((.405 − H / AB) × 100), clamped 0–40 (lower is better)
+Power = 650 + HR × 8, clamped 640–975
+Speed = round(118 + SB / AB × 300), clamped 118–148
 ```
 
 The constants place ordinary historical stat lines near the observed RBI scale; they are editorial
