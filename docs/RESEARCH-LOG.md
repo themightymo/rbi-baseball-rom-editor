@@ -136,3 +136,43 @@ No second pitcher, additional batter, team, lineup, or All-Star structure was pa
 - The records establish California's inline player order, but no independent lineup table or player-pointer table was identified.
 - An exact byte search found each California 16-byte record and six-byte name only at its source location. Therefore the supplied licensed payload does not contain exact California record copies in an All-Star area. A compact reference scheme or altered copies remain possible, so All-Star reuse is unresolved until the surrounding teams are decoded.
 - No non-California player record was parsed.
+
+## 2026-10-02 — Phase 6 all-team decode
+
+### Boundary validation and ROM order
+
+- Sequential validation found ten contiguous 256-byte team blocks at file `0x10–0xA0F`.
+- Every block contains slots `0–11` using the batter structure and slots `12–15` using the pitcher structure. All 160 leading slot bytes match their expected boundaries.
+- The verified ROM order is California, Boston, Detroit, Minnesota, Houston, New York, St. Louis, San Francisco, American League All-Stars, and National League All-Stars.
+- Both supplied ROMs are byte-identical across the entire 2,560-byte team-data range.
+- The parser checks bounds before reading a team, parses in ROM order, and stops at the first invalid slot, style, handedness, name glyph, or partial block.
+
+### Names and value validation
+
+- The complete roster matches the original manual, including starters, bench players, pitchers, displayed statistics, and handedness.
+- Hidden batter and pitcher values were compared with the detailed published rating table where available.
+- Byte `0x25` is a period glyph, consistently accounting for names such as `J.Rice`, `S.Owen`, `J.Cruz`, `K.Bass`, `D.Thon`, `N.Ryan`, `T.Herr`, `T.Pena`, and `J.Key`.
+- The application preserves ROM abbreviations exactly. In particular, the ROM contains `Righti`, while the manual identifies the player as Dave Righetti.
+
+### All-Star mechanism
+
+- American and National All-Stars are ordinary inline team blocks at IDs 8 and 9, each with twelve complete batter records and four complete pitcher records.
+- No All-Star name or complete record duplicates a record from team IDs 0–7.
+- No team-to-player references are used for these rosters. The All-Star records are standalone data, mostly for players from clubs without selectable regular teams.
+
+### Implementation
+
+- A generic team parser now loads all ten teams while retaining the California compatibility entry point.
+- A read-only RBI Rosters tab displays every decoded batter and pitcher value directly from the loaded ROM, including explicitly labeled unknown bytes.
+- Confirmed byte-range annotations now cover all ten team blocks and all 160 player records.
+
+### Sources
+
+- [Original RBI Baseball manual](https://dee-nee.com/rbi/files/RBI_Baseball.pdf)
+- [RBI Baseball Technical Page](https://dee-nee.com/rbi/tech.shtml)
+- [Detailed RBI player-rating FAQ](https://gamefaqs.gamespot.com/nes/587559-rbi-baseball/faqs/63117)
+
+### Still unknown
+
+- Batter bytes `+14/+15` and pitcher bytes `+14/+15` retain their existing explicit unknown status.
+- No meaning was inferred for data immediately after the ten team blocks.

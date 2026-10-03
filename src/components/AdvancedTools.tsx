@@ -19,8 +19,9 @@ function HackerNotice() {
       <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <p className="text-muted-foreground">
         <strong className="text-foreground">Research tools.</strong> Use these to inspect bytes,
-        search strings, describe candidate records, and verify exactly what a change affects. RBI
-        player parsing is intentionally disabled until its layout is proven.
+        search strings, describe candidate records, and verify exactly what a change affects. The
+        proven RBI roster layout is available in the RBI Rosters tab; editing remains gated until
+        round-trip validation is complete.
       </p>
     </div>
   );

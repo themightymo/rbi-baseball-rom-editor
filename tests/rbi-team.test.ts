@@ -1,6 +1,194 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseCaliforniaTeam } from "../src/games/rbi/teams.ts";
+import {
+  parseCaliforniaTeam,
+  parseRbiTeams,
+  RBI_TEAM_DEFINITIONS,
+  teamOffset,
+} from "../src/games/rbi/teams.ts";
+
+const TEAM_ROSTERS = [
+  [
+    "Pettis",
+    "DCincs",
+    "Joyner",
+    "Jacksn",
+    "Dwning",
+    "Grich",
+    "Schfld",
+    "Boone",
+    "Burlsn",
+    "Hendrk",
+    "Wilfng",
+    "Jones",
+    "Witt",
+    "Sutton",
+    "Corbet",
+    "Moore",
+  ],
+  [
+    "Barret",
+    "Bucknr",
+    "Boggs",
+    "J.Rice",
+    "Baylor",
+    "DwEvns",
+    "Gedman",
+    "S.Owen",
+    "Hndrsn",
+    "Burks",
+    "Armas",
+    "Sullvn",
+    "Clemns",
+    "Hurst",
+    "Schrld",
+    "Stanly",
+  ],
+  [
+    "Tramml",
+    "Gibson",
+    "DaEvns",
+    "Nokes",
+    "Herndn",
+    "Lemon",
+    "Whitkr",
+    "Brookn",
+    "Shrdan",
+    "Heath",
+    "Madlck",
+    "Bergmn",
+    "Alxndr",
+    "Morris",
+    "Hrndez",
+    "King",
+  ],
+  [
+    "Gladdn",
+    "Gaetti",
+    "Pucket",
+    "Hrbek",
+    "Brnsky",
+    "Gagne",
+    "Laudnr",
+    "Lmbrdz",
+    "Smally",
+    "Davdsn",
+    "Bush",
+    "Larkin",
+    "Viola",
+    "Blylvn",
+    "Brnger",
+    "Reardn",
+  ],
+  [
+    "Hatchr",
+    "J.Cruz",
+    "Wallng",
+    "GDavis",
+    "K.Bass",
+    "Doran",
+    "Rynlds",
+    "Ashby",
+    "Lopes",
+    "Garner",
+    "D.Thon",
+    "Puhl",
+    "N.Ryan",
+    "MScott",
+    "Kerfld",
+    "DSmith",
+  ],
+  [
+    "Dykstr",
+    "Wilson",
+    "Herndz",
+    "Carter",
+    "Strwby",
+    "Backmn",
+    "Knight",
+    "Sntana",
+    "Heep",
+    "Teufel",
+    "Johnsn",
+    "Mazzli",
+    "Gooden",
+    "Ojeda",
+    "Orosco",
+    "McDowl",
+  ],
+  [
+    "Colman",
+    "OSmith",
+    "T.Herr",
+    "JClark",
+    "McGee",
+    "Pndltn",
+    "Ford",
+    "T.Pena",
+    "Oqendo",
+    "Morris",
+    "Lindmn",
+    "Lake",
+    "Tudor",
+    "Cox",
+    "Dayley",
+    "Worrel",
+  ],
+  [
+    "JUribe",
+    "Mitchl",
+    "Leonrd",
+    "Mldndo",
+    "WClark",
+    "Brenly",
+    "CDavis",
+    "Thmpsn",
+    "Spilmn",
+    "Speier",
+    "Aldrte",
+    "Yngbld",
+    "Krukow",
+    "Reushl",
+    "Grelts",
+    "Robnsn",
+  ],
+  [
+    "Rndlph",
+    "Mtngly",
+    "Bell",
+    "Cansco",
+    "Ripken",
+    "Baines",
+    "Brett",
+    "Schrdr",
+    "McGwir",
+    "Seitzr",
+    "Moltor",
+    "Franco",
+    "J.Key",
+    "Sbrhgn",
+    "Righti",
+    "Henke",
+  ],
+  [
+    "Raines",
+    "Sndbrg",
+    "Sntago",
+    "Dawson",
+    "EDavis",
+    "Schmdt",
+    "Gllrga",
+    "Pedriq",
+    "Guerro",
+    "Murphy",
+    "Gwynn",
+    "Kruk",
+    "Vlnzla",
+    "Sutclf",
+    "Franco",
+    "Bedrsn",
+  ],
+] as const;
 
 const BATTERS = [
   ["Pettis", "L", 258, 5, 20, 759, 140],
@@ -27,9 +215,28 @@ const PITCHERS = [
 function encodeName(name: string): number[] {
   return Array.from(name.padEnd(6, " "), (character) => {
     if (character === " ") return 0x24;
+    if (character === ".") return 0x25;
     const code = character.charCodeAt(0);
     return code >= 0x41 && code <= 0x5a ? 0x0a + code - 0x41 : 0x28 + code - 0x61;
   });
+}
+
+function allTeamsFixture(): Uint8Array {
+  const rom = new Uint8Array(0xa10);
+  for (const [teamId, roster] of TEAM_ROSTERS.entries()) {
+    for (const [slot, name] of roster.entries()) {
+      const offset = teamOffset(teamId) + slot * 16;
+      if (slot < 12) {
+        rom.set([slot, ...encodeName(name), 0, 100, 10, 20, 0x20, 0x03, 128, 0, 0], offset);
+      } else {
+        rom.set(
+          [slot, ...encodeName(name), 0x40, 150, 140, 160, 180, 0x55, 20, 0x70, 0x90],
+          offset,
+        );
+      }
+    }
+  }
+  return rom;
 }
 
 function californiaFixture(): Uint8Array {
@@ -156,4 +363,47 @@ test("rejects a record-boundary mismatch instead of shifting the roster", () => 
   const rom = californiaFixture();
   rom[0x20] = 7;
   assert.throws(() => parseCaliforniaTeam(rom), /expected slot 1, found 7/);
+});
+
+test("parses all ten teams in verified ROM order", () => {
+  const teams = parseRbiTeams(allTeamsFixture());
+  assert.equal(teams.length, 10);
+  assert.deepEqual(
+    teams.map(({ name, abbreviation, offset }) => [name, abbreviation, offset]),
+    RBI_TEAM_DEFINITIONS.map(({ name, abbreviation }, teamId) => [
+      name,
+      abbreviation,
+      0x10 + teamId * 0x100,
+    ]),
+  );
+  assert.deepEqual(
+    teams.map((team) => [...team.batters, ...team.pitchers].map(({ name }) => name)),
+    TEAM_ROSTERS,
+  );
+});
+
+test("stops at the first invalid team boundary", () => {
+  const rom = allTeamsFixture();
+  rom[teamOffset(4) + 5 * 16] = 99;
+  assert.throws(() => parseRbiTeams(rom), /Houston record boundary mismatch/);
+});
+
+test("never parses a partial final team", () => {
+  const rom = allTeamsFixture().slice(0, 0xa0f);
+  assert.throws(() => parseRbiTeams(rom), /team 9 block is outside the ROM/);
+});
+
+test("All-Star teams contain standalone records rather than regular-team duplicates", () => {
+  const teams = parseRbiTeams(allTeamsFixture());
+  const regular = teams.slice(0, 8).flatMap((team) => [...team.batters, ...team.pitchers]);
+  const allStars = teams.slice(8).flatMap((team) => [...team.batters, ...team.pitchers]);
+  assert.equal(allStars.length, 32);
+  assert.equal(
+    allStars.some((allStar) =>
+      regular.some((player) =>
+        player.rawBytes.every((byte, index) => byte === allStar.rawBytes[index]),
+      ),
+    ),
+    false,
+  );
 });

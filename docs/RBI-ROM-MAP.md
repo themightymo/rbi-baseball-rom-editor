@@ -28,7 +28,7 @@ Sources: [NES Directory cartridge records](https://nesdir.github.io/3C5C81D4_USA
 
 ## Game data
 
-California's complete player block is confirmed below. Other teams, lineup tables, All-Star references, and non-player game data remain **unknown**.
+All ten complete team player blocks are confirmed below. Non-player game data and any lineup data outside the record order remain **unknown**.
 
 ## Address conventions
 
@@ -39,6 +39,31 @@ California's complete player block is confirmed below. Other teams, lineup table
 - CPU addresses are shown only where mapper state is unnecessary. Mapper 206 fixes its final two 8 KB PRG banks at CPU `$C000–$FFFF`; earlier PRG banks are switchable and therefore reported as bank-dependent. This behavior is documented by [NESdev's mapper 206 reference](https://www.nesdev.org/wiki/INES_Mapper_206).
 
 ## Confirmed annotated RBI regions
+
+### Complete team table
+
+The player table is ten consecutive 256-byte blocks at file `0x000010–0x000A0F` (PRG-relative `0x000000–0x0009FF`). Every team contains twelve 16-byte batter records followed by four 16-byte pitcher records. The block order is established by decoding the ROM and matching every roster to the original manual; it is not inferred from the UI order.
+
+|  ID | Team                      | Abbr. | File range      | PRG-relative range |
+| --: | ------------------------- | ----- | --------------- | ------------------ |
+|   0 | California                | `Ca`  | `0x0010–0x010F` | `0x0000–0x00FF`    |
+|   1 | Boston                    | `Bo`  | `0x0110–0x020F` | `0x0100–0x01FF`    |
+|   2 | Detroit                   | `De`  | `0x0210–0x030F` | `0x0200–0x02FF`    |
+|   3 | Minnesota                 | `Mn`  | `0x0310–0x040F` | `0x0300–0x03FF`    |
+|   4 | Houston                   | `Ho`  | `0x0410–0x050F` | `0x0400–0x04FF`    |
+|   5 | New York                  | `NY`  | `0x0510–0x060F` | `0x0500–0x05FF`    |
+|   6 | St. Louis                 | `SL`  | `0x0610–0x070F` | `0x0600–0x06FF`    |
+|   7 | San Francisco             | `SF`  | `0x0710–0x080F` | `0x0700–0x07FF`    |
+|   8 | American League All-Stars | `Am`  | `0x0810–0x090F` | `0x0800–0x08FF`    |
+|   9 | National League All-Stars | `Na`  | `0x0910–0x0A0F` | `0x0900–0x09FF`    |
+
+The first eight records in each team are the starting batting order, the next four are bench batters, and the final four are pitchers. All 160 slot bytes increment from `0` through `15` within their team, and all names decode without substitution. The two supplied ROMs contain byte-identical data throughout this complete range.
+
+### All-Star storage
+
+The All-Star teams do not reference the eight regular-team blocks. IDs 8 and 9 contain the same complete, inline record structures as every other team: twelve batters and four pitchers apiece. None of their 32 names or complete 16-byte records duplicates a player in IDs 0–7. They are standalone rosters, largely representing players from clubs that do not have their own selectable team, rather than copies or pointers to the eight regular rosters.
+
+The manual confirms every displayed abbreviation, handedness, batting average, home-run total, ERA, and roster identity. The detailed community rating table confirms the hidden contact, power, speed, pitch, curve, stamina, and still-unknown raw values. ROM spelling is preserved verbatim, including `Righti` for the American League pitcher displayed as Dave Righetti in the manual.
 
 ### California team player block
 
@@ -63,9 +88,9 @@ California occupies file offsets `0x000010–0x00010F` (PRG-relative `0x000000�
 |   14 | Pitcher | `Corbet` |      `0xF0` |
 |   15 | Pitcher | `Moore`  |     `0x100` |
 
-Slots `0–7` are the documented starting batters and `8–11` are bench batters. The player records are inline in this block; no separate California-to-player pointer was found or inferred. Each complete California record and six-byte name occurs only once in the supplied licensed payload, ruling out exact All-Star copies but not compact references or altered copies. That distinction remains unresolved.
+Slots `0–7` are the documented starting batters and `8–11` are bench batters. The player records are inline in this block; no separate California-to-player pointer was found or inferred. Phase 6 confirmed that the two All-Star teams likewise store independent inline records rather than references to California or another selectable team.
 
-The name encoding uses uppercase `A–Z` at `0x0A–0x23`, space at `0x24`, and lowercase `a–z` at `0x28–0x41`. All glyphs needed by the California roster decode without substitution.
+The name encoding uses uppercase `A–Z` at `0x0A–0x23`, space at `0x24`, period at `0x25`, and lowercase `a–z` at `0x28–0x41`. All glyphs needed by all ten rosters decode without substitution.
 
 ### California batter slot 3 — `Jacksn`
 

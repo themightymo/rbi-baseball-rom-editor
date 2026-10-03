@@ -4,10 +4,11 @@ import { RomProvider, useRom } from "@/lib/romStore";
 import { RomDropZone, RomToolbar } from "@/components/RomUploader";
 import { RbiDetectionPanel } from "@/components/RbiDetectionPanel";
 import { ExportPanel } from "@/components/ExportPanel";
+import { RbiRosterPanel } from "@/components/RbiRosterPanel";
 import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FileSearch, Save, Table } from "lucide-react";
+import { FileSearch, Save, Table, Users } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -49,6 +50,9 @@ function Shell() {
                 <TabsTrigger value="layouts" className="gap-1.5">
                   <Table className="size-4" /> Research Layouts
                 </TabsTrigger>
+                <TabsTrigger value="rosters" className="gap-1.5">
+                  <Users className="size-4" /> RBI Rosters
+                </TabsTrigger>
                 <TabsTrigger value="save" className="ml-auto gap-1.5">
                   <Save className="size-4" /> Save &amp; Export
                 </TabsTrigger>
@@ -58,6 +62,9 @@ function Shell() {
               </TabsContent>
               <TabsContent value="layouts">
                 <CustomLayoutTools />
+              </TabsContent>
+              <TabsContent value="rosters">
+                <RbiRosterPanel />
               </TabsContent>
               <TabsContent value="save">
                 <ExportPanel />
