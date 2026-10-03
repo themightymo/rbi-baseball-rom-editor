@@ -35,15 +35,15 @@ function Shell() {
   };
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="nes-rule bg-card">
+      <header className="border-b-4 border-[#b93022] bg-black shadow-[0_4px_0_#d5df38]">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
           <img
             src={rbiLogo}
             alt="R.B.I. Baseball"
-            className="w-28 shrink-0 border-2 border-black object-contain sm:w-40"
+            className="w-32 shrink-0 border-2 border-white bg-black object-contain shadow-[4px_4px_0_#7c1d17] sm:w-44"
           />
           <div>
-            <p className="text-[10px] tracking-[0.2em] text-muted-foreground">NES ROM EDITOR</p>
+            <p className="text-[10px] tracking-[0.2em] text-[#d5df38]">NES ROM EDITOR</p>
             <h1 className="mt-2 text-lg leading-relaxed text-foreground">
               R.B.I. Baseball ROM Editor
             </h1>
@@ -104,7 +104,7 @@ function Shell() {
           </>
         )}
       </main>
-      <footer className="border-t-[3px] border-[#fc74b4] bg-card px-4 py-3 text-center text-xs text-muted-foreground">
+      <footer className="border-t-[3px] border-[#b93022] bg-card px-4 py-3 text-center text-xs text-muted-foreground">
         <Popover>
           <PopoverTrigger className="underline-offset-4 hover:text-foreground hover:underline">
             About

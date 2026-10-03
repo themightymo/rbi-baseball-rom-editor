@@ -11,10 +11,9 @@ Confidence labels used here: **confirmed**, **strongly inferred**, **suspected**
 | CHR ROM               |  `0x010010` | 32,768 bytes | confirmed | Four 8 KB iNES units         |
 | End of standard image |  `0x018010` |            — | confirmed | 98,320 bytes total           |
 
-The CHR region contains 2,048 consecutive 16-byte NES 2-bit planar tiles. That tile framing is a
-property of the NES format and is now editable by raw tile index. Individual tile meanings,
-metatile layouts, palette assignments, sprites, logos, and screen associations remain unknown;
-none are labeled as RBI-specific regions yet.
+The CHR region contains 2,048 consecutive 16-byte NES 2-bit planar tiles. Team abbreviation tile
+copies are now identified and writable; other metatile layouts, sprites, logos, and screen
+associations remain unknown.
 
 The roadmap mentions a 98,448-byte file. That is 128 bytes longer than the standard iNES header plus 64 KB PRG plus 32 KB CHR. The detector accepts an exact verified cartridge-data match with trailing bytes and reports the discrepancy; the purpose of any 128-byte suffix is **unknown** and it is not parsed.
 
@@ -184,4 +183,11 @@ These bytes are identical in both supplied ROMs. They do not use the player-name
 
 ## Palettes
 
-The generic NES palette model is confirmed: ROM palette values are 6-bit indices `0x00–0x3F`, presented through the 64-entry FCEUX-compatible reference palette. RBI-specific offsets for team cap/bat colors, jersey/pants colors, field colors, and interface palettes are still **unknown**. Values in this numeric range are common throughout code and data, so occurrence alone is not evidence of a palette table. No palette writer is enabled.
+The generic NES palette model is confirmed: ROM palette values are 6-bit indices `0x00–0x3F`, presented through the 64-entry FCEUX-compatible reference palette. Team uniforms use three bytes per team—cap/bat, skin, and jersey/pants—in records beginning at PRG-relative `0x31AB` and mirrored at `0x9EA8`. Both copies are written together. Cap/bat and jersey/pants are editable; skin is preserved. Field and interface palette locations remain **unknown**.
+
+## Team identity tiles
+
+Each team's in-game identity is a two-letter, one-bit tile mark duplicated in four CHR layouts.
+The first copy begins at file `0x10AD0`; the other layouts begin at `0x11810`, `0x150B0`, and
+`0x174D0`, with the original paired/interleaved team ordering preserved. The editor updates all
+four copies together using a constrained A–Z 5×7 alphabet.

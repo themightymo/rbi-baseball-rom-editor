@@ -1,5 +1,16 @@
 # Research Log
 
+## 2026-10-03 — Team identity, uniforms, and RBI visual refresh
+
+- Confirmed the ten three-byte uniform records at PRG-relative `0x31AB`, mirrored at `0x9EA8`:
+  cap/bat, skin, and jersey/pants. Color writes update both copies and preserve skin.
+- Implemented the four known CHR copies of each two-letter team mark, using the original editor's
+  documented layouts and a constrained A–Z 5×7 glyph generator.
+- Added stable masked fingerprints so roster, team-mark, and uniform edits exported by this editor
+  reopen as supported derivatives without allowing unrelated ROM changes.
+- Replaced the inherited blue/pink Tecmo-like interface palette with the RBI logo's brick red,
+  black, white, yellow, and yellow-green visual language.
+
 ## 2026-10-03 — Dedicated play screen
 
 - “Save and Play Game” now leaves the editor workspace and opens a dedicated play screen, matching

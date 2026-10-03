@@ -9,6 +9,8 @@ import { detectRbiRom } from "@/games/rbi/detect";
 import { RbiBatterCard } from "@/components/RbiBatterCard";
 import { RbiPitcherCard } from "@/components/RbiPitcherCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RbiTeamEditor } from "@/components/RbiTeamEditor";
+import { readRbiTeamAbbreviation } from "@/games/rbi/teamCustomization";
 
 type RbiPlayer = RbiBatter | RbiPitcher;
 interface PlayerSelection {
@@ -63,6 +65,7 @@ export function RbiRosterPanel() {
 
   const teams = result.teams;
   const team = teams[selectedTeam] ?? teams[0];
+  const teamAbbreviation = rom ? readRbiTeamAbbreviation(rom, team.id) : team.abbreviation;
   const selectedPlayer = selection ? findPlayer(teams, selection) : null;
   const originalPlayer = selection && originalTeams ? findPlayer(originalTeams, selection) : null;
   const chooseTeam = (teamId: number) => {
@@ -94,14 +97,14 @@ export function RbiRosterPanel() {
 
   return (
     <section className="overflow-hidden border-2 border-white bg-black">
-      <header className="border-b-[3px] border-[#fc74b4] bg-[#0956e7] px-4 py-4 text-center">
+      <header className="border-b-[3px] border-[#d5df38] bg-[#b93022] px-4 py-4 text-center">
         <p className="text-[8px] tracking-[0.3em] text-white/80">SELECT TEAM</p>
         <div className="mt-3 flex items-center justify-center gap-4">
           <TeamArrow label="Previous team" onClick={() => chooseTeam(team.id - 1)}>
             <ChevronLeft className="size-5" />
           </TeamArrow>
           <div className="min-w-64">
-            <p className="text-2xl text-[#fcd800]">{team.abbreviation}</p>
+            <p className="text-2xl text-[#ffd43b]">{teamAbbreviation}</p>
             <h2 className="mt-2 text-sm text-white">{team.name}</h2>
           </div>
           <TeamArrow label="Next team" onClick={() => chooseTeam(team.id + 1)}>
@@ -118,15 +121,17 @@ export function RbiRosterPanel() {
               onClick={() => chooseTeam(candidate.id)}
               className={`min-w-10 border px-2 py-1 text-[8px] ${
                 candidate.id === team.id
-                  ? "border-[#fcd800] bg-black text-[#fcd800]"
-                  : "border-white/50 bg-[#0744b8] text-white hover:border-white"
+                  ? "border-[#ffd43b] bg-black text-[#ffd43b]"
+                  : "border-white/50 bg-[#7c1d17] text-white hover:border-white"
               }`}
             >
-              {candidate.abbreviation}
+              {rom ? readRbiTeamAbbreviation(rom, candidate.id) : candidate.abbreviation}
             </button>
           ))}
         </div>
       </header>
+
+      <RbiTeamEditor teamId={team.id} editable={editable} />
 
       <div className="grid gap-6 p-4 lg:grid-cols-[1.35fr_0.85fr]">
         <RosterGroup
@@ -194,7 +199,7 @@ function TeamArrow({
   return (
     <button
       type="button"
-      className="p-2 text-white hover:text-[#fcd800] focus-visible:outline-2 focus-visible:outline-white"
+      className="p-2 text-white hover:text-[#ffd43b] focus-visible:outline-2 focus-visible:outline-white"
       aria-label={label}
       onClick={onClick}
     >
@@ -216,7 +221,7 @@ function RosterGroup({
 }) {
   return (
     <section>
-      <h3 className="nes-rule mb-2 pb-2 text-xs text-[#fc74b4]">{title}</h3>
+      <h3 className="nes-rule mb-2 pb-2 text-xs text-[#d5df38]">{title}</h3>
       <ol className="space-y-1">
         {players.map((player, index) => (
           <li key={player.rosterSlot}>
@@ -228,7 +233,7 @@ function RosterGroup({
               <span className="text-[8px] text-muted-foreground">
                 {numbered ? index + 1 : player.rosterSlot}
               </span>
-              <span className="text-xs group-hover:text-[#fcd800]">{player.name}</span>
+              <span className="text-xs group-hover:text-[#ffd43b]">{player.name}</span>
               <span className="text-[8px] text-muted-foreground">
                 {isBatter(player)
                   ? `${player.bats}  .${player.battingAverage.toString().padStart(3, "0")}  ${player.homeRuns} HR`
@@ -270,8 +275,8 @@ function PlayerPreview({ player, teamName }: { player: RbiPlayer; teamName: stri
 function PlayerHeading({ teamName, playerName }: { teamName: string; playerName: string }) {
   return (
     <DialogHeader>
-      <p className="text-[8px] text-[#fc74b4]">{teamName}</p>
-      <DialogTitle className="text-lg text-[#fcd800]">{playerName}</DialogTitle>
+      <p className="text-[8px] text-[#d5df38]">{teamName}</p>
+      <DialogTitle className="text-lg text-[#ffd43b]">{playerName}</DialogTitle>
     </DialogHeader>
   );
 }

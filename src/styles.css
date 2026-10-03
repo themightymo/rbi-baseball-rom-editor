@@ -56,19 +56,18 @@
 }
 
 :root {
-  /* Colours taken from the NES palette used by Tecmo Super Bowl's team and
-     roster screens: black background, white text, pink rules. Buttons are blue;
-     active and hovered links are pink. */
+  /* RBI's title screen and box identity: brick red, black, white, and the
+     yellow-green BASEBALL wordmark. */
   --radius: 0px;
   --nes-black: #000000;
   --nes-white: #fcfcfc;
   --nes-gray: #bcbcbc;
   --nes-dark-gray: #747474;
   --nes-panel: #181818;
-  --nes-pink: #fc74b4;
-  --nes-blue: #0956e7;
-  --nes-blue-dark: #0744b8;
-  --nes-hot-pink: #f858a5;
+  --rbi-red: #b93022;
+  --rbi-red-dark: #7c1d17;
+  --rbi-yellow: #d5df38;
+  --rbi-gold: #ffd43b;
   --nes-green: #00a800;
   --nes-red: #da0046;
 
@@ -78,21 +77,20 @@
   --card-foreground: var(--nes-white);
   --popover: var(--nes-black);
   --popover-foreground: var(--nes-white);
-  --primary: var(--nes-blue);
+  --primary: var(--rbi-red);
   --primary-foreground: var(--nes-white);
-  /* Text-on-black accent: blue is too dark to read on black, so use pink. */
-  --highlight: var(--nes-hot-pink);
+  --highlight: var(--rbi-yellow);
   --secondary: var(--nes-panel);
   --secondary-foreground: var(--nes-white);
   --muted: var(--nes-panel);
   --muted-foreground: var(--nes-gray);
   --accent: #2c2c2c;
-  --accent-foreground: var(--nes-hot-pink);
+  --accent-foreground: var(--rbi-yellow);
   --destructive: var(--nes-red);
   --destructive-foreground: var(--nes-white);
   --border: var(--nes-white);
   --input: var(--nes-gray);
-  --ring: var(--nes-hot-pink);
+  --ring: var(--rbi-gold);
   --success: #80d010;
   --warning: #fcd800;
 }
@@ -131,18 +129,22 @@
     text-transform: uppercase;
   }
   ::selection {
-    background: var(--nes-blue);
+    background: var(--rbi-red);
     color: var(--nes-white);
   }
 }
 
-/* A TSB window: black panel with a white frame. */
 @utility nes-window {
   background-color: var(--nes-black);
   border: 2px solid var(--nes-white);
+  box-shadow: 4px 4px 0 var(--rbi-red-dark);
 }
 
-/* The pink rule the game draws under section titles like ROSTER and RESULTS. */
 @utility nes-rule {
-  border-bottom: 3px solid var(--nes-pink);
+  border-bottom: 3px solid var(--rbi-red);
+}
+
+@utility rbi-card {
+  background: linear-gradient(180deg, #181818 0%, #080808 100%);
+  border-bottom: 3px solid var(--rbi-red);
 }

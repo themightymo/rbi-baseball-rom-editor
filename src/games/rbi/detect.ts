@@ -1,6 +1,7 @@
 import { crc32 } from "../../lib/checksum.ts";
 import { parseINES } from "../../core/nes/ines.ts";
 import { RBI_ROM_PROFILES, type RbiRomProfile } from "./profiles.ts";
+import { rbiEditorStablePayloadCrc32 } from "./teamCustomization.ts";
 
 export interface RbiProfileFingerprint {
   payloadCrc32: string;
@@ -126,6 +127,29 @@ export function detectRbiRom(rom: Uint8Array): RbiDetectionResult {
       supported: exact.support === "supported",
       payloadCrc32,
       warnings,
+    };
+  }
+
+  const stablePayloadCrc32 = rbiEditorStablePayloadCrc32(rom);
+  const editorDerivative = RBI_ROM_PROFILES.find(
+    (profile) =>
+      profile.support === "supported" &&
+      profile.editorStablePayloadCrc32 !== null &&
+      profile.editorStablePayloadCrc32 === stablePayloadCrc32 &&
+      profile.acceptedMappers.includes(ines.mapper) &&
+      profile.prgSize === ines.prgSize &&
+      profile.chrSize === ines.chrSize,
+  );
+  if (editorDerivative && hasRbiRosterRecordBoundaries(rom, dataStart)) {
+    return {
+      ...base,
+      isRbi: true,
+      confidence: "high",
+      profileId: editorDerivative.id,
+      profileLabel: `${editorDerivative.label} (edited)`,
+      supported: true,
+      payloadCrc32,
+      warnings: ["This ROM contains supported edits made to a verified RBI Baseball profile."],
     };
   }
 
