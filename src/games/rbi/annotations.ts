@@ -37,6 +37,9 @@ export function getRbiAnnotations(rom: Uint8Array | null): readonly RomAnnotatio
       { start: 0xdd, length: 1, label: "Witt Stamina", confidence: "confirmed" },
       { start: 0xde, length: 1, label: "Witt Unknown 1", confidence: "confirmed" },
       { start: 0xdf, length: 1, label: "Witt Unknown 2", confidence: "confirmed" },
+      { start: 0x1466, length: 6, label: "End paper name field 1", confidence: "confirmed" },
+      { start: 0x146d, length: 7, label: "End paper name field 2", confidence: "confirmed" },
+      { start: 0x1474, length: 4, label: "End paper name field 3", confidence: "confirmed" },
     );
     return annotations;
   } catch {

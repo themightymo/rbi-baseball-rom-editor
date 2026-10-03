@@ -235,3 +235,12 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - Project import rejects the wrong CRC/profile, malformed values, out-of-range offsets, and original-byte mismatches before exposing a modified ROM.
 - Import applies the complete validated result in one state update, fixing the inherited multiple-`setBytes` batching hazard.
 - The changed-byte table now uses confirmed annotations to describe player records and known fields; unconfirmed offsets remain labeled `Unannotated byte`.
+
+## 2026-10-02 — Phase 13 team metadata
+
+- Verified team names and abbreviations remain application metadata tied to the proven roster order; no adjacent ROM string table was found.
+- Published technical offsets confirm three separate end-paper name fields at PRG-relative `0x1456–0x1467` (headered file `0x1466–0x1477`). Both supplied ROMs contain identical bytes there.
+- The end-paper bytes do not decode with the player-name table. Opening-screen text also mixes glyph and control bytes, confirming that screen text cannot safely reuse the roster-name writer.
+- These confirmed regions are annotated, but no metadata writer was added. Team-selection labels, roster labels, newspaper/end-paper names, and opening text remain separate until their exact tile/control encoding and fixed-space constraints are proven.
+
+Source: [RBI Baseball Technical Page](https://dee-nee.com/rbi/tech.shtml).

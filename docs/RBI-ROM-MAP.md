@@ -142,3 +142,17 @@ Mike Witt's record begins at file `0x0000D0` (PRG-relative `0x0000C0`) and is 16
 The low style nibble was validated against documented examples: `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm. All four California pitchers use the same parsed structure. The meanings of Unknown 1 and Unknown 2 are not documented or inferred; each pitcher's raw values remain visible and unchanged.
 
 Confirmed pitcher fields `+1..+13` are writable with field-specific validation. Style changes repack handedness and delivery into the low nibble while preserving Drop in the high nibble; curve changes repack both confirmed curve nibbles. ERA accepts displayed values 100–355 and stores `value - 100`; Drop and curves accept 0–15; velocities and Stamina accept 0–255. Slot `+0` and unknown bytes `+14..+15` are deliberately excluded from the writer API.
+
+## Team and screen text
+
+The ten selectable team labels are verified by roster identity and the original manual, but are not stored as ordinary strings beside the team records. Their exact rendering mechanism on the team-selection, roster, and game screens remains unresolved; the application metadata must not be mistaken for decoded writable ROM text.
+
+Published technical research identifies three separate end-paper name fields. Its offsets are PRG-relative, so their headered file ranges are:
+
+| Field            | PRG-relative | File range      | Length | Status                         |
+| ---------------- | ------------ | --------------- | -----: | ------------------------------ |
+| End paper name 1 | `0x1456`     | `0x1466–0x146B` |      6 | region confirmed; encoding TBD |
+| End paper name 2 | `0x145D`     | `0x146D–0x1473` |      7 | region confirmed; encoding TBD |
+| End paper name 3 | `0x1464`     | `0x1474–0x1477` |      4 | region confirmed; encoding TBD |
+
+These bytes are identical in both supplied ROMs. They do not use the player-name glyph mapping directly and may include screen-specific tile/control semantics. Editing is intentionally withheld. Opening-screen lines are likewise documented at PRG-relative `0x2F37–0x2F8D`, but contain interleaved control data and are not yet modeled.
