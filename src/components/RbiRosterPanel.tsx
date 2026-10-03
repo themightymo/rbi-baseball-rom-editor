@@ -4,8 +4,10 @@ import { useRom } from "@/lib/romStore";
 import { parseRbiTeams } from "@/games/rbi/teams";
 import type { RbiBatter, RbiPitcher } from "@/games/rbi/types";
 import { writeBatterFields, type RbiBatterChanges } from "@/games/rbi/batters";
+import { writePitcherFields, type RbiPitcherChanges } from "@/games/rbi/pitchers";
 import { detectRbiRom } from "@/games/rbi/detect";
 import { RbiBatterCard } from "@/components/RbiBatterCard";
+import { RbiPitcherCard } from "@/components/RbiPitcherCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type RbiPlayer = RbiBatter | RbiPitcher;
@@ -67,6 +69,14 @@ export function RbiRosterPanel() {
   const changeBatter = (changes: RbiBatterChanges) => {
     if (!rom || !selectedPlayer || !isBatter(selectedPlayer) || !editable) return;
     const changed = writeBatterFields(rom, selectedPlayer.offset, changes);
+    setBytes(
+      selectedPlayer.offset,
+      changed.subarray(selectedPlayer.offset, selectedPlayer.offset + 16),
+    );
+  };
+  const changePitcher = (changes: RbiPitcherChanges) => {
+    if (!rom || !selectedPlayer || isBatter(selectedPlayer) || !editable) return;
+    const changed = writePitcherFields(rom, selectedPlayer.offset, changes);
     setBytes(
       selectedPlayer.offset,
       changed.subarray(selectedPlayer.offset, selectedPlayer.offset + 16),
@@ -139,6 +149,19 @@ export function RbiRosterPanel() {
                 original={originalPlayer}
                 editable={editable}
                 onChange={changeBatter}
+              />
+            </>
+          ) : selectedPlayer &&
+            originalPlayer &&
+            !isBatter(selectedPlayer) &&
+            !isBatter(originalPlayer) ? (
+            <>
+              <PlayerHeading teamName={team.name} playerName={selectedPlayer.name} />
+              <RbiPitcherCard
+                player={selectedPlayer}
+                original={originalPlayer}
+                editable={editable}
+                onChange={changePitcher}
               />
             </>
           ) : selectedPlayer ? (

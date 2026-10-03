@@ -212,3 +212,11 @@ The same five checks passed in memory against both supplied 98,320-byte ROMs. Ea
 - The documented first pinch-hit at-bat Power bonus is shown as a derived `base + 64` value and explicitly identified as game behavior rather than stored record data.
 - Editing permission is determined from the originally loaded ROM profile so a valid first edit does not disable subsequent edits when the working CRC changes.
 - Pure tests write all confirmed fields, reparse them, verify the input is unchanged, verify unknown bytes remain intact, and reject invalid ranges or unsupported name glyphs.
+
+## 2026-10-02 — Phase 10 pitcher editor
+
+- The pitcher card separates cosmetic ERA from movement, velocity, and Stamina gameplay ratings.
+- Name, throwing hand, delivery, ERA, Drop, both Curve directions, all three pitch velocities, and Stamina use validated field writers with original/current/reset presentation.
+- Partial writes to packed style or curve bytes preserve the other field in the same byte.
+- Unknown 1 and Unknown 2 appear only in a collapsed Advanced section with raw hexadecimal and decimal values. They remain read-only and unnamed.
+- Pure tests write every confirmed field, verify packed-field preservation, verify slot and unknown bytes remain unchanged, and reject invalid byte/nibble ranges.

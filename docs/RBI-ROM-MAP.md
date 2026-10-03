@@ -140,3 +140,5 @@ Mike Witt's record begins at file `0x0000D0` (PRG-relative `0x0000C0`) and is 16
 |             `+15` |       `0xDF` |                `8C` | Unknown 2             | raw value 140                  | unknown    |
 
 The low style nibble was validated against documented examples: `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm. All four California pitchers use the same parsed structure. The meanings of Unknown 1 and Unknown 2 are not documented or inferred; each pitcher's raw values remain visible and unchanged.
+
+Confirmed pitcher fields `+1..+13` are writable with field-specific validation. Style changes repack handedness and delivery into the low nibble while preserving Drop in the high nibble; curve changes repack both confirmed curve nibbles. ERA accepts displayed values 100–355 and stores `value - 100`; Drop and curves accept 0–15; velocities and Stamina accept 0–255. Slot `+0` and unknown bytes `+14..+15` are deliberately excluded from the writer API.
