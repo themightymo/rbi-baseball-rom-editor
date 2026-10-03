@@ -32,21 +32,31 @@ export function diffBytes(a: Uint8Array, b: Uint8Array, gap = 4): DiffRange[] {
   return ranges;
 }
 
-// Build a simple IPS patch from edits.
+const IPS_HEADER = [0x50, 0x41, 0x54, 0x43, 0x48] as const;
+const IPS_FOOTER = [0x45, 0x4f, 0x46] as const;
+const IPS_MAX_OFFSET = 0xffffff;
+const IPS_MAX_RECORD_SIZE = 0xffff;
+
+// Build an IPS patch from equal-length original and modified ROM images.
 export function buildIPS(original: Uint8Array, modified: Uint8Array): Uint8Array {
+  if (original.length !== modified.length) {
+    throw new RangeError("IPS export requires original and modified ROMs of equal length.");
+  }
   const ranges = diffBytes(original, modified, 0);
   const chunks: number[] = [];
-  // header "PATCH"
-  chunks.push(0x50, 0x41, 0x54, 0x43, 0x48);
+  chunks.push(...IPS_HEADER);
   for (const r of ranges) {
-    const off = r.start;
-    if (off > 0xffffff) continue;
-    chunks.push((off >> 16) & 0xff, (off >> 8) & 0xff, off & 0xff);
-    const size = r.modified.length;
-    chunks.push((size >> 8) & 0xff, size & 0xff);
-    for (let k = 0; k < size; k++) chunks.push(r.modified[k]);
+    for (let position = 0; position < r.modified.length; position += IPS_MAX_RECORD_SIZE) {
+      const offset = r.start + position;
+      if (offset > IPS_MAX_OFFSET) {
+        throw new RangeError("IPS cannot encode offsets above 0xFFFFFF.");
+      }
+      const data = r.modified.subarray(position, position + IPS_MAX_RECORD_SIZE);
+      chunks.push((offset >> 16) & 0xff, (offset >> 8) & 0xff, offset & 0xff);
+      chunks.push((data.length >> 8) & 0xff, data.length & 0xff);
+      for (const byte of data) chunks.push(byte);
+    }
   }
-  // footer "EOF"
-  chunks.push(0x45, 0x4f, 0x46);
+  chunks.push(...IPS_FOOTER);
   return new Uint8Array(chunks);
 }

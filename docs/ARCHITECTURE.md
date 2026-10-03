@@ -31,3 +31,10 @@ The repository still contains dormant Tecmo-specific modules (rosters, abilities
 - Undo-all restores a fresh copy of the original.
 - Detection never relies on filenames.
 - Detection excludes bytes after the iNES-declared PRG+CHR region, while warning about them.
+- RBI field writers return new byte arrays and never mutate their input ROM.
+- IPS export refuses length-changing input rather than silently emitting an incomplete patch.
+- IPS records are split at the format's 65,535-byte record limit; offsets above its 24-bit range are rejected.
+
+## Round-trip guarantees
+
+Phase 7 exercises the complete 98,320-byte image rather than comparing only player records. Automated tests prove that an unchanged working copy exports identically, known batter and pitcher edits affect only their mapped bytes, restoring original values restores the whole image, and an independent IPS reader reproduces the same modified image as direct export.

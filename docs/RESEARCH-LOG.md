@@ -176,3 +176,23 @@ No second pitcher, additional batter, team, lineup, or All-Star structure was pa
 
 - Batter bytes `+14/+15` and pitcher bytes `+14/+15` retain their existing explicit unknown status.
 - No meaning was inferred for data immediately after the ten team blocks.
+
+## 2026-10-02 — Phase 7 round-trip verification
+
+### Automated guarantees
+
+- Test A copies and exports a complete 98,320-byte fixture without edits and confirms byte-for-byte identity with a distinct output buffer.
+- Test B changes Jacksn's Power from 945 to 1256 and confirms that only file offsets `0x4B–0x4C` change.
+- Test C changes Witt's Stamina from 50 to 54 and confirms that only file offset `0xDD` changes.
+- Test D applies both edits, restores both original values, and confirms equality across the complete ROM image.
+- Test E generates an IPS patch for both edits and applies it with an independent test-only IPS reader. The result exactly equals the directly modified ROM.
+
+### Supplied-ROM verification
+
+The same five checks passed in memory against both supplied 98,320-byte ROMs. Each combined two-field patch is 26 bytes. No modified ROM or patch was written to the repository.
+
+### IPS safety changes
+
+- IPS generation now rejects unequal original/modified lengths instead of silently ignoring length changes.
+- Changed ranges larger than the IPS 65,535-byte record limit are split into valid records.
+- An offset that exceeds the format's 24-bit range now produces an explicit error instead of being skipped.
