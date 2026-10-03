@@ -15,3 +15,26 @@ export interface RbiBatter {
   offset: number;
   rawBytes: Uint8Array;
 }
+
+export type RbiPitcherDelivery = "standard" | "sidearm";
+
+export interface RbiPitcher {
+  teamId: number;
+  rosterSlot: number;
+  name: string;
+  throws: RbiHandedness;
+  delivery: RbiPitcherDelivery;
+  /** Displayed ERA in hundredths: 284 renders as 2.84. */
+  earnedRunAverage: number;
+  drop: number;
+  leftCurve: number;
+  rightCurve: number;
+  slowPitchVelocity: number;
+  normalPitchVelocity: number;
+  fastPitchVelocity: number;
+  stamina: number;
+  unknown1: number;
+  unknown2: number;
+  offset: number;
+  rawBytes: Uint8Array;
+}

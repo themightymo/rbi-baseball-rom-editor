@@ -81,3 +81,34 @@ Pure tests parse the known record, encode/decode Power symmetrically, change Pow
 ### Scope held
 
 No second batter, pitcher, team, lineup, or All-Star structure was parsed. The clean unlicensed payload and canonical mapper-206 headers remain untested.
+
+## 2026-10-02 — Phase 4 single-pitcher investigation
+
+### Subject
+
+California pitcher slot 12, `WITT` (Mike Witt), at file offset `0xD0` in both supplied ROMs.
+
+### Evidence and conclusions
+
+- The community technical map documents the loaded pitcher order as style/handedness, ERA, slow speed, normal speed, fast speed, packed curves, stamina, Unknown 1, and Unknown 2.
+- The full 16-byte record is identical in the modified test ROM and the image with verified licensed payload CRC32 `3C5C81D4`.
+- Composite byte `0x40` decodes as drop 4 and style 0. Documented pitcher examples verify style nibbles `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm.
+- ERA byte `0xB8` plus 100 gives 284, displayed as `2.84`. The same formula reproduces the other three California ERAs.
+- Velocity bytes `90 A0 BA` directly equal 144 slow/sinker, 160 normal/curve, and 186 fastball.
+- Packed curve byte `0x97` gives left curve 9 and right curve 7.
+- Stamina byte `0x32` directly equals 50.
+- Bytes `0x73` and `0x8C` match published `Un1=115` and `Un2=140`, but their purposes remain unknown.
+
+### Round-trip proof
+
+Pure tests change Stamina from 50 to 54, verify that only file offset `0xDD` changes, then restore 50 and reproduce the entire original byte array. The input is never mutated.
+
+### Sources
+
+- [RBI Baseball Technical Page](https://dee-nee.com/rbi/tech.shtml)
+- [California player ratings](https://dee-nee.com/rbi/cali.shtml)
+- [Detailed RBI player-rating FAQ](https://gamefaqs.gamespot.com/nes/587559-rbi-baseball/faqs/63117)
+
+### Scope held
+
+No second pitcher, additional batter, team, lineup, or All-Star structure was parsed. Unknown 1 and Unknown 2 were not assigned speculative meanings.

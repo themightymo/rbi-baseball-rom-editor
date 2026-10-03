@@ -66,3 +66,25 @@ The name glyph table currently includes only byte/character pairs required by `J
 The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
 
 The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its `JACKSN` record is byte-identical. Its legacy iNES header still declares mapper 4 rather than documented mapper 206, so it is evidence for the licensed payload and record layout but not a canonical header. The clean unlicensed payload remains untested.
+
+### California pitcher slot 12 — `WITT`
+
+Mike Witt's record begins at file `0x0000D0` (PRG-relative `0x0000C0`) and is 16 bytes long. It is byte-identical in both supplied ROMs.
+
+|       Record byte |  File offset |                 Raw | Meaning               | Decoded value                  | Confidence |
+| ----------------: | -----------: | ------------------: | --------------------- | ------------------------------ | ---------- |
+|              `+0` |       `0xD0` |                `0C` | Roster slot           | 12                             | confirmed  |
+|          `+1..+6` | `0xD1..0xD6` | `20 30 3B 3B 24 24` | Display name          | `WITT` plus two padding glyphs | confirmed  |
+|  `+7` high nibble |       `0xD7` |                 `4` | Drop/sinker rating    | 4                              | confirmed  |
+|   `+7` low nibble |       `0xD7` |                 `0` | Throws/delivery       | right, standard                | confirmed  |
+|              `+8` |       `0xD8` |                `B8` | Displayed ERA         | `2.84` (`184 + 100`)           | confirmed  |
+|              `+9` |       `0xD9` |                `90` | Slow/sinker velocity  | 144                            | confirmed  |
+|             `+10` |       `0xDA` |                `A0` | Normal/curve velocity | 160                            | confirmed  |
+|             `+11` |       `0xDB` |                `BA` | Fastball velocity     | 186                            | confirmed  |
+| `+12` high nibble |       `0xDC` |                 `9` | Left curve            | 9                              | confirmed  |
+|  `+12` low nibble |       `0xDC` |                 `7` | Right curve           | 7                              | confirmed  |
+|             `+13` |       `0xDD` |                `32` | Stamina               | 50                             | confirmed  |
+|             `+14` |       `0xDE` |                `73` | Unknown 1             | raw value 115                  | unknown    |
+|             `+15` |       `0xDF` |                `8C` | Unknown 2             | raw value 140                  | unknown    |
+
+The low style nibble was validated against documented examples: `0` right/standard, `1` left/standard, `2` right/sidearm, and `3` left/sidearm. The meanings of Unknown 1 and Unknown 2 are not documented or inferred; they remain raw and unchanged.
