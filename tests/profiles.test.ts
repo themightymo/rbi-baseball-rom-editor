@@ -24,8 +24,28 @@ test("exact original payload profiles accept canonical and common legacy mapper 
   assert.equal(matchExactRbiProfile({ ...fingerprint, mapper: 1 }), null);
 });
 
+test("the exact supplied modified image has its own supported profile", () => {
+  const profile = matchExactRbiProfile({
+    payloadCrc32: "C987A275",
+    mapper: 4,
+    prgSize: 64 * 1024,
+    chrSize: 32 * 1024,
+  });
+  assert.equal(profile?.id, "rbi-usa-supplied-modified");
+  assert.equal(profile?.support, "supported");
+  assert.equal(
+    matchExactRbiProfile({
+      payloadCrc32: "C987A275",
+      mapper: 206,
+      prgSize: 64 * 1024,
+      chrSize: 32 * 1024,
+    }),
+    null,
+  );
+});
+
 test("unfingerprinted expanded and historical families cannot auto-detect", () => {
-  const manualFamilies = RBI_ROM_PROFILES.filter((profile) => profile.family !== "original");
+  const manualFamilies = RBI_ROM_PROFILES.filter((profile) => profile.payloadCrc32 === null);
   assert.ok(manualFamilies.length >= 4);
   assert.ok(manualFamilies.every((profile) => profile.payloadCrc32 === null));
   assert.equal(

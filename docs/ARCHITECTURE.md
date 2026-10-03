@@ -15,6 +15,10 @@ verified payload checksum remain manual, unsupported profile entries.
 
 ROM bytes never leave the browser.
 
+“Save and Play Game” makes a fresh `Uint8Array` snapshot of the working ROM in React state. The
+JSNES player consumes that copy directly; it does not invoke file download, browser persistence, or
+network APIs. Closing the player discards the running emulator, while editor state remains intact.
+
 ## Separation boundary
 
 Generic NES/container logic belongs under `src/core`. Game identity, verified offsets, record formats, and write rules belong under `src/games/rbi`. UI components consume those APIs and must not invent offsets.

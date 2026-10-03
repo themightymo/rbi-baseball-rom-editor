@@ -26,6 +26,7 @@ Checksums below cover PRG+CHR cartridge bytes and deliberately exclude the mutab
 | -------------------------- | ---------------: | --------------: | ----: | ----: | ------------- | --------- |
 | Licensed gray cartridge    |              206 |       206 or 4¹ | 64 KB | 32 KB | `3C5C81D4`    | supported |
 | Unlicensed black cartridge |              206 |       206 or 4¹ | 64 KB | 32 KB | `2E326A1D`    | supported |
+| Supplied modified US image |                4 |               4 | 64 KB | 32 KB | `C987A275`    | supported |
 
 ¹ Mapper 4 is accepted only when the complete PRG+CHR payload hash is exact. It is a common legacy
 iNES header for the supplied licensed payload, not a claim that mapper 4 is the canonical cartridge
@@ -139,7 +140,7 @@ Confirmed batter fields `+1..+13` are writable with field-specific validation. N
 
 ## Phase 2 test-ROM observation
 
-The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
+The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. Direct comparison with the licensed-payload image finds exactly 17 isolated differing PRG bytes at file `0x5E19–0x5F94`; the complete `0x10–0xA0F` roster table and CHR are identical. It is now supported through its own exact-checksum profile. No other modified image inherits that support.
 
 The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its complete roster table is byte-identical. Its legacy iNES header declares mapper 4 rather than canonical mapper 206. Phase 16 now accepts this exact payload/header pairing for editing while visibly warning about the header discrepancy. A mapper-4 header never bypasses the full checksum requirement. The clean unlicensed payload remains untested.
 

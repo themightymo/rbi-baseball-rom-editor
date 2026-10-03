@@ -57,6 +57,19 @@ export const RBI_ROM_PROFILES: readonly RbiRomProfile[] = [
     prgCrc32: "203D32B5",
   },
   {
+    ...ORIGINAL_LAYOUT,
+    id: "rbi-usa-supplied-modified",
+    label: "Verified supplied modified US image",
+    family: "historical-hack",
+    payloadCrc32: "C987A275",
+    prgCrc32: "24FAA2AF",
+    canonicalMapper: 4,
+    acceptedMappers: [4],
+    expectedFileSizes: [98_320],
+    notes:
+      "Exact supplied image; its complete roster table and CHR match the licensed payload, while 17 isolated PRG bytes differ outside player data.",
+  },
+  {
     id: "rbi-stuffed-licensed-family",
     label: "Stuffed licensed family (unverified image)",
     family: "stuffed",

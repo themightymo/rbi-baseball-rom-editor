@@ -1,5 +1,18 @@
 # Research Log
 
+## 2026-10-03 — In-browser play and supplied modified profile
+
+- Added an in-memory play snapshot: “Save and Play Game” copies the current working ROM bytes into
+  React state and opens a browser NES player without downloading, uploading, or persisting the ROM.
+- The player follows the referenced Retro Game Emulator fork's JSNES 2.1 approach: 256×240
+  pixel-rendered canvas, 60 FPS timing, audio, focus-scoped keyboard controls, pause/reset, and
+  fullscreen. JSNES is consumed as its Apache-2.0 npm package rather than copying the fork's
+  WordPress-specific wrapper.
+- The two supplied ROMs differ at only 17 isolated PRG bytes, all at file `0x5E19–0x5F94`. Their
+  complete roster table and CHR are identical. `RBI Baseball (U).nes` now has a checksum-specific
+  supported profile (`C987A275`); this does not weaken detection for any other modified ROM.
+- Added the user-supplied `rbi-logo-in-game.jpg` to the application header.
+
 ## 2026-10-03 — Phase 18 Ratings Lab
 
 - Added pure, deterministic batter and pitcher recommendation functions, documented in

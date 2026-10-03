@@ -9,9 +9,11 @@ import { RbiAdvancedRosterEditor } from "@/components/RbiAdvancedRosterEditor";
 import { InspectRomTools, CustomLayoutTools } from "@/components/AdvancedTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FileSearch, List, Save, Table, Users } from "lucide-react";
-import { Gauge } from "lucide-react";
+import { FileSearch, Gamepad2, Gauge, List, Save, Table, Users } from "lucide-react";
 import { RbiRatingsGenerator } from "@/components/RbiRatingsGenerator";
+import { NesPlayer } from "@/components/NesPlayer";
+import { createNesPlaySnapshot, type NesPlaySnapshot } from "@/core/nes/play";
+import rbiLogo from "@/assets/rbi-logo-in-game.jpg";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -24,16 +26,29 @@ function Index() {
 }
 
 function Shell() {
-  const { rom } = useRom();
+  const { rom, romName } = useRom();
   const [tab, setTab] = useState("rosters");
+  const [playSnapshot, setPlaySnapshot] = useState<NesPlaySnapshot | null>(null);
+  const saveAndPlay = () => {
+    if (!rom) return;
+    setPlaySnapshot(createNesPlaySnapshot(rom, romName));
+    setTab("play");
+  };
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="nes-rule bg-card">
-        <div className="mx-auto max-w-7xl px-4 py-5">
-          <p className="text-[10px] tracking-[0.2em] text-muted-foreground">NES ROM EDITOR</p>
-          <h1 className="mt-2 text-lg leading-relaxed text-foreground">
-            R.B.I. Baseball ROM Editor
-          </h1>
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
+          <img
+            src={rbiLogo}
+            alt="R.B.I. Baseball"
+            className="w-28 shrink-0 border-2 border-black object-contain sm:w-40"
+          />
+          <div>
+            <p className="text-[10px] tracking-[0.2em] text-muted-foreground">NES ROM EDITOR</p>
+            <h1 className="mt-2 text-lg leading-relaxed text-foreground">
+              R.B.I. Baseball ROM Editor
+            </h1>
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-4 px-4 py-6">
@@ -43,7 +58,7 @@ function Shell() {
           </div>
         ) : (
           <>
-            <RomToolbar />
+            <RomToolbar onPlay={saveAndPlay} />
             <RbiDetectionPanel />
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="flex h-auto w-full flex-wrap justify-start">
@@ -62,6 +77,11 @@ function Shell() {
                 <TabsTrigger value="ratings" className="gap-1.5">
                   <Gauge className="size-4" /> Ratings Lab
                 </TabsTrigger>
+                {playSnapshot && (
+                  <TabsTrigger value="play" className="gap-1.5">
+                    <Gamepad2 className="size-4" /> Play Game
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="save" className="ml-auto gap-1.5">
                   <Save className="size-4" /> Save &amp; Export
                 </TabsTrigger>
@@ -77,6 +97,11 @@ function Shell() {
               </TabsContent>
               <TabsContent value="ratings">
                 <RbiRatingsGenerator />
+              </TabsContent>
+              <TabsContent value="play">
+                {playSnapshot && (
+                  <NesPlayer snapshot={playSnapshot} onClose={() => setTab("rosters")} />
+                )}
               </TabsContent>
               <TabsContent value="rosters">
                 <RbiRosterPanel />
