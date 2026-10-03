@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import { useRom } from "@/lib/romStore";
 import { getNesRomLayout, hex } from "@/core/nes/addressing";
 import { detectRbiRom } from "@/games/rbi/detect";
-import { RBI_ANNOTATIONS } from "@/games/rbi/annotations";
+import { getRbiAnnotations } from "@/games/rbi/annotations";
 
 export function ResearchPanel() {
   const { rom, romChecksum } = useRom();
   const layout = useMemo(() => (rom ? getNesRomLayout(rom) : null), [rom]);
   const detection = useMemo(() => (rom ? detectRbiRom(rom) : null), [rom]);
+  const annotations = useMemo(() => getRbiAnnotations(rom), [rom]);
   if (!rom || !detection) return null;
 
   return (
@@ -39,11 +40,11 @@ export function ResearchPanel() {
       </dl>
       <div>
         <h3 className="text-xs text-muted-foreground">Known annotated RBI regions</h3>
-        {RBI_ANNOTATIONS.length === 0 ? (
+        {annotations.length === 0 ? (
           <p className="mt-1 text-xs">None confirmed yet.</p>
         ) : (
           <ul className="mt-1 space-y-1 text-xs">
-            {RBI_ANNOTATIONS.map((annotation) => (
+            {annotations.map((annotation) => (
               <li key={`${annotation.start}:${annotation.label}`}>
                 <span className="font-mono">{hex(annotation.start)}</span> {annotation.label} (
                 {annotation.confidence})

@@ -40,8 +40,29 @@ Player names, team records, batter records, pitcher records, lineups, ratings, a
 
 ## Confirmed annotated RBI regions
 
-None yet. The annotation registry is intentionally empty until Phase 3 verifies a game-data region. The iNES, PRG, and CHR container ranges shown by the research panel are derived metadata, not RBI game-data annotations.
+### California batter slot 3 — `JACKSN`
+
+Both supplied ROMs store California's batter records immediately after the 16-byte iNES header. The selected record begins at file `0x000040` (PRG-relative `0x000030`) and is 16 bytes long.
+
+| Record byte |  File offset |                 Raw | Meaning           | Decoded value        | Confidence |
+| ----------: | -----------: | ------------------: | ----------------- | -------------------- | ---------- |
+|        `+0` |       `0x40` |                `03` | Roster slot       | 3                    | confirmed  |
+|    `+1..+6` | `0x41..0x46` | `13 28 2A 32 3A 35` | Display name      | `JACKSN`             | confirmed  |
+|        `+7` |       `0x47` |                `01` | Bats              | Left                 | confirmed  |
+|        `+8` |       `0x48` |                `7D` | Displayed average | `.275` (`125 + 150`) | confirmed  |
+|        `+9` |       `0x49` |                `27` | Home runs         | 39                   | confirmed  |
+|       `+10` |       `0x4A` |                `17` | Contact           | 23                   | confirmed  |
+|       `+11` |       `0x4B` |                `B1` | Power low byte    | —                    | confirmed  |
+|       `+12` |       `0x4C` |                `03` | Power high byte   | `0x03B1` = 945       | confirmed  |
+|       `+13` |       `0x4D` |                `80` | Speed             | 128                  | confirmed  |
+|  `+14..+15` | `0x4E..0x4F` |             `00 00` | Unknown           | preserved verbatim   | unknown    |
+
+The batting-average transformation was checked across all twelve California batter records solely to validate the field formula: `stored byte + 150` reproduces every published in-game average, including Pettis `.258`. Those other records have not been added to the application data model.
+
+The name glyph table currently includes only byte/character pairs required by `JACKSN`. Unverified glyphs decode as `?` rather than being guessed.
 
 ## Phase 2 test-ROM observation
 
 The locally supplied `RBI Baseball (U).nes` is 98,320 bytes with no trainer. Its header declares mapper 4, 64 KB PRG, and 32 KB CHR. Its cartridge CRC32 is `C987A275`, PRG CRC32 is `24FAA2AF`, and CHR CRC32 is the known RBI value `C36B03AE`. It does not exactly match either clean supported profile and remains inspection-only. No header correction or game-data inference was made.
+
+The additionally supplied `R.B.I. Baseball (U) [!].nes` has the published licensed-cartridge payload CRC32 `3C5C81D4`; its `JACKSN` record is byte-identical. Its legacy iNES header still declares mapper 4 rather than documented mapper 206, so it is evidence for the licensed payload and record layout but not a canonical header. The clean unlicensed payload remains untested.

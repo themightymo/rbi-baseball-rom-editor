@@ -11,7 +11,7 @@ import {
   parseOffset,
 } from "@/core/nes/addressing";
 import { annotationsAt } from "@/core/rom/annotations";
-import { RBI_ANNOTATIONS } from "@/games/rbi/annotations";
+import { getRbiAnnotations } from "@/games/rbi/annotations";
 
 const ROW_LENGTH = 16;
 const PAGE_LENGTH = 32 * ROW_LENGTH;
@@ -24,6 +24,7 @@ export function HexViewer({ jumpOffset }: { jumpOffset?: number | null }) {
   const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
   const layout = useMemo(() => (rom ? getNesRomLayout(rom) : null), [rom]);
+  const annotations = useMemo(() => getRbiAnnotations(rom), [rom]);
   const selection = useMemo(() => {
     if (selectionStart === null) return null;
     const end = selectionEnd ?? selectionStart;
@@ -111,6 +112,7 @@ export function HexViewer({ jumpOffset }: { jumpOffset?: number | null }) {
             start={selection.start}
             end={selection.end}
             layout={layout}
+            annotations={annotations}
             onCopy={copySelection}
           />
         )}
@@ -127,15 +129,16 @@ export function HexViewer({ jumpOffset }: { jumpOffset?: number | null }) {
                   const offset = rowOffset + index;
                   const selected =
                     selection && offset >= selection.start && offset <= selection.end;
-                  const annotations = annotationsAt(RBI_ANNOTATIONS, offset);
+                  const byteAnnotations = annotationsAt(annotations, offset);
                   return (
                     <button
                       key={offset}
                       type="button"
                       title={
-                        annotations.map(({ label }) => label).join(", ") || `File ${hex(offset)}`
+                        byteAnnotations.map(({ label }) => label).join(", ") ||
+                        `File ${hex(offset)}`
                       }
-                      className={`rounded px-0.5 ${selected ? "bg-highlight text-background" : annotations.length ? "bg-primary/20 text-highlight" : "hover:bg-accent"}`}
+                      className={`rounded px-0.5 ${selected ? "bg-highlight text-background" : byteAnnotations.length ? "bg-primary/20 text-highlight" : "hover:bg-accent"}`}
                       onClick={(event) => {
                         if (event.shiftKey && selectionStart !== null) setSelectionEnd(offset);
                         else {
@@ -170,17 +173,19 @@ function SelectionSummary({
   start,
   end,
   layout,
+  annotations,
   onCopy,
 }: {
   rom: Uint8Array;
   start: number;
   end: number;
   layout: ReturnType<typeof getNesRomLayout>;
+  annotations: ReturnType<typeof getRbiAnnotations>;
   onCopy: () => void;
 }) {
   const prgOffset = layout ? fileOffsetToPrgOffset(layout, start) : null;
   const cpuAddress = layout ? fileOffsetToCpuAddress(layout, start) : null;
-  const annotations = annotationsAt(RBI_ANNOTATIONS, start);
+  const selectedAnnotations = annotationsAt(annotations, start);
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded border bg-background/40 p-2 text-xs">
       <span>
@@ -207,7 +212,7 @@ function SelectionSummary({
       </span>
       <span>
         Annotation{" "}
-        <strong>{annotations.map(({ label }) => label).join(", ") || "Unlabeled"}</strong>
+        <strong>{selectedAnnotations.map(({ label }) => label).join(", ") || "Unlabeled"}</strong>
       </span>
       <Button size="sm" variant="outline" onClick={onCopy}>
         <Copy className="size-3" /> Copy {end - start + 1} byte{end === start ? "" : "s"}
