@@ -8,6 +8,7 @@ import { DEFAULT_ROM_MAP, type RomMap } from "@/types/RomMap";
 import { buildRbiProject, applyRbiProject } from "@/games/rbi/project";
 import { getRbiAnnotations } from "@/games/rbi/annotations";
 import { annotationsAt } from "@/core/rom/annotations";
+import { RbiCsvPanel } from "@/components/RbiCsvPanel";
 
 export function ExportPanel() {
   const { rom, originalRom, romName, edits, romMap, setRomMap, setBytes } = useRom();
@@ -47,6 +48,8 @@ export function ExportPanel() {
           </Button>
         </Option>
       </div>
+
+      <RbiCsvPanel />
 
       <details className="nes-window p-4">
         <summary className="cursor-pointer text-sm font-medium">

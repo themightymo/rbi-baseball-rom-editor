@@ -1,5 +1,17 @@
 # Research Log
 
+## 2026-10-02 — Phase 17 atomic roster CSV
+
+- Added complete roster export/import using the documented schema in [`RBI-CSV.md`](RBI-CSV.md).
+- Exports contain all 160 player rows. Batter and pitcher columns are separated explicitly, while
+  `team`, `type`, and `slot` form stable record identities.
+- Both unresolved bytes remain visible as `unknown_1` and `unknown_2` but are read-only. Import
+  rejects changes to them rather than assigning a speculative meaning.
+- Import validates the exact header, row width, all ranges/enums, name glyphs, applicable/blank
+  fields, unique team/slot pairs, and complete roster coverage. Errors carry CSV row and field.
+- Validation and writes occur against a clone. A replacement ROM is returned only if every row is
+  valid, proving that one bad row cannot partially modify application state.
+
 ## 2026-10-02 — Phase 16 profile-based ROM variants
 
 ### Profile architecture
